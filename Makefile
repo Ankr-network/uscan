@@ -15,11 +15,11 @@ compile:
 	-X 'github.com/Ankr-network/uscan/cmd.Date=$(Date)' \
 	-X 'github.com/Ankr-network/uscan/cmd.Author=$(Author)' \
 	-X 'github.com/Ankr-network/uscan/cmd.Email=$(Email)' \
-	-X 'github.com/Ankr-network/uscan/cmd.GoVersion=$(GoVersion)'"
+	-X 'github.com/Ankr-network/uscan/cmd.GoVersion=$(GoVersion)'" -o bin/uscan
 
 .PHONY: perf
 perf: compile
-	./uscan --config .uscan.yaml 
+	bin/uscan --config .uscan.yaml 
 
 .PHONY: race
 race:
@@ -27,7 +27,7 @@ race:
 
 .PHONY: start 
 start: compile
-	./uscan --config .uscan.yaml 
+	bin/uscan --config .uscan.yaml 
 
 
 .PHONY: build
