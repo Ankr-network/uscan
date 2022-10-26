@@ -1,3 +1,19 @@
+/*
+Copyright © 2022 uscan team
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
 package kv
 
 import (
@@ -51,5 +67,32 @@ func NewMdbx(path string) *MdbxDB {
 		return nil
 	})
 
+	return nil
+}
+
+func (d *MdbxDB) Put(key []byte, val []byte, opts *WriteOption) error {
+	return d.env.Update(func(txn *mdbx.Txn) error {
+		return txn.Put(d.tables[opts.Table], key, val, mdbx.Upsert)
+	})
+}
+
+func (d *MdbxDB) Get(key []byte, opts *ReadOption) (rs []byte, err error) {
+
+	d.env.View(func(txn *mdbx.Txn) error {
+		rs, err = txn.Get(d.tables[opts.Table], key)
+		if mdbx.IsNotFound(err) {
+			err = NotFound
+		}
+		return nil
+	})
+
+	return
+}
+
+func (d *MdbxDB) Close() error {
+	for _, v := range d.tables {
+		d.env.CloseDBI(v)
+	}
+	d.env.Close()
 	return nil
 }
