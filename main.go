@@ -1,5 +1,5 @@
 /*
-Copyright © 2022 mobus <sunsc0220@gmail.com>
+Copyright © 2022 uscan team
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License

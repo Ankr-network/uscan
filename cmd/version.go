@@ -25,7 +25,7 @@ import (
 var (
 	Branch    = "main"
 	Author    = "uscan team"
-	Email     = "<uscan@gmail.com>"
+	Email     = "<uscanteam@163.com>"
 	Date      = "2022-10-25"
 	Commit    = "821288f"
 	GoVersion = ""
