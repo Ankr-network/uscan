@@ -1,0 +1,132 @@
+###
+@scanHost = http://120.133.222.86/
+
+###
+// get block list
+GET {{scanHost}}chain-scan/v1/blocks?offset=0&limit=10
+
+
+###
+// get txs list
+GET {{scanHost}}chain-scan/v1/txs?offset=0&limit=20
+
+
+###
+// get block
+GET {{scanHost}}chain-scan/v1/blocks/55
+
+###
+// get block txs
+GET {{scanHost}}chain-scan/v1/txs?blockBegin=55&blockEnd=55
+
+###
+// get tx
+GET {{scanHost}}chain-scan/v1/txs/0xf403097775c31691d70a0d5fdc2e30e8497e96b70a641f318b99df6a2c07dac3
+
+###
+// get base tx
+GET {{scanHost}}chain-scan/v1/txs/0xf403097775c31691d70a0d5fdc2e30e8497e96b70a641f318b99df6a2c07dac3/base
+
+###
+// get address erc tx
+GET {{scanHost}}chain-scan/v1/accounts/0x20cD8eB93c50BDAc35d6A526f499c0104958e3F6/txns-erc20
+
+###
+// get address erc tx
+GET {{scanHost}}chain-scan/v1/accounts/0x20cD8eB93c50BDAc35d6A526f499c0104958e3F6/txns-erc721
+
+###
+// get address erc tx
+GET {{scanHost}}chain-scan/v1/accounts/0x20cD8eB93c50BDAc35d6A526f499c0104958e3F6/txns-erc1155
+
+###
+// get contract address
+GET {{scanHost}}chain-scan/v1/accounts/0xBedb5e825989B8ef4B195bfC3A9196eEC35Beae4
+
+###
+// get account address
+GET {{scanHost}}chain-scan/v1/accounts/0xbedb5e825989b8ef4b195bfc3a9196eec35beae4
+
+###
+// get address
+GET {{scanHost}}chain-scan/v1/accounts?offset=0&limit=100
+
+###
+// get address
+GET {{scanHost}}chain-scan/v1/accounts/0x2594d5efA1cBb3a5486988f8A5b094E9707539e5/txns
+
+###
+// get erc20
+GET {{scanHost}}chain-scan/v1/tokens/txns/erc721?offset=0&limit=100
+
+###
+// get token type
+GET {{scanHost}}chain-scan/v1/tokens/0x84868afcC4Ba758a4ae2aca141D2fF0ECD8C5fac/type
+
+###
+// get token holders
+GET {{scanHost}}chain-scan/v1/tokens/0x84868afcC4Ba758a4ae2aca141D2fF0ECD8C5fac/holders?type=erc20
+
+###
+// get token transfers
+GET {{scanHost}}chain-scan/v1/tokens/0x84868afcc4ba758a4ae2aca141d2ff0ecd8c5fac/transfers?type=erc20
+
+
+###
+// get nft transfers
+GET {{scanHost}}chain-scan/v1/tokens/0xbedb5e825989b8ef4b195bfc3a9196eec35beae4/transfers?type=erc721
+
+###
+// get logs
+GET {{scanHost}}chain-scan/v1/txs/0x6de151b9f4f0c2515f3fe3570f6e0b7456934c70677088e19a305c0d4803862c/event-logs
+
+###
+// search
+GET {{scanHost}}chain-scan/v1/search?type=1&keyword=0xbedb5e825989b8ef4b195bfc3a9196eec35beae4
+
+###
+// metadata
+GET {{scanHost}}chain-scan/v1/contracts/metadata
+
+
+###
+// metadata
+GET {{scanHost}}chain-scan/v1/contracts/0x3d87c534f1c5c418b5b7b3b9e8a296b8aaafad03/content
+
+
+###
+// metadata
+GET {{scanHost}}chain-scan/v1/contracts-verify/c65fec460cb8425d95f45cf59f8b74da/status
+
+
+###
+// metadata
+GET {{scanHost}}chain-scan/v1/contracts/0x87e0d90cdaf7c35ebd82d834518f02193fe008d5/content
+
+###
+// metadata
+GET {{scanHost}}chain-scan/v1/contracts/0x398005ecc2ca215e7188095b44bf38270af6fac9/content
+
+###
+// geth debug trace
+GET {{scanHost}}/chain-scan/v1/txs/0x276bc6ffe4ac99be64ba1f5b3c264e170d881c3be4b9e40d8d044988a2134872/tracetx
+
+###
+// tracetx2 geth debug trace2
+GET {{scanHost}}/chain-scan/v1/txs/0x276bc6ffe4ac99be64ba1f5b3c264e170d881c3be4b9e40d8d044988a2134872/tracetx2
+
+###
+// download
+GET {{scanHost}}/chain-scan/v1/accounts/0x20cD8eB93c50BDAc35d6A526f499c0104958e3F6/txns/download
+
+###
+// total
+GET {{scanHost}}/chain-scan/v1/daily/trend?beginTime=20220801&endTime=20220818
+
+###
+// overview
+GET {{scanHost}}/chain-scan/v1/overview
+
+###
+// overview
+GET {{scanHost}}/chain-scan/v1/accounts?type=1
