@@ -3,9 +3,11 @@ module github.com/Ankr-network/uscan
 go 1.19
 
 require (
+	github.com/GeertJohan/go.rice v1.0.2
 	github.com/RoaringBitmap/roaring v1.2.1
 	github.com/ethereum/go-ethereum v1.10.25
 	github.com/gofiber/fiber/v2 v2.39.0
+	github.com/rakyll/statik v0.1.7
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.13.0
 	github.com/stretchr/testify v1.8.0

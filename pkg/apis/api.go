@@ -22,7 +22,10 @@ import (
 	"log"
 
 	"github.com/Ankr-network/uscan/share"
+	_ "github.com/Ankr-network/uscan/statik"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/filesystem"
+	fs "github.com/rakyll/statik/fs"
 	"github.com/spf13/viper"
 )
 
@@ -33,10 +36,14 @@ func Apis(ctx context.Context) error {
 		DisableStartupMessage: true,
 	})
 
-	svc.Static("/", "web")
-	svc.Get("/", func(c *fiber.Ctx) error {
-		return c.SendFile("web/index.html")
-	})
+	statikFs, err := fs.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	svc.Use("/", filesystem.New(filesystem.Config{
+		Root: statikFs,
+	}))
 
 	g := svc.Group("/uscan/v1")
 
