@@ -49,4 +49,8 @@ release: build
 	docker push ankrnetwork/uscan:latest
 
 
+.PHONY: start-scan-page
+start-scan-page:
+	go run ./front/chainscan_frontend/main.go
+
 

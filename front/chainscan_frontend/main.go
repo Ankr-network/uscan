@@ -12,11 +12,11 @@ import (
 func main() {
 	app := gin.Default()
 
-	app.Use(static.Serve("/", static.LocalFile("dist", true)))
+	app.Use(static.Serve("/", static.LocalFile("./front/chainscan_frontend/dist", true)))
 
-	app.StaticFS("/dist", http.Dir("./dist"))
+	app.StaticFS("/dist", http.Dir("./front/chainscan_frontend/dist"))
 
-	app.StaticFile("/favicon.ico", "./favicon.ico")
+	app.StaticFile("/favicon.ico", "./front/chainscan_frontend/favicon.ico")
 
 	app.NoRoute(func(c *gin.Context) {
 		accept := c.Request.Header.Get("Accept")
