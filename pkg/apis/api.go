@@ -33,6 +33,11 @@ func Apis(ctx context.Context) error {
 		DisableStartupMessage: true,
 	})
 
+	svc.Static("/", "web")
+	svc.Get("/", func(c *fiber.Ctx) error {
+		return c.SendFile("web/index.html")
+	})
+
 	g := svc.Group("/uscan/v1")
 
 	g.Get("/hello/:name", func(c *fiber.Ctx) error {
