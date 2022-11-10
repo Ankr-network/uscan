@@ -1,61 +1,71 @@
 package types
 
 import (
-	"github.com/Ankr-network/uscan/pkg/utils"
+	"math/big"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/rlp"
 )
 
 const (
-	Erc20Flag   byte = 0x80
-	Erc721Flag  byte = 0x40
-	Erc1155Flag byte = 0x20
+	Erc20Flag   byte = 0x01
+	Erc721Flag  byte = 0x02
+	Erc1155Flag byte = 0x04
 )
 
 type Account struct {
-	Erc20   bool
-	Erc721  bool
-	Erc1155 bool
-	Balance uint64
-	Code    []byte
+	BlockNumber *big.Int
+	Owner       common.Address `rlp:"-"`
+	Balance     *big.Int
+
+	Erc20            bool `rlp:"-"`
+	Erc721           bool `rlp:"-"`
+	Erc1155          bool `rlp:"-"`
+	ErcFlag          byte
+	Creator          *common.Address
+	TxHash           *common.Hash
+	Code             []byte
+	Name, Symbol     string
+	TokenTotalSupply *big.Int
+	NftTotalSupply   *big.Int
+	Decimals         *big.Int // erc20 decimals
 }
 
-func (a *Account) Marshal() ([]byte, error) {
-	var flag byte
-	switch {
-	case a.Erc1155:
-		flag |= Erc1155Flag
-	case a.Erc20:
-		flag |= Erc20Flag
-	case a.Erc721:
-		flag |= Erc721Flag
+func (b *Account) Marshal() ([]byte, error) {
+	b.ErcFlag = 0x0
+	if b.Erc20 {
+		b.ErcFlag += Erc20Flag
 	}
-	bs := make([]byte, 0, 2)
-	bs = append(bs, flag)
-	bs = append(bs, utils.WrapLen(utils.EncodeVarint(a.Balance))...)
-	bs = append(bs, a.Code...)
-	return bs, nil
+
+	if b.Erc721 {
+		b.ErcFlag += Erc721Flag
+	}
+
+	if b.Erc1155 {
+		b.ErcFlag += Erc1155Flag
+	}
+	return rlp.EncodeToBytes(b)
 }
 
-func (a *Account) Unmarshal(bin []byte) error {
-
-	if a == nil {
-		a = &Account{}
+func (b *Account) Unmarshal(bin []byte) (err error) {
+	err = rlp.DecodeBytes(bin, &b)
+	if err != nil {
+		return err
 	}
 
-	if bin[0]&Erc20Flag == Erc20Flag {
-		a.Erc20 = true
-	}
-	if bin[0]&Erc721Flag == Erc721Flag {
-		a.Erc721 = true
-	}
-	if bin[0]&Erc1155Flag == Erc1155Flag {
-		a.Erc1155 = true
+	if b.ErcFlag >= Erc1155Flag {
+		b.ErcFlag -= Erc1155Flag
+		b.Erc1155 = true
 	}
 
-	balLen := int(bin[1])
-	a.Balance, _ = utils.DecodeVarint(bin[2 : 2+balLen])
+	if b.ErcFlag >= Erc721Flag {
+		b.ErcFlag -= Erc721Flag
+		b.Erc721 = true
+	}
 
-	a.Code = make([]byte, len(bin)-2-balLen)
-	copy(a.Code, bin[2+balLen:])
-
+	if b.ErcFlag >= Erc20Flag {
+		b.ErcFlag -= Erc20Flag
+		b.Erc20 = true
+	}
 	return nil
 }

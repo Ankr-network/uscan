@@ -1,0 +1,66 @@
+package types
+
+import (
+	"math/big"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/rlp"
+)
+
+type Bloom [types.BloomByteLength]byte
+
+// MarshalText encodes b as a hex string with 0x prefix.
+func (b Bloom) MarshalText() ([]byte, error) {
+	return hexutil.Bytes(b[:]).MarshalText()
+}
+
+// UnmarshalText b as a hex string with 0x prefix.
+func (b *Bloom) UnmarshalText(input []byte) error {
+	return hexutil.UnmarshalFixedText("Bloom", input, b[:])
+}
+
+type BlockNonce [8]byte
+
+// MarshalText encodes n as a hex string with 0x prefix.
+func (n BlockNonce) MarshalText() ([]byte, error) {
+	return hexutil.Bytes(n[:]).MarshalText()
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (n *BlockNonce) UnmarshalText(input []byte) error {
+	return hexutil.UnmarshalFixedText("BlockNonce", input, n[:])
+}
+
+type Block struct {
+	Number           *big.Int       `json:"number"  rlp:"-"`
+	Hash             common.Hash    `json:"hash"`
+	ParentHash       common.Hash    `json:"parentHash"`
+	UncleHash        common.Hash    `json:"sha3Uncles"`
+	Coinbase         common.Address `json:"miner"`
+	Root             common.Hash    `json:"stateRoot"`
+	TxHash           common.Hash    `json:"transactionsRoot"`
+	ReceiptHash      common.Hash    `json:"receiptsRoot"`
+	Bloom            Bloom          `json:"logsBloom"`
+	Difficulty       *big.Int       `json:"difficulty"`
+	GasLimit         *big.Int       `json:"gasLimit"`
+	GasUsed          *big.Int       `json:"gasUsed"`
+	Time             *big.Int       `json:"timestamp"`
+	Extra            []byte         `json:"extraData"`
+	MixDigest        common.Hash    `json:"mixHash"`
+	Nonce            BlockNonce     `json:"nonce"`
+	BaseFee          *big.Int       `json:"baseFeePerGas"`
+	Size             *big.Int       `json:"size"`
+	TotalDifficulty  *big.Int       `json:"totalDifficulty"`
+	Transactions     []common.Hash  `json:"transactions" rlp:"-"`
+	TransactionTotal *big.Int       `json:"-"`
+}
+
+func (b *Block) Marshal() ([]byte, error) {
+	return rlp.EncodeToBytes(b)
+}
+
+func (b *Block) Unmarshal(bin []byte) error {
+	return rlp.DecodeBytes(bin, &b)
+}
