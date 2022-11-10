@@ -19,7 +19,7 @@ package apis
 import (
 	"context"
 	"fmt"
-	"log"
+	"github.com/Ankr-network/uscan/pkg/log"
 
 	"github.com/Ankr-network/uscan/share"
 	"github.com/gofiber/fiber/v2"
@@ -34,15 +34,12 @@ func Apis(ctx context.Context) error {
 	})
 
 	g := svc.Group("/uscan/v1")
-
-	g.Get("/hello/:name", func(c *fiber.Ctx) error {
-		c.JSON(fmt.Sprintf("Hi %s", c.Params("name")))
-		return nil
-	})
+	SetupRouter(g)
 
 	addr := fmt.Sprintf("%s:%s", viper.GetString(share.HttpAddr), viper.GetString(share.HttpPort))
-	log.Printf("service boot with: %s \n", addr)
-	svc.Listen(addr)
-
+	log.Infof("service boot with: %s \n", addr)
+	if err := svc.Listen(addr); err != nil {
+		log.Fatalf("service boot with error: %s", err)
+	}
 	return nil
 }

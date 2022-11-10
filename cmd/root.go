@@ -18,9 +18,9 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/Ankr-network/uscan/pkg"
 	"os"
 
-	"github.com/Ankr-network/uscan/pkg/service"
 	"github.com/Ankr-network/uscan/share"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -33,7 +33,7 @@ var rootCmd = &cobra.Command{
 	Use:   "uscan",
 	Short: "boot blockchain scan",
 	Long:  ``,
-	Run:   service.MainRun,
+	Run:   pkg.MainRun,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
