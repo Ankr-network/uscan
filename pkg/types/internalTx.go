@@ -1,22 +1,21 @@
 package types
 
 import (
-	"math/big"
-
+	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
 )
 
 type InternalTx struct {
 	TransactionHash common.Hash
-	BlockNumber     *big.Int
+	BlockNumber     *field.BigInt
 	Status          bool
 	CallType        string
 	Depth           string
 	From            common.Address
 	To              *common.Address
-	Amount          *big.Int
-	GasLimit        *big.Int
+	Amount          *field.BigInt
+	GasLimit        *field.BigInt
 }
 
 func (b *InternalTx) Marshal() ([]byte, error) {

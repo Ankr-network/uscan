@@ -70,6 +70,9 @@ func TestBlockJson(t *testing.T) {
 	err := json.Unmarshal(testBlock, out)
 	// err := out.UnmarshalJSON(testBlock)
 	assert.NoError(t, err)
-
 	t.Log(out)
+
+	byteRes, err := json.Marshal(out)
+	assert.NoError(t, err)
+	t.Log(string(byteRes))
 }

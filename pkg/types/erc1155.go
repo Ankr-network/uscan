@@ -1,21 +1,20 @@
 package types
 
 import (
-	"math/big"
-
+	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
 )
 
 type Erc1155Transfer struct {
 	TransactionHash common.Hash
-	BlockNumber     *big.Int
+	BlockNumber     *field.BigInt
 	Contract        common.Address
 	Method          string
 	From            common.Address
 	To              common.Address
-	TokenID         big.Int
-	Quantity        big.Int
+	TokenID         field.BigInt
+	Quantity        field.BigInt
 }
 
 func (b *Erc1155Transfer) Marshal() ([]byte, error) {

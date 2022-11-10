@@ -1,8 +1,7 @@
 package types
 
 import (
-	"math/big"
-
+	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
 )
@@ -14,9 +13,9 @@ const (
 )
 
 type Account struct {
-	BlockNumber *big.Int
+	BlockNumber *field.BigInt
 	Owner       common.Address `rlp:"-"`
-	Balance     *big.Int
+	Balance     *field.BigInt
 
 	Erc20            bool `rlp:"-"`
 	Erc721           bool `rlp:"-"`
@@ -26,9 +25,9 @@ type Account struct {
 	TxHash           *common.Hash
 	Code             []byte
 	Name, Symbol     string
-	TokenTotalSupply *big.Int
-	NftTotalSupply   *big.Int
-	Decimals         *big.Int // erc20 decimals
+	TokenTotalSupply *field.BigInt
+	NftTotalSupply   *field.BigInt
+	Decimals         *field.BigInt // erc20 decimals
 }
 
 func (b *Account) Marshal() ([]byte, error) {

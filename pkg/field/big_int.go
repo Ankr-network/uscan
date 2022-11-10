@@ -44,8 +44,7 @@ func (b *BigInt) UnmarshalJSON(bs []byte) error {
 	if err != nil {
 		return err
 	}
-
-	b = (*BigInt)(bi)
+	(*big.Int)(b).SetBytes(bi.Bytes())
 
 	return nil
 }

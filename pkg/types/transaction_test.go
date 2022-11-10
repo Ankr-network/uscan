@@ -2,9 +2,9 @@ package types
 
 import (
 	"encoding/json"
-	"math/big"
 	"testing"
 
+	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/stretchr/testify/assert"
@@ -13,20 +13,20 @@ import (
 func TestTxSerialize(t *testing.T) {
 	to := common.HexToAddress("0x473780deaf4a2ac070bbba936b0cdefe7f267dfc")
 	b := &Tx{
-		BlockNum:  big.NewInt(11),
-		GasTipCap: big.NewInt(11),
-		GasFeeCap: big.NewInt(11),
-		GasPrice:  big.NewInt(11),
-		Nonce:     big.NewInt(11123123),
-		Gas:       big.NewInt(123421),
+		BlockNum:  field.NewInt(11),
+		GasTipCap: field.NewInt(11),
+		GasFeeCap: field.NewInt(11),
+		GasPrice:  field.NewInt(11),
+		Nonce:     field.NewInt(11123123),
+		Gas:       field.NewInt(123421),
 		To:        &to,
-		Value:     big.NewInt(12312313),
+		Value:     field.NewInt(12312313),
 		Data:      []byte{11, 22, 212, 4, 54, 213, 2, 41, 41, 54},
 
 		// Signature values
-		V: big.NewInt(111),
-		R: big.NewInt(111),
-		S: big.NewInt(111),
+		V: field.NewInt(111),
+		R: field.NewInt(111),
+		S: field.NewInt(111),
 	}
 
 	res, err := b.Marshal()
@@ -57,7 +57,10 @@ var testTx = []byte(`{"blockHash":"0x93dc24ad05a3e73bbec6d52f0991a0c8ef6560ca925
 func TestTxJson(t *testing.T) {
 	out := &Tx{}
 	err := json.Unmarshal(testTx, out)
-	// err := out.UnmarshalJSON(testBlock)
 	assert.NoError(t, err)
 	t.Log(out)
+
+	byteRes, err := json.Marshal(out)
+	assert.NoError(t, err)
+	t.Log(string(byteRes))
 }
