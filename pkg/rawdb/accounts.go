@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package rawdb
 
 import (
+	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/Ankr-network/uscan/share"
@@ -31,7 +32,7 @@ func ReadAccountBalance(db kv.Getter, addr common.Address) (uint64, error) {
 	}
 	a := &types.Account{}
 	a.Unmarshal(bs)
-	return a.Balance, nil
+	return a.Balance.ToUint64(), nil
 }
 
 // demo
@@ -42,7 +43,7 @@ func WriteAccountBalance(db kv.Database, addr common.Address, balance uint64) er
 	}
 	a := &types.Account{}
 	a.Unmarshal(bs)
-	a.Balance = balance
+	a.Balance = field.NewInt(int64(balance))
 	abs, _ := a.Marshal()
 	return db.Put(addr.Bytes(), abs, &kv.WriteOption{Table: share.AccountsTbl})
 }

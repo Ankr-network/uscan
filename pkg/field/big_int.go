@@ -20,7 +20,18 @@ func NewInt(x int64) *BigInt {
 }
 
 func (b *BigInt) String() string {
+	if b == nil {
+		return ""
+	}
 	return hexutil.EncodeBig((*big.Int)(b))
+}
+
+func (b *BigInt) StringPointer() *string {
+	if b == nil {
+		return nil
+	}
+	res := hexutil.EncodeBig((*big.Int)(b))
+	return &res
 }
 
 func (b *BigInt) Bytes() []byte {
@@ -44,8 +55,7 @@ func (b *BigInt) UnmarshalJSON(bs []byte) error {
 	if err != nil {
 		return err
 	}
-
-	b = (*BigInt)(bi)
+	(*big.Int)(b).SetBytes(bi.Bytes())
 
 	return nil
 }

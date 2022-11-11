@@ -26,7 +26,7 @@ func Home() (map[string]interface{}, error) {
 		Offset: 0,
 		Limit:  10,
 	}
-	blocks , _, err := ListBaseFieldBlocks(page)
+	blocks, _, err := ListBaseFieldBlocks(page)
 	if err != nil {
 		return nil, err
 	}
@@ -108,19 +108,19 @@ func GetBlock(blockNum string) error {
 func ListBlocks(pager *types.Pager) ([]*types.Block, string, error) {
 	num, err := store.GetBlockNum(nil)
 	if err != nil {
-		return nil, "", err
+		return nil, "0", err
 	}
 	blocks := make([]*types.Block, 0)
 	if num == "" {
-		return blocks, "0x0", nil
+		return blocks, "0", nil
 	}
-
-	begin, end := ParseBlockPage(DecodeBig("0x"+num), pager.Offset, pager.Limit)
+	numBig := DecodeBig("0" + num)
+	begin, end := ParseBlockPage(numBig, pager.Offset, pager.Limit)
 	p := begin
 	for {
 		block, err := store.GetBlock(nil, EncodeBig(p))
 		if err != nil {
-			return nil, "", err
+			return nil, "0", err
 		}
 		blocks = append(blocks, block)
 		if p.Cmp(end) == 0 {
@@ -129,7 +129,7 @@ func ListBlocks(pager *types.Pager) ([]*types.Block, string, error) {
 		p = BigIntReduce(p, 1)
 	}
 
-	return blocks, "0x" + num, nil
+	return blocks, numBig.String(), nil
 }
 
 func ListBaseFieldBlocks(pager *types.Pager) ([]*types.HomeBlock, string, error) {
@@ -150,37 +150,50 @@ func ListBaseFieldBlocks(pager *types.Pager) ([]*types.HomeBlock, string, error)
 	return res, total, nil
 }
 
-func ListFullFieldBlock(pager *types.Pager) {
+func ListFullFieldBlocks(pager *types.Pager) ([]*types.BlockResp, string, error) {
 	blocks, total, err := ListBlocks(pager)
 	if err != nil {
-		return nil, "", err
+		return nil, "0", err
 	}
 	resp := make([]*types.BlockResp, len(blocks))
 	for i, block := range blocks {
+		nonce, err := block.Nonce.MarshalText()
+		if err != nil {
+			return nil, "0", err
+		}
+		bloom, err := block.Bloom.MarshalText()
+		if err != nil {
+			return nil, "0", err
+		}
+		txs := []string{}
+		for _, transaction := range block.Transactions {
+			txs = append(txs, transaction.String())
+		}
 		resp[i] = &types.BlockResp{
-			BaseFeePerGas:     block.BaseFee.String(),
-			Difficulty:        block.Difficulty.ToUint64(),
-			ExtraData:         block.Extra,
-			GasLimit:          block.GasLimit,
-			GasUsed:           block.GasUsed,
+			BaseFeePerGas:     block.BaseFee.StringPointer(),
+			Difficulty:        block.Difficulty.String(),
+			ExtraData:         string(block.Extra),
+			GasLimit:          block.GasLimit.String(),
+			GasUsed:           block.GasUsed.String(),
 			Hash:              block.Hash.Hex(),
-			LogsBloom:         block.Bloom,
+			LogsBloom:         string(bloom),
 			Miner:             block.Coinbase.String(),
 			MixHash:           block.MixDigest.String(),
-			Nonce:             block.Nonce,
+			Nonce:             string(nonce),
 			Number:            block.Number.String(),
 			ParentHash:        block.ParentHash.Hex(),
 			ReceiptsRoot:      block.ReceiptHash.Hex(),
 			Sha3Uncles:        block.UncleHash.Hex(),
-			Size:              block.Size,
+			Size:              block.Size.String(),
 			StateRoot:         block.Root.Hex(),
 			Timestamp:         block.Time.ToUint64(),
 			TotalDifficulty:   block.TotalDifficulty.ToUint64(),
-			Transactions:      block.Transactions,
+			Transactions:      txs,
 			TransactionsTotal: block.TransactionTotal.ToUint64(),
-			TransactionsRoot:  block.,
+			//TransactionsRoot:  block,
 		}
 	}
+	return resp, total, nil
 }
 
 func BigIntReduce(n *big.Int, num int64) *big.Int {

@@ -1,29 +1,29 @@
 package types
 
 import (
-	"math/big"
-
+	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/rlp"
 )
 
 type Tx struct {
 	Hash      common.Hash     `json:"hash"  rlp:"-"`
-	BlockNum  *big.Int        `json:"blockNumber"`
-	GasTipCap *big.Int        `json:"maxPriorityFeePerGas"`
-	GasFeeCap *big.Int        `json:"maxFeePerGas"`
-	GasPrice  *big.Int        `json:"gasPrice"`
-	Nonce     *big.Int        `json:"nonce"`
-	Gas       *big.Int        `json:"gas"`
+	BlockNum  *field.BigInt   `json:"blockNumber"`
+	GasTipCap *field.BigInt   `json:"maxPriorityFeePerGas"`
+	GasFeeCap *field.BigInt   `json:"maxFeePerGas"`
+	GasPrice  *field.BigInt   `json:"gasPrice"`
+	Nonce     *field.BigInt   `json:"nonce"`
+	Gas       *field.BigInt   `json:"gas"`
 	From      common.Address  `json:"from"`
 	To        *common.Address `json:"to"` // nil means contract creation
-	Value     *big.Int        `json:"value"`
-	Data      []byte          `json:"input"`
+	Value     *field.BigInt   `json:"value"`
+	Data      hexutil.Bytes   `json:"input"`
 
 	// Signature values
-	V *big.Int `json:"v"`
-	R *big.Int `json:"r"`
-	S *big.Int `json:"s"`
+	V *field.BigInt `json:"v"`
+	R *field.BigInt `json:"r"`
+	S *field.BigInt `json:"s"`
 }
 
 func (b *Tx) Marshal() ([]byte, error) {
@@ -32,8 +32,4 @@ func (b *Tx) Marshal() ([]byte, error) {
 
 func (b *Tx) Unmarshal(bin []byte) error {
 	return rlp.DecodeBytes(bin, &b)
-}
-
-func (b *Tx) UnmarshalJSON(bin []byte) error {
-	return nil
 }

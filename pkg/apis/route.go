@@ -80,11 +80,11 @@ func listBlocks(c *fiber.Ctx) error {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
 	}
 	f.Complete()
-	err := service.ListBlocks(f)
+	resp, total, err := service.ListFullFieldBlocks(f)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}
-	return c.Status(http.StatusOK).JSON(response.Ok(nil))
+	return c.Status(http.StatusOK).JSON(response.Ok(map[string]interface{}{"items": resp, "total": total}))
 }
 
 func getBlock(c *fiber.Ctx) error {

@@ -1,29 +1,31 @@
 package types
 
 import (
-	"math/big"
-
+	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/rlp"
 )
 
 type Log struct {
 	Address common.Address `json:"address"`
 	Topics  []common.Hash  `json:"topics"`
-	Data    []byte         `json:"data"`
+	Data    hexutil.Bytes  `json:"data"`
 }
 
 type Rt struct {
 	TxHash            common.Hash     `json:"transactionHash"  rlp:"-"`
-	Type              uint8           `json:"type,omitempty"`
-	PostState         []byte          `json:"root"`
-	Status            uint64          `json:"status"`
-	CumulativeGasUsed *big.Int        `json:"cumulativeGasUsed"`
-	Bloom             Bloom           `json:"logsBloom"        `
-	Logs              []*Log          `json:"logs"             `
+	Type              *field.BigInt   `json:"type,omitempty"`
+	PostState         hexutil.Bytes   `json:"root"`
+	Status            *field.BigInt   `json:"status"`
+	CumulativeGasUsed *field.BigInt   `json:"cumulativeGasUsed"`
+	Bloom             Bloom           `json:"logsBloom"`
+	Logs              []*Log          `json:"logs"`
 	ContractAddress   *common.Address `json:"contractAddress"`
-	GasUsed           *big.Int        `json:"gasUsed"`
-	EffectiveGasPrice *big.Int        `json:"effectiveGasPrice"`
+	GasUsed           *field.BigInt   `json:"gasUsed"`
+	EffectiveGasPrice *field.BigInt   `json:"effectiveGasPrice"`
+	ExistInternalTx   bool
+	ReturnErr         string
 }
 
 func (b *Rt) Marshal() ([]byte, error) {
@@ -32,8 +34,4 @@ func (b *Rt) Marshal() ([]byte, error) {
 
 func (b *Rt) Unmarshal(bin []byte) error {
 	return rlp.DecodeBytes(bin, &b)
-}
-
-func (b *Rt) UnmarshalJSON(bin []byte) error {
-	return nil
 }
