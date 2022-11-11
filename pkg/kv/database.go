@@ -16,6 +16,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 package kv
 
+import (
+	"context"
+)
+
 type ReadOption struct {
 	Table      string
 	Latest     bool
@@ -27,18 +31,24 @@ type WriteOption struct {
 }
 
 type Putter interface {
-	Put(key, val []byte, opts *WriteOption) error
+	Put(ctx context.Context, key, val []byte, opts *WriteOption) error
 }
 
 type Getter interface {
-	Get(key []byte, opts *ReadOption) ([]byte, error)
+	Get(ctx context.Context, key []byte, opts *ReadOption) ([]byte, error)
 }
 
 type Closer interface {
 	Close() error
 }
 
+type Transactioner interface {
+	Begin(context.Context) context.Context
+	Commit(context.Context)
+	RollBack(context.Context)
+}
 type Database interface {
+	Transactioner
 	Putter
 	Getter
 	Closer

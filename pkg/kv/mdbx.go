@@ -17,10 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package kv
 
 import (
+	"context"
+
 	"github.com/Ankr-network/uscan/pkg/log"
 	"github.com/Ankr-network/uscan/share"
 	"github.com/torquem-ch/mdbx-go/mdbx"
 )
+
+var _ Database = (*MdbxDB)(nil)
 
 type MdbxDB struct {
 	env    *mdbx.Env
@@ -70,14 +74,19 @@ func NewMdbx(path string) *MdbxDB {
 	return nil
 }
 
-func (d *MdbxDB) Put(key []byte, val []byte, opts *WriteOption) error {
-	return d.env.Update(func(txn *mdbx.Txn) error {
+func (d *MdbxDB) Begin(context.Context) context.Context {
+	return nil
+}
+func (d *MdbxDB) Commit(context.Context)   {}
+func (d *MdbxDB) RollBack(context.Context) {}
 
+func (d *MdbxDB) Put(ctx context.Context, key []byte, val []byte, opts *WriteOption) error {
+	return d.env.Update(func(txn *mdbx.Txn) error {
 		return txn.Put(d.tables[opts.Table], key, val, mdbx.Upsert)
 	})
 }
 
-func (d *MdbxDB) Get(key []byte, opts *ReadOption) (rs []byte, err error) {
+func (d *MdbxDB) Get(ctx context.Context, key []byte, opts *ReadOption) (rs []byte, err error) {
 	d.env.View(func(txn *mdbx.Txn) error {
 		rs, err = txn.Get(d.tables[opts.Table], key)
 		if mdbx.IsNotFound(err) {
