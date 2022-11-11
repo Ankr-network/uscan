@@ -14,17 +14,20 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
-package kv
+package mdbx
 
 import (
 	"context"
 
+	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/log"
 	"github.com/Ankr-network/uscan/share"
 	"github.com/torquem-ch/mdbx-go/mdbx"
 )
 
-var _ Database = (*MdbxDB)(nil)
+var _ kv.Database = (*MdbxDB)(nil)
+
+type txKey struct{}
 
 type MdbxDB struct {
 	env    *mdbx.Env
@@ -71,47 +74,93 @@ func NewMdbx(path string) *MdbxDB {
 		return nil
 	})
 
-	return nil
+	return d
 }
 
-func (d *MdbxDB) Begin(context.Context) context.Context {
-	return nil
-}
-func (d *MdbxDB) Commit(context.Context)   {}
-func (d *MdbxDB) RollBack(context.Context) {}
+func (d *MdbxDB) BeginTx(ctx context.Context) (context.Context, error) {
+	tnx, err := d.env.BeginTxn(nil, 0)
+	if err != nil {
+		return nil, err
+	}
 
-func (d *MdbxDB) Put(ctx context.Context, key []byte, val []byte, opts *WriteOption) error {
-	return d.env.Update(func(txn *mdbx.Txn) error {
-		return txn.Put(d.tables[opts.Table], key, val, mdbx.Upsert)
-	})
+	return context.WithValue(ctx, txKey{}, tnx), nil
 }
 
-func (d *MdbxDB) Get(ctx context.Context, key []byte, opts *ReadOption) (rs []byte, err error) {
-	d.env.View(func(txn *mdbx.Txn) error {
-		rs, err = txn.Get(d.tables[opts.Table], key)
+func (d *MdbxDB) Commit(ctx context.Context) {
+	out, ok := ctx.Value(txKey{}).(*mdbx.Txn)
+	if ok {
+		out.Commit()
+	}
+}
+
+func (d *MdbxDB) RollBack(ctx context.Context) {
+	out, ok := ctx.Value(txKey{}).(*mdbx.Txn)
+	if ok {
+		out.Abort()
+	}
+}
+
+func (d *MdbxDB) Put(ctx context.Context, key []byte, val []byte, opts *kv.WriteOption) error {
+	out, ok := ctx.Value(txKey{}).(*mdbx.Txn)
+	if ok {
+		return out.Put(d.tables[opts.Table], key, val, mdbx.Upsert)
+	} else {
+		return d.env.Update(func(txn *mdbx.Txn) error {
+			return txn.Put(d.tables[opts.Table], key, val, mdbx.Upsert)
+		})
+	}
+}
+
+func (d *MdbxDB) Get(ctx context.Context, key []byte, opts *kv.ReadOption) (rs []byte, err error) {
+	out, ok := ctx.Value(txKey{}).(*mdbx.Txn)
+	if ok {
+		rs, err = out.Get(d.tables[opts.Table], key)
 		if mdbx.IsNotFound(err) {
-			err = NotFound
+			err = kv.NotFound
 		}
-		return nil
-	})
+	} else {
+		d.env.View(func(txn *mdbx.Txn) error {
+			rs, err = txn.Get(d.tables[opts.Table], key)
+			if mdbx.IsNotFound(err) {
+				err = kv.NotFound
+			}
+			return nil
+		})
+	}
 
 	return
 }
 
-func (d *MdbxDB) Has(key []byte, opts *ReadOption) (rs bool, err error) {
-	d.env.View(func(txn *mdbx.Txn) error {
+func (d *MdbxDB) Has(ctx context.Context, key []byte, opts *kv.ReadOption) (rs bool, err error) {
+	out, ok := ctx.Value(txKey{}).(*mdbx.Txn)
+	if ok {
 		var res []byte
-		res, err = txn.Get(d.tables[opts.Table], key)
+		res, err = out.Get(d.tables[opts.Table], key)
 		if mdbx.IsNotFound(err) {
-			return nil
+			err = nil
+			return
 		}
-		if err != nil {
+		if err == nil {
 			if len(res) != 0 {
 				rs = true
 			}
 		}
-		return nil
-	})
+	} else {
+		d.env.View(func(txn *mdbx.Txn) error {
+			var res []byte
+			res, err = txn.Get(d.tables[opts.Table], key)
+			if mdbx.IsNotFound(err) {
+				err = nil
+				return nil
+			}
+			if err == nil {
+				if len(res) != 0 {
+					rs = true
+				}
+			}
+			return nil
+		})
+	}
 
 	return
 }

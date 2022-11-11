@@ -35,15 +35,15 @@ type Putter interface {
 }
 
 type Getter interface {
+	Has(ctx context.Context, key []byte, opts *ReadOption) (bool, error)
 	Get(ctx context.Context, key []byte, opts *ReadOption) ([]byte, error)
 }
-
 type Closer interface {
 	Close() error
 }
 
 type Transactioner interface {
-	Begin(context.Context) context.Context
+	BeginTx(context.Context) (context.Context, error)
 	Commit(context.Context)
 	RollBack(context.Context)
 }
