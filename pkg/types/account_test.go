@@ -1,30 +1,59 @@
 package types
 
 import (
+	"math/big"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/stretchr/testify/assert"
 )
 
+func TestFlag(t *testing.T) {
+	t.Log(Erc20Flag + (Erc721Flag + Erc1155Flag))
+}
+
 func TestAccount(t *testing.T) {
 
+	creator := common.HexToAddress("0x3c10ec535d1a8cba60536a963cc62a1df855e71c")
+	txhash := common.HexToHash("0x537e032e5bc31b5e52f5e28c61c5aefd631b438bf5b9c71913c19d022a4ae528")
 	a := &Account{
-		Erc20:   true,
-		Balance: 35621,
-		Code:    []byte("8066234511"),
+		BlockNumber: big.NewInt(12231),
+		Owner:       common.HexToAddress("0x473780deaf4a2ac070bbba936b0cdefe7f267dfc"),
+		Balance:     big.NewInt(1111),
+
+		Erc20:            true,
+		Erc721:           true,
+		Erc1155:          true,
+		Creator:          &creator,
+		TxHash:           &txhash,
+		Code:             []byte{11, 23, 2, 14, 51, 24, 51, 23, 4, 21, 4},
+		Name:             "dasdada",
+		Symbol:           "Da",
+		TokenTotalSupply: big.NewInt(219282312313),
+		NftTotalSupply:   big.NewInt(431421),
+		Decimals:         big.NewInt(18),
 	}
+	res, err := a.Marshal()
 
-	bs, err := a.Marshal()
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
+	t.Log(hexutil.Bytes(res).String())
 
-	b := &Account{}
+	out := Account{}
+	err = out.Unmarshal(res)
+	assert.NoError(t, err)
 
-	b.Unmarshal(bs)
-
-	assert.Equal(t, a.Erc20, b.Erc20, "ERC20")
-	assert.Equal(t, a.Balance, b.Balance, "Balance")
-	assert.Equal(t, a.Code, b.Code, "Code")
-
+	assert.Equal(t, out.BlockNumber, a.BlockNumber)
+	assert.Equal(t, out.Balance, a.Balance)
+	assert.Equal(t, out.Erc20, a.Erc20)
+	assert.Equal(t, out.Erc721, a.Erc721)
+	assert.Equal(t, out.Erc1155, a.Erc1155)
+	assert.Equal(t, out.Creator, a.Creator)
+	assert.Equal(t, out.TxHash, a.TxHash)
+	assert.Equal(t, out.Code, a.Code)
+	assert.Equal(t, out.Name, a.Name)
+	assert.Equal(t, out.Symbol, a.Symbol)
+	assert.Equal(t, out.TokenTotalSupply, a.TokenTotalSupply)
+	assert.Equal(t, out.NftTotalSupply, a.NftTotalSupply)
+	assert.Equal(t, out.Decimals, a.Decimals)
 }

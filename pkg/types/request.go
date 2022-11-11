@@ -1,8 +1,8 @@
 package types
 
 type Pager struct {
-	Offset int `query:"offset"`
-	Limit  int `query:"limit"`
+	Offset int64 `query:"offset"`
+	Limit  int64 `query:"limit"`
 }
 
 func (p *Pager) Complete() {

@@ -2,7 +2,7 @@ package service
 
 import (
 	"errors"
-	"fmt"
+	store "github.com/Ankr-network/uscan/pkg/rawdb"
 	"github.com/Ankr-network/uscan/pkg/response"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -26,13 +26,16 @@ func Home() (map[string]interface{}, error) {
 		Offset: 0,
 		Limit:  10,
 	}
-	ListBlocks(page)
+	blocks , _, err := ListBaseFieldBlocks(page)
+	if err != nil {
+		return nil, err
+	}
 	ListTxs(page)
 
 	resp := make(map[string]interface{})
 	resp["metrics"] = nil
 	resp["metrics"] = nil
-	resp["blocks"] = nil
+	resp["blocks"] = blocks
 	resp["txs"] = nil
 	return resp, nil
 }
@@ -102,26 +105,101 @@ func GetBlock(blockNum string) error {
 	return nil
 }
 
-func ListBlocks(pager *types.Pager) error {
-	// TODO get /block/num
-	num := 0
+func ListBlocks(pager *types.Pager) ([]*types.Block, string, error) {
+	num, err := store.GetBlockNum(nil)
+	if err != nil {
+		return nil, "", err
+	}
+	blocks := make([]*types.Block, 0)
+	if num == "" {
+		return blocks, "0x0", nil
+	}
 
-	begin, end := ParsePage(num, pager.Offset, pager.Limit)
-	NumToHex(fmt.Sprint(begin))
-	NumToHex(fmt.Sprint(end))
-	// get block
+	begin, end := ParseBlockPage(DecodeBig("0x"+num), pager.Offset, pager.Limit)
+	p := begin
+	for {
+		block, err := store.GetBlock(nil, EncodeBig(p))
+		if err != nil {
+			return nil, "", err
+		}
+		blocks = append(blocks, block)
+		if p.Cmp(end) == 0 {
+			break
+		}
+		p = BigIntReduce(p, 1)
+	}
 
-	return nil
+	return blocks, "0x" + num, nil
 }
 
-func ParsePage(num, offset, limit int) (int, int) {
-	if offset >= num {
+func ListBaseFieldBlocks(pager *types.Pager) ([]*types.HomeBlock, string, error) {
+	blocks, total, err := ListBlocks(pager)
+	if err != nil {
+		return nil, "", err
+	}
+	res := make([]*types.HomeBlock, len(blocks))
+	for i, block := range blocks {
+		res[i] = &types.HomeBlock{
+			Number:            block.Number.String(),
+			Timestamp:         block.Time.ToUint64(),
+			Miner:             block.Coinbase.String(),
+			GasUsed:           block.GasUsed.String(),
+			TransactionsTotal: block.TransactionTotal.ToUint64(),
+		}
+	}
+	return res, total, nil
+}
+
+func ListFullFieldBlock(pager *types.Pager) {
+	blocks, total, err := ListBlocks(pager)
+	if err != nil {
+		return nil, "", err
+	}
+	resp := make([]*types.BlockResp, len(blocks))
+	for i, block := range blocks {
+		resp[i] = &types.BlockResp{
+			BaseFeePerGas:     block.BaseFee.String(),
+			Difficulty:        block.Difficulty.ToUint64(),
+			ExtraData:         block.Extra,
+			GasLimit:          block.GasLimit,
+			GasUsed:           block.GasUsed,
+			Hash:              block.Hash.Hex(),
+			LogsBloom:         block.Bloom,
+			Miner:             block.Coinbase.String(),
+			MixHash:           block.MixDigest.String(),
+			Nonce:             block.Nonce,
+			Number:            block.Number.String(),
+			ParentHash:        block.ParentHash.Hex(),
+			ReceiptsRoot:      block.ReceiptHash.Hex(),
+			Sha3Uncles:        block.UncleHash.Hex(),
+			Size:              block.Size,
+			StateRoot:         block.Root.Hex(),
+			Timestamp:         block.Time.ToUint64(),
+			TotalDifficulty:   block.TotalDifficulty.ToUint64(),
+			Transactions:      block.Transactions,
+			TransactionsTotal: block.TransactionTotal.ToUint64(),
+			TransactionsRoot:  block.,
+		}
+	}
+}
+
+func BigIntReduce(n *big.Int, num int64) *big.Int {
+	m := new(big.Int)
+	m.SetInt64(-num)
+	m.Add(n, m)
+	return m
+}
+
+func ParseBlockPage(num *big.Int, offset, limit int64) (*big.Int, *big.Int) {
+	if offset >= num.Int64() {
 		offset = 0
 	}
-	begin := num - offset
-	end := num - offset - (limit - 1)
-	if end <= 0 {
-		end = 1
+	begin := BigIntReduce(num, offset)
+	end := BigIntReduce(begin, limit-1)
+
+	if end.Int64() <= 0 {
+		e := new(big.Int)
+		end = e.SetInt64(1)
 	}
 	return begin, end
 }
@@ -133,4 +211,13 @@ func NumToHex(num string) (string, error) {
 		return "", errors.New("parse block num error")
 	}
 	return hexutil.EncodeBig(n), nil
+}
+
+func DecodeBig(num string) *big.Int {
+	res, _ := hexutil.DecodeBig(num)
+	return res
+}
+
+func EncodeBig(num *big.Int) string {
+	return hexutil.EncodeBig(num)
 }

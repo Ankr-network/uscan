@@ -36,6 +36,7 @@ var schemas = []string{
 	share.Erc20Tbl,
 	share.Erc721Tbl,
 	share.TxLookupTbl,
+	share.ConfigTbl,
 }
 
 func NewMdbx(path string) *MdbxDB {
@@ -72,16 +73,34 @@ func NewMdbx(path string) *MdbxDB {
 
 func (d *MdbxDB) Put(key []byte, val []byte, opts *WriteOption) error {
 	return d.env.Update(func(txn *mdbx.Txn) error {
+
 		return txn.Put(d.tables[opts.Table], key, val, mdbx.Upsert)
 	})
 }
 
 func (d *MdbxDB) Get(key []byte, opts *ReadOption) (rs []byte, err error) {
-
 	d.env.View(func(txn *mdbx.Txn) error {
 		rs, err = txn.Get(d.tables[opts.Table], key)
 		if mdbx.IsNotFound(err) {
 			err = NotFound
+		}
+		return nil
+	})
+
+	return
+}
+
+func (d *MdbxDB) Has(key []byte, opts *ReadOption) (rs bool, err error) {
+	d.env.View(func(txn *mdbx.Txn) error {
+		var res []byte
+		res, err = txn.Get(d.tables[opts.Table], key)
+		if mdbx.IsNotFound(err) {
+			return nil
+		}
+		if err != nil {
+			if len(res) != 0 {
+				rs = true
+			}
 		}
 		return nil
 	})
