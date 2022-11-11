@@ -215,7 +215,7 @@ func (r *manage) GetTransactionReceiptByHash(ctx context.Context, transactionHas
 	return res, nil
 }
 
-func (r *manage) GetCode(ctx context.Context, address string, blockNumber string) (string, error) {
+func (r *manage) GetCode(ctx context.Context, address common.Address, blockNumber string) (string, error) {
 	var res string
 	err := r.clients[r.index].rpcClient.CallContext(ctx, &res, "eth_getCode", address, blockNumber)
 	if err != nil {
@@ -225,7 +225,7 @@ func (r *manage) GetCode(ctx context.Context, address string, blockNumber string
 	return res, nil
 }
 
-func (r *manage) GetBalance(ctx context.Context, address string, blockNumber string) (*field.BigInt, error) {
+func (r *manage) GetBalance(ctx context.Context, address common.Address, blockNumber string) (*field.BigInt, error) {
 	var res field.BigInt
 	err := r.clients[r.index].rpcClient.CallContext(ctx, &res, "eth_getBalance", address, blockNumber)
 	if err != nil {
@@ -236,8 +236,8 @@ func (r *manage) GetBalance(ctx context.Context, address string, blockNumber str
 	return &res, nil
 }
 
-func (r *manage) GetBalances(ctx context.Context, addresses []string, blockNumber string) (map[string]*field.BigInt, error) {
-	result := make(map[string]*field.BigInt, len(addresses))
+func (r *manage) GetBalances(ctx context.Context, addresses []common.Address, blockNumber string) (map[common.Address]*field.BigInt, error) {
+	result := make(map[common.Address]*field.BigInt, len(addresses))
 	elem := make([]rpc.BatchElem, 0, len(addresses))
 	for _, v := range addresses {
 		var res = field.BigInt{}

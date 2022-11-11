@@ -44,7 +44,7 @@ type CallFrame struct {
 	Input   hexutil.Bytes  `json:"input"`
 	Output  hexutil.Bytes  `json:"output,omitempty"`
 	Error   string         `json:"error,omitempty"`
-	Calls   []CallFrame    `json:"calls,omitempty"`
+	Calls   []*CallFrame   `json:"calls,omitempty"`
 }
 
 func (c *CallFrame) JsonToString() string {

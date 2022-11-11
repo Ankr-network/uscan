@@ -24,6 +24,8 @@ type Rt struct {
 	ContractAddress   *common.Address `json:"contractAddress"`
 	GasUsed           *field.BigInt   `json:"gasUsed"`
 	EffectiveGasPrice *field.BigInt   `json:"effectiveGasPrice"`
+	ExistInternalTx   bool
+	ReturnErr         string
 }
 
 func (b *Rt) Marshal() ([]byte, error) {

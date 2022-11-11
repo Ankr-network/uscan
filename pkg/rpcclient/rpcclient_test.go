@@ -76,13 +76,14 @@ func TestGetTransactionReceipt(t *testing.T) {
 }
 
 func TestGetCode(t *testing.T) {
-	code, err := testClient.GetCode(context.Background(), "0xd8a4ff865c120e287e0953551462e0d6084b9f04", "latest")
+
+	code, err := testClient.GetCode(context.Background(), common.HexToAddress("0xd8a4ff865c120e287e0953551462e0d6084b9f04"), "latest")
 	assert.NoError(t, err)
 	t.Log(code)
 }
 
 func TestGetBalance(t *testing.T) {
-	bal, err := testClient.GetBalance(context.Background(), "0x20cD8eB93c50BDAc35d6A526f499c0104958e3F6", "latest")
+	bal, err := testClient.GetBalance(context.Background(), common.HexToAddress("0x20cD8eB93c50BDAc35d6A526f499c0104958e3F6"), "latest")
 	assert.NoError(t, err)
 	t.Log(bal.String())
 }
@@ -90,10 +91,10 @@ func TestGetBalance(t *testing.T) {
 func TestGetBalances(t *testing.T) {
 	data, err := testClient.GetBalances(
 		context.Background(),
-		[]string{
-			"0x20cD8eB93c50BDAc35d6A526f499c0104958e3F6",
-			"0x5fd8b97F8D8DA84813F583C42d40D1e5A4DA9A17",
-			"0x6A82Fa5Cf82Ef724d1F1955fECc27DDd0758132E",
+		[]common.Address{
+			common.HexToAddress("0x20cD8eB93c50BDAc35d6A526f499c0104958e3F6"),
+			common.HexToAddress("0x5fd8b97F8D8DA84813F583C42d40D1e5A4DA9A17"),
+			common.HexToAddress("0x6A82Fa5Cf82Ef724d1F1955fECc27DDd0758132E"),
 		},
 		hexutil.EncodeUint64(2659050),
 	)

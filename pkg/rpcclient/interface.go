@@ -20,9 +20,9 @@ type RpcClient interface {
 	GetTransactionReceiptsByHash(ctx context.Context, transactionHash []common.Hash) ([]*types.Rt, error)
 	GetTransactionByHash(ctx context.Context, transactionHash common.Hash) (*types.Tx, error)
 	GetTransactionReceiptByHash(ctx context.Context, transactionHash common.Hash) (*types.Rt, error)
-	GetCode(ctx context.Context, address string, blockNumber string) (string, error)
-	GetBalance(ctx context.Context, address string, blockNumber string) (*field.BigInt, error)
-	GetBalances(ctx context.Context, addresses []string, blockNumber string) (map[string]*field.BigInt, error)
+	GetCode(ctx context.Context, address common.Address, blockNumber string) (string, error)
+	GetBalance(ctx context.Context, address common.Address, blockNumber string) (*field.BigInt, error)
+	GetBalances(ctx context.Context, addresses []common.Address, blockNumber string) (map[common.Address]*field.BigInt, error)
 	GetTracerCall(ctx context.Context, txhash common.Hash) (*types.CallFrame, error)
 	GetTracerLog(ctx context.Context, txHash common.Hash) (*types.ExecutionResult, error)
 }
