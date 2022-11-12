@@ -32,6 +32,7 @@ func ReadHome(ctx context.Context, db kv.Getter) (home *types.Home, err error) {
 	if err != nil {
 		return
 	}
+	home = &types.Home{}
 	err = home.Unmarshal(bytesRes)
 	if err == nil {
 		home.BlockNumber = syncingBlock
@@ -60,6 +61,7 @@ func ReadSyncingBlock(ctx context.Context, db kv.Getter) (bk *field.BigInt, err 
 	if err != nil {
 		return
 	}
+	bk = &field.BigInt{}
 	bk.SetBytes(bytesRes)
 	syncingBlock = bk
 	return

@@ -39,6 +39,7 @@ func ReadTraceTx(ctx context.Context, db kv.Getter, hash common.Hash) (res *type
 	if err != nil {
 		return
 	}
+	res = &types.TraceTx{}
 	err = res.Unmarshal(bytesRes)
 	return
 }
@@ -61,6 +62,7 @@ func ReadTraceTx2(ctx context.Context, db kv.Getter, hash common.Hash) (res *typ
 	if err != nil {
 		return
 	}
+	res = &types.TraceTx2{}
 	err = res.Unmarshal(bytesRes)
 	return
 }

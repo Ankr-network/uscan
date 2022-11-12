@@ -59,6 +59,7 @@ func ReadAccount(ctx context.Context, db kv.Getter, addr common.Address) (acc *t
 	if err != nil {
 		return nil, err
 	}
+	acc = &types.Account{}
 	err = acc.Unmarshal(bytesRes)
 	return
 }
@@ -83,6 +84,7 @@ func ReadAccountTxTotal(ctx context.Context, db kv.Getter, addr common.Address) 
 	if err != nil {
 		return
 	}
+	total = &field.BigInt{}
 	total.SetBytes(bytesRes)
 	return
 }
@@ -97,6 +99,7 @@ func ReadAccountTxIndex(ctx context.Context, db kv.Getter, addr common.Address, 
 	if err != nil {
 		return
 	}
+
 	hash.SetBytes(bytesRes)
 	return
 }
@@ -113,6 +116,7 @@ func ReadAccountITxTotal(ctx context.Context, db kv.Getter, addr common.Address)
 	if err != nil {
 		return
 	}
+	total = &field.BigInt{}
 	total.SetBytes(bytesRes)
 	return
 }
@@ -132,6 +136,7 @@ func ReadAccountITxIndex(ctx context.Context, db kv.Getter, addr common.Address,
 	if err != nil {
 		return
 	}
+	data = &types.InternalTxKey{}
 	err = data.Unmarshal(bytesRes)
 	return
 }
@@ -148,6 +153,7 @@ func ReadAccountErc20Total(ctx context.Context, db kv.Getter, addr common.Addres
 	if err != nil {
 		return
 	}
+	total = &field.BigInt{}
 	total.SetBytes(bytesRes)
 	return
 }
@@ -162,6 +168,8 @@ func ReadAccountErc20Index(ctx context.Context, db kv.Getter, addr common.Addres
 	if err != nil {
 		return
 	}
+
+	erc20TransferIndex = &field.BigInt{}
 	erc20TransferIndex.SetBytes(bytesRes)
 	return
 }
@@ -178,6 +186,8 @@ func ReadAccountErc721Total(ctx context.Context, db kv.Getter, addr common.Addre
 	if err != nil {
 		return
 	}
+
+	total = &field.BigInt{}
 	total.SetBytes(bytesRes)
 	return
 }
@@ -192,6 +202,8 @@ func ReadAccountErc721Index(ctx context.Context, db kv.Getter, addr common.Addre
 	if err != nil {
 		return
 	}
+
+	erc721TransferIndex = &field.BigInt{}
 	erc721TransferIndex.SetBytes(bytesRes)
 	return
 }
@@ -208,20 +220,24 @@ func ReadAccountErc1155Total(ctx context.Context, db kv.Getter, addr common.Addr
 	if err != nil {
 		return
 	}
+
+	total = &field.BigInt{}
 	total.SetBytes(bytesRes)
 	return
 }
 
-func WriteAccountErc1155Index(ctx context.Context, db kv.Putter, addr common.Address, index *field.BigInt, erc721TransferIndex *field.BigInt) (err error) {
-	return db.Put(ctx, append(append([]byte("/"), addr.Bytes()...), append([]byte("/erc1155/"), index.Bytes()...)...), erc721TransferIndex.Bytes(), &kv.WriteOption{Table: share.AccountsTbl})
+func WriteAccountErc1155Index(ctx context.Context, db kv.Putter, addr common.Address, index *field.BigInt, erc1155TransferIndex *field.BigInt) (err error) {
+	return db.Put(ctx, append(append([]byte("/"), addr.Bytes()...), append([]byte("/erc1155/"), index.Bytes()...)...), erc1155TransferIndex.Bytes(), &kv.WriteOption{Table: share.AccountsTbl})
 }
 
-func ReadAccountErc1155Index(ctx context.Context, db kv.Getter, addr common.Address, index *field.BigInt) (erc721TransferIndex *field.BigInt, err error) {
+func ReadAccountErc1155Index(ctx context.Context, db kv.Getter, addr common.Address, index *field.BigInt) (erc1155TransferIndex *field.BigInt, err error) {
 	var bytesRes []byte
 	bytesRes, err = db.Get(ctx, append(append([]byte("/"), addr.Bytes()...), append([]byte("/erc1155/"), index.Bytes()...)...), &kv.ReadOption{Table: share.AccountsTbl})
 	if err != nil {
 		return
 	}
-	erc721TransferIndex.SetBytes(bytesRes)
+
+	erc1155TransferIndex = &field.BigInt{}
+	erc1155TransferIndex.SetBytes(bytesRes)
 	return
 }

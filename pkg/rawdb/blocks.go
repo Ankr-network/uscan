@@ -30,6 +30,7 @@ func ReadBlock(ctx context.Context, db kv.Getter, blockNum *field.BigInt) (bk *t
 		return
 	}
 
+	bk = &types.Block{}
 	err = bk.Unmarshal(bytesRes)
 	if err == nil {
 		bk.Number = blockNum

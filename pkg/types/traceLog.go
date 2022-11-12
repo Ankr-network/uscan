@@ -11,7 +11,7 @@ import (
 
 type TraceTx struct {
 	Res    string
-	LogNum int
+	LogNum *field.BigInt
 }
 
 func (b *TraceTx) Marshal() ([]byte, error) {

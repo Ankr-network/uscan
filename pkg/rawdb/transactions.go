@@ -47,6 +47,7 @@ func ReadTx(ctx context.Context, db kv.Getter, hash common.Hash) (data *types.Tx
 	if err != nil {
 		return
 	}
+	data = &types.Tx{}
 	err = data.Unmarshal(bytesRes)
 	if err == nil {
 		data.Hash = hash
@@ -89,6 +90,7 @@ func ReadRt(ctx context.Context, db kv.Getter, hash common.Hash) (data *types.Rt
 	if err != nil {
 		return
 	}
+	data = &types.Rt{}
 	err = data.Unmarshal(bytesRes)
 	if err == nil {
 		data.TxHash = hash
