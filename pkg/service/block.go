@@ -111,11 +111,10 @@ func ListBlocks(pager *types.Pager) ([]*types.Block, string, error) {
 		return nil, "0", err
 	}
 	blocks := make([]*types.Block, 0)
-	if num == "" {
+	if num == nil {
 		return blocks, "0", nil
 	}
-	numBig := DecodeBig("0" + num)
-	begin, end := ParseBlockPage(numBig, pager.Offset, pager.Limit)
+	begin, end := ParseBlockPage(num, pager.Offset, pager.Limit)
 	p := begin
 	for {
 		block, err := store.GetBlock(nil, EncodeBig(p))
@@ -129,13 +128,13 @@ func ListBlocks(pager *types.Pager) ([]*types.Block, string, error) {
 		p = BigIntReduce(p, 1)
 	}
 
-	return blocks, numBig.String(), nil
+	return blocks, num.String(), nil
 }
 
 func ListBaseFieldBlocks(pager *types.Pager) ([]*types.HomeBlock, string, error) {
 	blocks, total, err := ListBlocks(pager)
 	if err != nil {
-		return nil, "", err
+		return nil, "0", err
 	}
 	res := make([]*types.HomeBlock, len(blocks))
 	for i, block := range blocks {

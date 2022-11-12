@@ -26,4 +26,6 @@ const (
 	Erc1155Tbl   = "erc1155"
 	AccountsTbl  = "accounts"
 	ConfigTbl    = "config"
+	TxTbl        = "transactions"
+	BlockTbl     = "blocks"
 )

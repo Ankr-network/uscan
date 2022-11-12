@@ -1,16 +1,17 @@
 package service
 
 import (
+	store "github.com/Ankr-network/uscan/pkg/rawdb"
 	"github.com/Ankr-network/uscan/pkg/types"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 func ListTxs(pager *types.Pager) error {
-	// TODO get txs /all/tx/total
-	//num := 0
-
-	//begin, end := ParsePage(num, pager.Offset, pager.Limit)
-	//NumToHex(fmt.Sprint(begin))
-	//NumToHex(fmt.Sprint(end))
+	num, err := store.GetTxNum(nil)
+	if err != nil {
+		return err
+	}
+	begin, end := ParseBlockPage(num, pager.Offset, pager.Limit)
 
 	// TODO get tx from begin to end :/all/tx/<index> => <txhash>  /tx/<txhash> /rt/<txhash>
 
@@ -18,6 +19,15 @@ func ListTxs(pager *types.Pager) error {
 }
 
 func GetTx(tx string) error {
-	// TODO get /tx/<txhash> /rt/<txhash>
+	txHash := common.HexToHash(tx)
+	txs, err := store.GetTx(nil, txHash)
+	if err != nil {
+		return err
+	}
+	rts, err := store.GetRt(nil, txHash)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
