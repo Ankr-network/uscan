@@ -93,7 +93,7 @@ func (n *Sync) CountTransfer(ctx context.Context, block uint64, erc20_transfers,
 	return nil
 }
 
-func (n *Sync) toGetDebugLog(txes []*rpcclient.Transaction) {
+func (n *Sync) toGetDebugLog(txes []*types.Tx) {
 	// for _, tx := range txes {
 	// 	if strings.HasPrefix(tx.Input, "0x") && len(tx.Input) > 2 {
 	// 		job.DebugJobChan <- job.NewSyncDebugJob(field.Hash(common.HexToHash(tx.Hash)), n.client, n.dbRepo)

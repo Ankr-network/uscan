@@ -27,6 +27,10 @@ func (b *BigInt) Bytes() []byte {
 	return b.Bytes()
 }
 
+func (b *BigInt) Add(num *BigInt) {
+	(*big.Int)(b).Add((*big.Int)(b), (*big.Int)(num))
+}
+
 func (b *BigInt) SetBytes(bin []byte) {
 	(*big.Int)(b).SetBytes(bin)
 }

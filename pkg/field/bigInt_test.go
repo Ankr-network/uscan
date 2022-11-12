@@ -2,6 +2,8 @@ package field
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBigInt(t *testing.T) {
@@ -16,4 +18,12 @@ func TestBytes(t *testing.T) {
 	in.SetBytes(arr)
 
 	t.Log(in.String())
+}
+
+func TestAddNum(t *testing.T) {
+	bi := NewInt(111)
+	bi.Add(NewInt(111))
+	bi.Add(NewInt(111))
+
+	assert.Equal(t, bi.ToUint64(), uint64(333))
 }

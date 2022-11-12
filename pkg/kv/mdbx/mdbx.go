@@ -37,12 +37,11 @@ type MdbxDB struct {
 
 var schemas = []string{
 	share.AccountsTbl,
-	share.BodiesTbl,
-	share.ContractsTbl,
-	share.Erc1155Tbl,
-	share.Erc20Tbl,
-	share.Erc721Tbl,
-	share.TxLookupTbl,
+	share.HomeTbl,
+	share.TxTbl,
+	share.BlockTbl,
+	share.TraceLogTbl,
+	share.TransferTbl,
 }
 
 func NewMdbx(path string) *MdbxDB {

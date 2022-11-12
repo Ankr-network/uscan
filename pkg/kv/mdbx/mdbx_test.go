@@ -10,7 +10,7 @@ import (
 
 func TestMdbx(t *testing.T) {
 	var (
-		path  = "/Users/jinmingzhi/test/db"
+		path  = "./"
 		db    = NewMdbx(path)
 		ctx   = context.Background()
 		key   = []byte("/key")
