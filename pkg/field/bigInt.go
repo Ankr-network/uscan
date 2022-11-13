@@ -38,8 +38,12 @@ func (b *BigInt) Bytes() []byte {
 	return b.Bytes()
 }
 
+func (b *BigInt) Add(num *BigInt) {
+	(*big.Int)(b).Add((*big.Int)(b), (*big.Int)(num))
+}
+
 func (b *BigInt) SetBytes(bin []byte) {
-	b = (*BigInt)((&big.Int{}).SetBytes(bin))
+	(*big.Int)(b).SetBytes(bin)
 }
 
 func (b *BigInt) ToUint64() uint64 {
