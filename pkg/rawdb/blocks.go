@@ -1,43 +1,52 @@
 package rawdb
 
 import (
+	"context"
+
+	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/Ankr-network/uscan/share"
-	"math/big"
 )
 
-const (
-	blockNumKey = "/syncing/block"
+var (
+	blockKey []byte = []byte("/block/")
 )
 
-func GetBlockNum(db kv.Getter) (*big.Int, error) {
-	data, err := db.Get([]byte(blockNumKey), &kv.ReadOption{
-		Table: share.ConfigTbl,
-	})
+/*
+table: blocks
+
+/block/<block num> => block info
+*/
+
+func ReadBlock(ctx context.Context, db kv.Getter, blockNum *field.BigInt) (bk *types.Block, err error) {
+	var (
+		key      = append(blockKey, blockNum.Bytes()...)
+		bytesRes []byte
+	)
+
+	bytesRes, err = db.Get(ctx, key, &kv.ReadOption{Table: share.BlockTbl})
 	if err != nil {
-		return nil, err
+		return
 	}
-	if data == nil {
-		return nil, nil
+
+	err = bk.Unmarshal(bytesRes)
+	if err == nil {
+		bk.Number = blockNum
 	}
-	num := (&big.Int{}).SetBytes(data)
-	return num, nil
+	return
 }
 
-func GetBlock(db kv.Getter, blockNum string) (*types.Block, error) {
-	data, err := db.Get([]byte(blockNum), &kv.ReadOption{
-		Table: share.BlockTbl,
-	})
+func WriteBlock(ctx context.Context, db kv.Putter, blockNum *field.BigInt, bk *types.Block) (err error) {
+	var (
+		key      = append(blockKey, blockNum.Bytes()...)
+		bytesRes []byte
+	)
+
+	bytesRes, err = bk.Marshal()
 	if err != nil {
-		return nil, err
+		return
 	}
-	if data == nil {
-		return nil, nil
-	}
-	res := &types.Block{}
-	if err := res.Unmarshal(data); err != nil {
-		return nil, err
-	}
-	return res, nil
+
+	return db.Put(ctx, key, bytesRes, &kv.WriteOption{Table: share.BlockTbl})
 }

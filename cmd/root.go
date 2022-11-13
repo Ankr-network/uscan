@@ -52,6 +52,7 @@ func init() {
 
 	rootCmd.Flags().StringP(share.HttpAddr, "", "0.0.0.0", "service boot with this address")
 	rootCmd.Flags().StringP(share.HttpPort, "", "4322", "service boot with this address")
+	rootCmd.Flags().StringP(share.MdbxPath, "", "uscandb", "uscan db path")
 
 	// bind viper
 	viper.BindPFlag(share.HttpAddr, rootCmd.Flags().Lookup(share.HttpAddr))

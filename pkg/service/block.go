@@ -1,7 +1,9 @@
 package service
 
 import (
+	"context"
 	"errors"
+	"github.com/Ankr-network/uscan/pkg/field"
 	store "github.com/Ankr-network/uscan/pkg/rawdb"
 	"github.com/Ankr-network/uscan/pkg/response"
 	"github.com/Ankr-network/uscan/pkg/types"
@@ -21,23 +23,89 @@ const (
 )
 
 func Home() (map[string]interface{}, error) {
-	// 面板 趋势图 block列表 tx列表
-	page := &types.Pager{
-		Offset: 0,
-		Limit:  10,
-	}
-	blocks, _, err := ListBaseFieldBlocks(page)
+	home, err := store.ReadHome(context.Background(), nil)
 	if err != nil {
-		return nil, err
-	}
-	ListTxs(page)
 
+	}
+	//DateTxs
+	dateTxs := GetDateTxs(home.DateTxs)
+
+	// Blocks
+	blocks := make([]*types.HomeBlock, 0)
+	var totalTxs int
+	var beginTime, endTime int
+	for i, block := range home.Blocks {
+		blocks = append(blocks, &types.HomeBlock{
+			Number:            block.Number.String(),
+			Timestamp:         uint64(block.Timestamp),
+			Miner:             block.Miner.String(),
+			GasUsed:           block.GasUsed.String(),
+			TransactionsTotal: uint64(block.TransactionsTotal),
+		})
+		totalTxs += block.TransactionsTotal
+		if i == 0 {
+			endTime = block.Timestamp
+		}
+		if i == len(blocks)-1 {
+			beginTime = block.Timestamp
+		}
+	}
+	t := endTime - beginTime
+
+	// Txs
+	txs := make([]*types.HomeTx, 0)
+	for _, tx := range home.Txs {
+		txs = append(txs, &types.HomeTx{
+			Hash:        tx.Hash.Hex(),
+			From:        tx.From.Hex(),
+			To:          tx.To.Hex(),
+			GasPrice:    tx.GasPrice.StringPointer(),
+			Gas:         tx.Gas.StringPointer(),
+			CreatedTime: 0, // TODO 少时间
+		})
+	}
+
+	// metrics
 	resp := make(map[string]interface{})
-	resp["metrics"] = nil
-	resp["metrics"] = nil
+	resp["dateTxs"] = home.DateTxs
+	resp["metrics"] = GetHomeMetrics(home, dateTxs, totalTxs, t)
 	resp["blocks"] = blocks
-	resp["txs"] = nil
+	resp["txs"] = txs
 	return resp, nil
+}
+
+func GetHomeMetrics(home *types.Home, dateTxs []map[string]string, totalTxs, t int) map[string]interface{} {
+	metrics := make(map[string]interface{})
+	metrics["address"] = home.AddressTotal.String()
+	metrics["tx"] = home.TxTotal.String()
+	metrics["block"] = home.BlockNumber.String()
+	metrics["avgBlockTime"] = 3
+	metrics["dailyTx"] = 0
+	if len(dateTxs) > 0 {
+		metrics["dailyTx"] = dateTxs[len(dateTxs)-1]
+	}
+	if t == 0 {
+		metrics["tps"] = 0
+	} else {
+		metrics["tps"] = totalTxs / t
+	}
+	// TODO 舍弃
+	metrics["diff"] = 0
+	metrics["erc20"] = 0
+	metrics["erc721"] = 0
+	return metrics
+}
+
+func GetDateTxs(dateTxs map[string]*field.BigInt) []map[string]string {
+	keys := make([]string, 0)
+	for k := range dateTxs {
+		keys = append(keys, k)
+	}
+	resp := make([]map[string]string, 0)
+	for _, key := range keys {
+		resp = append(resp, map[string]string{"date": key, "txCount": dateTxs[key].String()})
+	}
+	return resp
 }
 
 func Search(f *types.SearchFilter) (map[string]interface{}, error) {
@@ -95,14 +163,53 @@ func Search(f *types.SearchFilter) (map[string]interface{}, error) {
 	}
 }
 
-func GetBlock(blockNum string) error {
-	_, err := NumToHex(blockNum)
-	if err != nil {
-		return err
+func GetBlock(blockNum string) (*types.BlockResp, error) {
+	n := new(big.Int)
+	n, ok := n.SetString(blockNum, 10)
+	if !ok {
+		return nil, errors.New("parse block num error")
 	}
-	// get block from db
-
-	return nil
+	num := field.BigInt(*n)
+	block, err := store.ReadBlock(context.Background(), nil, &num)
+	if err != nil {
+		return nil, err
+	}
+	nonce, err := block.Nonce.MarshalText()
+	if err != nil {
+		return nil, err
+	}
+	bloom, err := block.Bloom.MarshalText()
+	if err != nil {
+		return nil, err
+	}
+	txs := []string{}
+	for _, transaction := range block.Transactions {
+		txs = append(txs, transaction.String())
+	}
+	resp := &types.BlockResp{
+		BaseFeePerGas:     block.BaseFee.StringPointer(),
+		Difficulty:        block.Difficulty.String(),
+		ExtraData:         string(block.Extra),
+		GasLimit:          block.GasLimit.String(),
+		GasUsed:           block.GasUsed.String(),
+		Hash:              block.Hash.Hex(),
+		LogsBloom:         string(bloom),
+		Miner:             block.Coinbase.String(),
+		MixHash:           block.MixDigest.String(),
+		Nonce:             string(nonce),
+		Number:            block.Number.String(),
+		ParentHash:        block.ParentHash.Hex(),
+		ReceiptsRoot:      block.ReceiptHash.Hex(),
+		Sha3Uncles:        block.UncleHash.Hex(),
+		Size:              block.Size.String(),
+		StateRoot:         block.Root.Hex(),
+		Timestamp:         block.Time.ToUint64(),
+		TotalDifficulty:   block.TotalDifficulty.ToUint64(),
+		Transactions:      txs,
+		TransactionsTotal: block.TransactionTotal.ToUint64(),
+		//TransactionsRoot:  block,
+	}
+	return resp, nil
 }
 
 func ListBlocks(pager *types.Pager) ([]*types.Block, string, error) {
@@ -114,10 +221,10 @@ func ListBlocks(pager *types.Pager) ([]*types.Block, string, error) {
 	if num == nil {
 		return blocks, "0", nil
 	}
-	begin, end := ParseBlockPage(num, pager.Offset, pager.Limit)
+	begin, end := ParsePage(num, pager.Offset, pager.Limit)
 	p := begin
 	for {
-		block, err := store.GetBlock(nil, EncodeBig(p))
+		block, err := store.ReadBlock(context.Background(), nil, p)
 		if err != nil {
 			return nil, "0", err
 		}
@@ -131,65 +238,20 @@ func ListBlocks(pager *types.Pager) ([]*types.Block, string, error) {
 	return blocks, num.String(), nil
 }
 
-func ListBaseFieldBlocks(pager *types.Pager) ([]*types.HomeBlock, string, error) {
+func ListFullFieldBlocks(pager *types.Pager) ([]*types.ListBlockResp, string, error) {
 	blocks, total, err := ListBlocks(pager)
 	if err != nil {
 		return nil, "0", err
 	}
-	res := make([]*types.HomeBlock, len(blocks))
+	resp := make([]*types.ListBlockResp, len(blocks))
 	for i, block := range blocks {
-		res[i] = &types.HomeBlock{
-			Number:            block.Number.String(),
-			Timestamp:         block.Time.ToUint64(),
-			Miner:             block.Coinbase.String(),
-			GasUsed:           block.GasUsed.String(),
-			TransactionsTotal: block.TransactionTotal.ToUint64(),
-		}
-	}
-	return res, total, nil
-}
-
-func ListFullFieldBlocks(pager *types.Pager) ([]*types.BlockResp, string, error) {
-	blocks, total, err := ListBlocks(pager)
-	if err != nil {
-		return nil, "0", err
-	}
-	resp := make([]*types.BlockResp, len(blocks))
-	for i, block := range blocks {
-		nonce, err := block.Nonce.MarshalText()
-		if err != nil {
-			return nil, "0", err
-		}
-		bloom, err := block.Bloom.MarshalText()
-		if err != nil {
-			return nil, "0", err
-		}
-		txs := []string{}
-		for _, transaction := range block.Transactions {
-			txs = append(txs, transaction.String())
-		}
-		resp[i] = &types.BlockResp{
-			BaseFeePerGas:     block.BaseFee.StringPointer(),
-			Difficulty:        block.Difficulty.String(),
-			ExtraData:         string(block.Extra),
+		resp[i] = &types.ListBlockResp{
 			GasLimit:          block.GasLimit.String(),
 			GasUsed:           block.GasUsed.String(),
-			Hash:              block.Hash.Hex(),
-			LogsBloom:         string(bloom),
 			Miner:             block.Coinbase.String(),
-			MixHash:           block.MixDigest.String(),
-			Nonce:             string(nonce),
 			Number:            block.Number.String(),
-			ParentHash:        block.ParentHash.Hex(),
-			ReceiptsRoot:      block.ReceiptHash.Hex(),
-			Sha3Uncles:        block.UncleHash.Hex(),
-			Size:              block.Size.String(),
-			StateRoot:         block.Root.Hex(),
 			Timestamp:         block.Time.ToUint64(),
-			TotalDifficulty:   block.TotalDifficulty.ToUint64(),
-			Transactions:      txs,
 			TransactionsTotal: block.TransactionTotal.ToUint64(),
-			//TransactionsRoot:  block,
 		}
 	}
 	return resp, total, nil
@@ -202,11 +264,15 @@ func BigIntReduce(n *big.Int, num int64) *big.Int {
 	return m
 }
 
-func ParseBlockPage(num *big.Int, offset, limit int64) (*big.Int, *big.Int) {
-	if offset >= num.Int64() {
+func ParsePage(num *field.BigInt, offset, limit int64) (*big.Int, *big.Int) {
+	if uint64(offset) >= num.ToUint64() {
 		offset = 0
 	}
-	begin := BigIntReduce(num, offset)
+
+	//begin := BigIntReduce(num, offset)
+
+	begin := num.Add(field.NewInt(-offset))
+
 	end := BigIntReduce(begin, limit-1)
 
 	if end.Int64() <= 0 {
@@ -214,15 +280,6 @@ func ParseBlockPage(num *big.Int, offset, limit int64) (*big.Int, *big.Int) {
 		end = e.SetInt64(1)
 	}
 	return begin, end
-}
-
-func NumToHex(num string) (string, error) {
-	n := new(big.Int)
-	n, ok := n.SetString(num, 10)
-	if !ok {
-		return "", errors.New("parse block num error")
-	}
-	return hexutil.EncodeBig(n), nil
 }
 
 func DecodeBig(num string) *big.Int {

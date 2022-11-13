@@ -42,7 +42,16 @@ type BlockResp struct {
 	//CreatedTime       uint64   `json:"createdTime"`
 }
 
-type TransactionResp struct {
+type ListBlockResp struct {
+	Number            string `json:"number"`
+	Timestamp         uint64 `json:"timestamp"`
+	TransactionsTotal uint64 `json:"transactionsTotal"`
+	Miner             string `json:"miner"`
+	GasLimit          string `json:"gasLimit"` // int64 改成string
+	GasUsed           string `json:"gasUsed"`  // int64 改成string
+}
+
+type TxResp struct {
 	Hash                 string               `json:"hash"`
 	Method               *string              `json:"method"`
 	BlockHash            *string              `json:"blockHash"`
@@ -61,7 +70,7 @@ type TransactionResp struct {
 	CreatedTime          uint64               `json:"createTime"`
 	MaxFeePerGas         *string              `json:"maxFeePerGas"`
 	MaxPriorityFeePerGas *string              `json:"maxPriorityFeePerGas"`
-	Input                *string              `json:"input"`
+	Input                string               `json:"input"`
 	Nonce                string               `json:"nonce"` // change string
 	TransactionIndex     *string              `json:"transactionIndex"`
 	Type                 *string              `json:"type"`
@@ -69,23 +78,30 @@ type TransactionResp struct {
 	V                    string               `json:"v"`
 	R                    string               `json:"r"`
 	S                    string               `json:"s"`
-	TotalLogs            int64                `json:"totalLogs"`
+	TotalLogs            int                  `json:"totalLogs"`
 	TokensTransferred    []*TokensTransferred `json:"tokensTransferred"`
 	BaseFeePerGas        *string              `json:"baseFeePerGas"`
 	GasLimit             string               `json:"gasLimit"` // change string
 	MethodName           string               `json:"methodName"`
-	ReceiptResp
+	Logs                 []*RtLogResp         `json:"logs"`
+	RtResp                                    // 新增
 }
 
-type ReceiptResp struct {
+type RtLogResp struct {
+	Address string   `json:"address"`
+	Topics  []string `json:"topics"`
+	Data    string   `json:"data"`
+}
+
+type RtResp struct {
 	ContractAddress       *string `json:"contractAddress"`
 	ContractAddressName   string  `json:"contractAddressName"`
 	ContractAddressSymbol string  `json:"contractAddressSymbol"`
-	CumulativeGasUsed     *uint64 `json:"cumulativeGasUsed"`
+	CumulativeGasUsed     *string `json:"cumulativeGasUsed"`
 	EffectiveGasPrice     *string `json:"effectiveGasPrice"`
-	GasUsed               uint64  `json:"gasUsed"`
+	GasUsed               string  `json:"gasUsed"`
 	LogsBloom             *string `json:"logsBloom"`
-	Root                  *string `json:"root"`
+	Root                  string  `json:"root"`
 	Status                uint64  `json:"status"`
 	ErrorReturn           string  `json:"errorReturn"`
 }
@@ -98,4 +114,46 @@ type TokensTransferred struct {
 	Address       string `json:"address"`
 	AddressName   string `json:"addressName"`
 	AddressSymbol string `json:"addressSymbol"`
+}
+
+type ListTransactionResp struct {
+	Hash        string  `json:"hash"` // transaction Hash
+	Method      *string `json:"method"`
+	BlockHash   *string `json:"blockHash"`
+	BlockNumber *string `json:"blockNumber"`
+	From        string  `json:"from"`
+	FromName    string  `json:"fromName"`
+	FromSymbol  string  `json:"fromSymbol"`
+	FromCode    string  `json:"fromCode"`
+	To          string  `json:"to"`
+	ToName      string  `json:"toName"`
+	ToSymbol    string  `json:"toSymbol"`
+	ToCode      string  `json:"toCode"`
+	Gas         *string `json:"gas"`
+	GasPrice    *string `json:"gasPrice"`
+	Value       *string `json:"value"`
+	CreatedTime uint64  `json:"createTime"`
+}
+
+type TransactionBaseResp struct {
+	Hash     string `json:"hash"` // transaction Hash
+	Nonce    string `json:"nonce"`
+	GasUsed  string `json:"gasUsed"`
+	GasLimit string `json:"gasLimit"`
+	Status   uint64 `json:"status"`
+}
+
+type AccountResp struct {
+	Owner            string  `json:"owner"`
+	Balance          string  `json:"balance"`
+	BlockNumber      *string `json:"blockNumber"`
+	Creator          *string `json:"creator"`
+	TxHash           *string `json:"txHash"`
+	Code             *string `json:"code"`
+	Name             string  `json:"name"`
+	Symbol           string  `json:"symbol"`
+	TokenTotalSupply *string `json:"tokenTotalSupply"`
+	NftTotalSupply   *string `json:"nftTotalSupply"`
+	Decimals         uint64  `json:"decimals"`
+	CreatedTime      uint64  `json:"createdTime"`
 }

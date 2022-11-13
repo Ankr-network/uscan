@@ -11,7 +11,6 @@ import (
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/Ankr-network/uscan/pkg/workpool"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type Sync struct {
@@ -43,20 +42,18 @@ func (n *Sync) Execute(ctx context.Context, defaultBlock uint64) {
 
 	begin = n.getBeginBlock()
 	for lastBlock = range n.client.GetLatestBlockNumber(ctx) {
-		log.Debug().Uint64("latest block", lastBlock).Msg("receive block")
-
+		log.Infof("receive block: %d", lastBlock)
 		end = lastBlock - 1
 		if begin > end {
 			continue
 		}
 
 		if end >= begin {
-			log.Info().Uint64("begin", begin).Uint64("end", end).Msg("from begin to end")
+			log.Infof("from %d to %d", begin, end)
 			for ; begin <= end; begin++ {
 				serveJob := job.NewSyncJob(begin, n.client)
-				n.jobChan <- serveJob
+				n.jobChan.AddJob(serveJob)
 				n.storeChan <- serveJob
-				log.Debug().Uint64("block", begin).Msg("to job queue")
 			}
 		}
 	}
@@ -74,7 +71,7 @@ func (n *Sync) storeEvent() {
 			blockNum = job.Block
 			if job.Completed {
 				if err := n.handleEventData(job.Block, job.BlockData, job.TransactionDatas, job.ReceiptDatas, job.ContractOrMemberData, job.InternalTxs, job.CallFrames); err != nil {
-					log.Error().Uint64("block", job.Block).Err(err).Msg("handle event data")
+					log.Errorf("handle event data: %d", job.Block)
 					goto end
 				} else {
 					// n.toGetDebugLog(job.TransactionDatas)
@@ -96,7 +93,7 @@ func (n *Sync) CountTransfer(ctx context.Context, block uint64, erc20_transfers,
 	return nil
 }
 
-func (n *Sync) toGetDebugLog(txes []*rpcclient.Transaction) {
+func (n *Sync) toGetDebugLog(txes []*types.Tx) {
 	// for _, tx := range txes {
 	// 	if strings.HasPrefix(tx.Input, "0x") && len(tx.Input) > 2 {
 	// 		job.DebugJobChan <- job.NewSyncDebugJob(field.Hash(common.HexToHash(tx.Hash)), n.client, n.dbRepo)
