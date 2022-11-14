@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 	"github.com/Ankr-network/uscan/pkg/field"
+	"github.com/Ankr-network/uscan/pkg/kv"
 	store "github.com/Ankr-network/uscan/pkg/rawdb"
 	"github.com/Ankr-network/uscan/pkg/response"
 	"github.com/Ankr-network/uscan/pkg/types"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"math/big"
+	"unicode"
 )
 
 const (
@@ -116,30 +119,35 @@ func Search(f *types.SearchFilter) (map[string]interface{}, error) {
 	}
 	switch f.Type {
 	case allFilters:
-		//address := common.IsHexAddress(f.Keyword)
-		//if address {
-		//	// common.HexToAddress(f.Keyword).Hex()
-		//	account, err := store.GetAccount()
-		//	if err != nil && err != gorm.ErrRecordNotFound {
-		//		return nil, err
-		//	}
-		//	if account.ID > 0 {
-		//		resp["type"] = searchAddress
-		//		return resp, nil
-		//	}
-		//}
-		//number := IsNumber(f.Keyword)
-		//if number {
-		//	blockNum, _ := strconv.ParseInt(f.Keyword, 10, 64)
-		//	block, err := store.GetBlock(field.BigInt(*big.NewInt(blockNum)))
-		//	if err != nil && err != gorm.ErrRecordNotFound {
-		//		return nil, err
-		//	}
-		//	if block.ID > 0 {
-		//		resp["type"] = searchBlock
-		//		return resp, nil
-		//	}
-		//}
+		address := common.IsHexAddress(f.Keyword)
+		if address {
+			// common.HexToAddress(f.Keyword).Hex()
+			account, err := store.ReadAccount(context.Background(), nil, common.HexToAddress(f.Keyword))
+			if err != nil {
+				return nil, err
+			}
+			if account != nil {
+				resp["type"] = searchAddress
+				return resp, nil
+			}
+		}
+		number := IsNumber(f.Keyword)
+		if number {
+			n := new(big.Int)
+			n, ok := n.SetString(f.Keyword, 10)
+			if !ok {
+				return nil, errors.New("parse block num error")
+			}
+			num := field.BigInt(*n)
+			block, err := store.ReadBlock(context.Background(), nil, &num)
+			if err != nil && err != kv.NotFound {
+				return nil, err
+			}
+			if block != nil {
+				resp["type"] = searchBlock
+				return resp, nil
+			}
+		}
 		//transaction, err := store.GetTransaction(common.HexToHash(f.Keyword).Hex())
 		//if err != nil && err != gorm.ErrRecordNotFound {
 		//	return nil, err
@@ -161,6 +169,15 @@ func Search(f *types.SearchFilter) (map[string]interface{}, error) {
 	default:
 		return nil, response.ErrInvalidParameter
 	}
+}
+
+func IsNumber(number string) bool {
+	for _, s := range []rune(number) {
+		if !unicode.IsDigit(s) {
+			return false
+		}
+	}
+	return true
 }
 
 func GetBlock(blockNum string) (*types.BlockResp, error) {
@@ -217,6 +234,7 @@ func ListBlocks(pager *types.Pager) ([]*types.Block, string, error) {
 	if err != nil {
 		return nil, "0", err
 	}
+	total := num.String()
 	blocks := make([]*types.Block, 0)
 	if num == nil {
 		return blocks, "0", nil
@@ -229,13 +247,13 @@ func ListBlocks(pager *types.Pager) ([]*types.Block, string, error) {
 			return nil, "0", err
 		}
 		blocks = append(blocks, block)
-		if p.Cmp(end) == 0 {
+		if p.String() == end.String() {
 			break
 		}
-		p = BigIntReduce(p, 1)
+		p.Add(field.NewInt(-1))
 	}
 
-	return blocks, num.String(), nil
+	return blocks, total, nil
 }
 
 func ListFullFieldBlocks(pager *types.Pager) ([]*types.ListBlockResp, string, error) {
@@ -264,22 +282,23 @@ func BigIntReduce(n *big.Int, num int64) *big.Int {
 	return m
 }
 
-func ParsePage(num *field.BigInt, offset, limit int64) (*big.Int, *big.Int) {
+func ParsePage(num *field.BigInt, offset, limit int64) (*field.BigInt, *field.BigInt) {
 	if uint64(offset) >= num.ToUint64() {
 		offset = 0
 	}
+	num.Add(field.NewInt(-offset))
+	beginHex := num.String()
 
-	//begin := BigIntReduce(num, offset)
+	num.Add(field.NewInt(-(limit - 1)))
+	endHex := num.String()
 
-	begin := num.Add(field.NewInt(-offset))
+	begin := field.BigInt(*DecodeBig(beginHex))
+	end := field.BigInt(*DecodeBig(endHex))
 
-	end := BigIntReduce(begin, limit-1)
-
-	if end.Int64() <= 0 {
-		e := new(big.Int)
-		end = e.SetInt64(1)
+	if end.ToUint64() <= 0 {
+		end = *(field.NewInt(1))
 	}
-	return begin, end
+	return &begin, &end
 }
 
 func DecodeBig(num string) *big.Int {

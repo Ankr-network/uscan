@@ -26,9 +26,9 @@ table: transfers
 /erc721/total => total
 /erc1155/total => total
 
-/erc20/<index> => erc20 tansfer info
-/erc721/<index> => erc1155 tansfer info
-/erc1155/<index> => erc1155 tansfer info
+/erc20/<index> => erc20 transfer info
+/erc721/<index> => erc1155 transfer info
+/erc1155/<index> => erc1155 transfer info
 */
 
 func WriteErc20Total(ctx context.Context, db kv.Putter, total *field.BigInt) error {
@@ -41,6 +41,7 @@ func ReadErc20Total(ctx context.Context, db kv.Getter) (total *field.BigInt, err
 	if err != nil {
 		return
 	}
+	total = &field.BigInt{}
 	total.SetBytes(bytesRes)
 	return
 }
@@ -55,6 +56,8 @@ func ReadErc721Total(ctx context.Context, db kv.Getter) (total *field.BigInt, er
 	if err != nil {
 		return
 	}
+
+	total = &field.BigInt{}
 	total.SetBytes(bytesRes)
 	return
 }
@@ -69,6 +72,8 @@ func ReadErc1155Total(ctx context.Context, db kv.Getter) (total *field.BigInt, e
 	if err != nil {
 		return
 	}
+
+	total = &field.BigInt{}
 	total.SetBytes(bytesRes)
 	return
 }
@@ -88,6 +93,7 @@ func ReadErc20Transfer(ctx context.Context, db kv.Getter, index *field.BigInt) (
 	if err != nil {
 		return
 	}
+	data = &types.Erc20Transfer{}
 	err = data.Unmarshal(bytesRes)
 	return
 }
@@ -107,6 +113,8 @@ func ReadErc721Transfer(ctx context.Context, db kv.Getter, index *field.BigInt) 
 	if err != nil {
 		return
 	}
+
+	data = &types.Erc721Transfer{}
 	err = data.Unmarshal(bytesRes)
 	return
 }
@@ -126,6 +134,8 @@ func ReadErc1155Transfer(ctx context.Context, db kv.Getter, index *field.BigInt)
 	if err != nil {
 		return
 	}
+
+	data = &types.Erc1155Transfer{}
 	err = data.Unmarshal(bytesRes)
 	return
 }

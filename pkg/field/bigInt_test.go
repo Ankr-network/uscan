@@ -1,9 +1,10 @@
 package field
 
 import (
-	"testing"
-
+	"fmt"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestBigInt(t *testing.T) {
@@ -24,6 +25,13 @@ func TestAddNum(t *testing.T) {
 	bi := NewInt(111)
 	bi.Add(NewInt(111))
 	bi.Add(NewInt(111))
+
+	a := bi.String()
+
+	bi.Add(NewInt(111))
+	fmt.Println(bi.ToUint64())
+	res, _ := hexutil.DecodeBig(a)
+	fmt.Println(res.String())
 
 	assert.Equal(t, bi.ToUint64(), uint64(333))
 }

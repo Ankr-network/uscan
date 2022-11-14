@@ -82,7 +82,7 @@ func (n *Sync) storeEvent() {
 		}
 	}
 end:
-	log.Fatal("handle failed: %d", blockNum)
+	log.Fatalf("handle failed: %d", blockNum)
 }
 
 func (n *Sync) handleEventData(block uint64, blockData *types.Block, transactionData []*types.Tx, receiptData []*types.Rt, contractOrMemberData map[common.Address]*types.Account, internalTxs []*types.InternalTx, callFrames map[common.Hash]*types.CallFrame) (err error) {

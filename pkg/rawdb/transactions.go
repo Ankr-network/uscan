@@ -2,8 +2,6 @@ package rawdb
 
 import (
 	"context"
-	"math/big"
-
 	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/types"
@@ -48,6 +46,7 @@ func ReadTx(ctx context.Context, db kv.Getter, hash common.Hash) (data *types.Tx
 	if err != nil {
 		return
 	}
+	data = &types.Tx{}
 	err = data.Unmarshal(bytesRes)
 	if err == nil {
 		data.Hash = hash
@@ -90,6 +89,7 @@ func ReadRt(ctx context.Context, db kv.Getter, hash common.Hash) (data *types.Rt
 	if err != nil {
 		return
 	}
+	data = &types.Rt{}
 	err = data.Unmarshal(bytesRes)
 	if err == nil {
 		data.TxHash = hash
@@ -97,11 +97,12 @@ func ReadRt(ctx context.Context, db kv.Getter, hash common.Hash) (data *types.Rt
 	return
 }
 
-func ReadTxTotal(ctx context.Context, db kv.Getter) (*big.Int, error) {
-	bytesRes, err := db.Get(ctx, []byte(txNumKey), &kv.ReadOption{Table: share.TxTbl})
+func ReadTxTotal(ctx context.Context, db kv.Getter) (total *field.BigInt, error error) {
+	bytesRes, err := db.Get(ctx, txNumKey, &kv.ReadOption{Table: share.TxTbl})
 	if err != nil {
 		return nil, err
 	}
-	num := (&big.Int{}).SetBytes(bytesRes)
-	return num, nil
+	total = &field.BigInt{}
+	total.SetBytes(bytesRes)
+	return
 }

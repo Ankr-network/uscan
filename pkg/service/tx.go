@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/Ankr-network/uscan/pkg/kv"
 	store "github.com/Ankr-network/uscan/pkg/rawdb"
 	"github.com/Ankr-network/uscan/pkg/types"
@@ -23,10 +24,10 @@ func ListTxs(pager *types.Pager) ([]*types.ListTransactionResp, string, error) {
 			return nil, "0", err
 		}
 		txs = append(txs, tx)
-		if p.Cmp(end) == 0 {
+		if p.String() == end.String() {
 			break
 		}
-		p = BigIntReduce(p, 1)
+		p.Add(field.NewInt(-1))
 	}
 
 	resp := make([]*types.ListTransactionResp, 0)

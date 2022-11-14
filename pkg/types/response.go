@@ -157,3 +157,86 @@ type AccountResp struct {
 	Decimals         uint64  `json:"decimals"`
 	CreatedTime      uint64  `json:"createdTime"`
 }
+
+type InternalTxResp struct {
+	TransactionHash string  `json:"transactionHash"`
+	BlockNumber     string  `json:"blockNumber"`
+	Status          bool    `json:"status"`
+	CallType        string  `json:"callType"`
+	Depth           string  `json:"depth"`
+	From            string  `json:"from"`
+	To              *string `json:"to"`
+	Amount          string  `json:"amount"`
+	GasLimit        string  `json:"gasLimit"`
+	CreatedTime     uint64  `json:"createdTime"`
+}
+
+type Erc20TxResp struct {
+	TransactionHash string `json:"transactionHash"`
+	BlockHash       string `json:"blockHash"`
+	BlockNumber     string `json:"blockNumber"`
+	Contract        string `json:"contract"`
+	ContractName    string `json:"contractName"`
+	ContractSymbol  string `json:"contractSymbol"`
+	Method          string `json:"method"`
+	From            string `json:"from"`
+	FromName        string `json:"fromName"`
+	FromSymbol      string `json:"fromSymbol"`
+	FromCode        string `json:"fromCode"`
+	To              string `json:"to"`
+	ToName          string `json:"toName"`
+	ToSymbol        string `json:"toSymbol"`
+	ToCode          string `json:"toCode"`
+	Value           string `json:"value"`
+	CreatedTime     uint64 `json:"createdTime"`
+}
+
+type Erc721TxResp struct {
+	TransactionHash string `json:"transactionHash"`
+	BlockHash       string `json:"blockHash"`
+	BlockNumber     string `json:"blockNumber"`
+	Contract        string `json:"contract"`
+	ContractName    string `json:"contractName"`
+	ContractSymbol  string `json:"contractSymbol"`
+	Method          string `json:"method"`
+	From            string `json:"from"`
+	FromName        string `json:"fromName"`
+	FromSymbol      string `json:"fromSymbol"`
+	FromCode        string `json:"fromCode"`
+	To              string `json:"to"`
+	ToName          string `json:"toName"`
+	ToSymbol        string `json:"toSymbol"`
+	ToCode          string `json:"toCode"`
+	TokenID         uint64 `json:"tokenID"`
+	CreatedTime     uint64 `json:"createdTime"`
+}
+
+type Erc1155TxResp struct {
+	TransactionHash string `json:"transactionHash"`
+	BlockHash       string `json:"blockHash"`
+	BlockNumber     string `json:"blockNumber"`
+	Contract        string `json:"contract"`
+	ContractName    string `json:"contractName"`
+	ContractSymbol  string `json:"contractSymbol"`
+	Method          string `json:"method"`
+	From            string `json:"from"`
+	FromName        string `json:"fromName"`
+	FromSymbol      string `json:"fromSymbol"`
+	FromCode        string `json:"fromCode"`
+	To              string `json:"to"`
+	ToName          string `json:"toName"`
+	ToSymbol        string `json:"toSymbol"`
+	ToCode          string `json:"toCode"`
+	TokenID         uint64 `json:"tokenID"`
+	Value           string `json:"value"`
+	CreatedTime     uint64 `json:"createdTime"`
+}
+
+type TraceTxResp struct {
+	Res    string `json:"res"`
+	LogNum string `json:"logNum"`
+}
+
+type TraceTx2Resp struct {
+	Res string `json:"res"`
+}
