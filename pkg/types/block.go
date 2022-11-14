@@ -45,7 +45,7 @@ type Block struct {
 	Difficulty       *field.BigInt  `json:"difficulty"`
 	GasLimit         *field.BigInt  `json:"gasLimit"`
 	GasUsed          *field.BigInt  `json:"gasUsed"`
-	Time             *field.BigInt  `json:"timestamp"`
+	TimeStamp        *field.BigInt  `json:"timestamp"`
 	Extra            []byte         `json:"extraData"`
 	MixDigest        common.Hash    `json:"mixHash"`
 	Nonce            BlockNonce     `json:"nonce"`

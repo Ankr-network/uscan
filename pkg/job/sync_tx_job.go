@@ -39,6 +39,10 @@ func (e *SyncTxJob) Execute() {
 		}
 	}
 
+	if len(e.TransactionData.Data) > 0 {
+		e.TransactionData.Method = e.TransactionData.Data[:8]
+	}
+
 	e.ContractOrMemberData[e.TransactionData.From] = &types.Account{
 		Owner:       e.TransactionData.From,
 		BlockNumber: e.TransactionData.BlockNum,

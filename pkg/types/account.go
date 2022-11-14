@@ -23,7 +23,6 @@ type Account struct {
 	ErcFlag          byte
 	Creator          *common.Address
 	TxHash           *common.Hash
-	Code             []byte
 	Name, Symbol     string
 	TokenTotalSupply *field.BigInt
 	NftTotalSupply   *field.BigInt
@@ -67,4 +66,19 @@ func (b *Account) Unmarshal(bin []byte) (err error) {
 		b.Erc20 = true
 	}
 	return nil
+}
+
+type Contract struct {
+	Owner                 common.Address `rlp:"-"`
+	ByteCode              []byte
+	ConstructorArguements []byte
+	DeployedCode          []byte
+}
+
+func (b *Contract) Marshal() ([]byte, error) {
+	return rlp.EncodeToBytes(b)
+}
+
+func (b *Contract) Unmarshal(bin []byte) error {
+	return rlp.DecodeBytes(bin, &b)
 }

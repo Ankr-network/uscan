@@ -10,7 +10,7 @@ type Erc721Transfer struct {
 	TransactionHash common.Hash
 	BlockNumber     *field.BigInt
 	Contract        common.Address
-	Method          string
+	Method          []byte
 	From            common.Address
 	To              common.Address
 	TokenId         field.BigInt
