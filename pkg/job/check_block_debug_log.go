@@ -81,7 +81,7 @@ func (e *CheckBlockDebugLog) Execute() {
 			}
 			err = rawdb.WriteTraceTx(context.Background(), e.db, v, &types.TraceTx{
 				Res:    logRes.JsonToString(),
-				LogNum: field.NewInt(int64(logNum)),
+				LogNum: *field.NewInt(int64(logNum)),
 			})
 			if err != nil {
 				log.Errorf("write Trace tx : %v", err)

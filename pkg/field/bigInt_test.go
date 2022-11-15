@@ -28,4 +28,8 @@ func TestAddNum(t *testing.T) {
 	assert.Equal(t, bi.ToUint64(), uint64(333))
 	res := bi.Add(NewInt(2))
 	assert.Equal(t, res.ToUint64(), uint64(335))
+
+	res = bi.Sub(NewInt(3))
+	assert.Equal(t, res.ToUint64(), uint64(332))
+	assert.Equal(t, bi.ToUint64(), uint64(332))
 }

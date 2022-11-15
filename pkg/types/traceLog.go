@@ -11,7 +11,7 @@ import (
 
 type TraceTx struct {
 	Res    string
-	LogNum *field.BigInt
+	LogNum field.BigInt
 }
 
 func (b *TraceTx) Marshal() ([]byte, error) {
@@ -38,9 +38,9 @@ type CallFrame struct {
 	Type    string         `json:"type"`
 	From    common.Address `json:"from"`
 	To      common.Address `json:"to,omitempty"`
-	Value   *field.BigInt  `json:"value,omitempty"`
-	Gas     *field.BigInt  `json:"gas"`
-	GasUsed *field.BigInt  `json:"gasUsed"`
+	Value   field.BigInt   `json:"value,omitempty"`
+	Gas     field.BigInt   `json:"gas"`
+	GasUsed field.BigInt   `json:"gasUsed"`
 	Input   hexutil.Bytes  `json:"input"`
 	Output  hexutil.Bytes  `json:"output,omitempty"`
 	Error   string         `json:"error,omitempty"`

@@ -63,6 +63,9 @@ func ReadContract(ctx context.Context, db kv.Getter, addr common.Address) (acc *
 	}
 	acc = &types.Contract{}
 	err = acc.Unmarshal(bytesRes)
+	if err == nil {
+		acc.Owner = addr
+	}
 	return
 }
 
@@ -84,6 +87,9 @@ func ReadAccount(ctx context.Context, db kv.Getter, addr common.Address) (acc *t
 	}
 	acc = &types.Account{}
 	err = acc.Unmarshal(bytesRes)
+	if err == nil {
+		acc.Owner = addr
+	}
 	return
 }
 

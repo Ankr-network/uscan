@@ -113,7 +113,7 @@ func (e *SyncJob) Execute() {
 			time.Sleep(time.Second)
 		} else {
 			for k, v := range balanceMap {
-				e.ContractOrMemberData[k].Balance = v
+				e.ContractOrMemberData[k].Balance = *v
 			}
 			break
 		}
@@ -125,10 +125,10 @@ func (e *SyncJob) Execute() {
 func (e *SyncJob) mergeContractOrMember(data map[common.Address]*types.Account, data2 map[common.Address]*types.Account) map[common.Address]*types.Account {
 	for k, v := range data2 {
 		if _, ok := data[k]; ok {
-			if v.Creator != nil {
+			if v.Creator != (common.Address{}) {
 				data[k].Creator = v.Creator
 			}
-			if v.TxHash != nil {
+			if v.TxHash != (common.Hash{}) {
 				data[k].TxHash = v.TxHash
 			}
 		} else {

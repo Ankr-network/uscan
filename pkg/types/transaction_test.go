@@ -13,20 +13,20 @@ import (
 func TestTxSerialize(t *testing.T) {
 	to := common.HexToAddress("0x473780deaf4a2ac070bbba936b0cdefe7f267dfc")
 	b := &Tx{
-		BlockNum:  field.NewInt(11),
-		GasTipCap: field.NewInt(11),
-		GasFeeCap: field.NewInt(11),
-		GasPrice:  field.NewInt(11),
-		Nonce:     field.NewInt(11123123),
-		Gas:       field.NewInt(123421),
+		BlockNum:  *field.NewInt(11),
+		GasTipCap: *field.NewInt(11),
+		GasFeeCap: *field.NewInt(11),
+		GasPrice:  *field.NewInt(11),
+		Nonce:     *field.NewInt(11123123),
+		Gas:       *field.NewInt(123421),
 		To:        &to,
-		Value:     field.NewInt(12312313),
+		Value:     *field.NewInt(12312313),
 		Data:      []byte{11, 22, 212, 4, 54, 213, 2, 41, 41, 54},
 
 		// Signature values
-		V: field.NewInt(111),
-		R: field.NewInt(111),
-		S: field.NewInt(111),
+		V: *field.NewInt(111),
+		R: *field.NewInt(111),
+		S: *field.NewInt(111),
 	}
 
 	res, err := b.Marshal()
@@ -40,7 +40,7 @@ func TestTxSerialize(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, out.BlockNum, b.BlockNum)
-	assert.Equal(t, out.GasTipCap, b.GasTipCap)
+	assert.Equal(t, out.GasTipCap.String(), b.GasTipCap.String())
 	assert.Equal(t, out.GasFeeCap, b.GasFeeCap)
 	assert.Equal(t, out.GasPrice, b.GasPrice)
 	assert.Equal(t, out.Nonce, b.Nonce)

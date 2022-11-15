@@ -8,14 +8,14 @@ import (
 
 type InternalTx struct {
 	TransactionHash common.Hash `rlp:"-"`
-	BlockNumber     *field.BigInt
+	BlockNumber     field.BigInt
 	Status          bool
 	CallType        string
 	Depth           string
 	From            common.Address
-	To              *common.Address
-	Amount          *field.BigInt
-	GasLimit        *field.BigInt
+	To              common.Address
+	Amount          field.BigInt
+	GasLimit        field.BigInt
 }
 
 func (b *InternalTx) Marshal() ([]byte, error) {
@@ -28,7 +28,7 @@ func (b *InternalTx) Unmarshal(bin []byte) error {
 
 type InternalTxKey struct {
 	TransactionHash common.Hash
-	Index           *field.BigInt
+	Index           field.BigInt
 }
 
 func (b *InternalTxKey) Marshal() ([]byte, error) {

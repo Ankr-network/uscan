@@ -9,23 +9,23 @@ import (
 
 type Tx struct {
 	Hash      common.Hash     `json:"hash"  rlp:"-"`
-	BlockNum  *field.BigInt   `json:"blockNumber"`
-	GasTipCap *field.BigInt   `json:"maxPriorityFeePerGas"`
-	GasFeeCap *field.BigInt   `json:"maxFeePerGas"`
-	GasPrice  *field.BigInt   `json:"gasPrice"`
-	Nonce     *field.BigInt   `json:"nonce"`
-	Gas       *field.BigInt   `json:"gas"`
+	BlockNum  field.BigInt    `json:"blockNumber"`
+	GasTipCap field.BigInt    `json:"maxPriorityFeePerGas"`
+	GasFeeCap field.BigInt    `json:"maxFeePerGas"`
+	GasPrice  field.BigInt    `json:"gasPrice"`
+	Nonce     field.BigInt    `json:"nonce"`
+	Gas       field.BigInt    `json:"gas"`
 	From      common.Address  `json:"from"`
 	To        *common.Address `json:"to"` // nil means contract creation
-	Value     *field.BigInt   `json:"value"`
+	Value     field.BigInt    `json:"value"`
 	Method    hexutil.Bytes   `json:"-"`
 	Data      hexutil.Bytes   `json:"input"`
-	TimeStamp *field.BigInt   `json:"-"`
+	TimeStamp field.BigInt    `json:"-"`
 
 	// Signature values
-	V *field.BigInt `json:"v"`
-	R *field.BigInt `json:"r"`
-	S *field.BigInt `json:"s"`
+	V field.BigInt `json:"v"`
+	R field.BigInt `json:"r"`
+	S field.BigInt `json:"s"`
 }
 
 func (b *Tx) Marshal() ([]byte, error) {

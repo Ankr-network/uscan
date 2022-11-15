@@ -85,9 +85,9 @@ func (e *SyncTracerJob) handleCall(prefix string, data *types.CallFrame) {
 		in, arg := getByteCodeAndArg(data.To, data.Input, data.Output)
 		e.ContractOrMemberData[data.To] = &types.Account{
 			Owner:       data.To,
-			BlockNumber: field.NewInt(int64(e.block)),
-			Creator:     &data.From,
-			TxHash:      &e.tx,
+			BlockNumber: *field.NewInt(int64(e.block)),
+			Creator:     data.From,
+			TxHash:      e.tx,
 		}
 		e.ContractInfoMap[data.To] = &types.Contract{
 			ByteCode:              in,
@@ -96,33 +96,33 @@ func (e *SyncTracerJob) handleCall(prefix string, data *types.CallFrame) {
 		}
 	}
 
-	if data.Value != nil && data.Value.String() != "0x0" {
+	if data.Value.String() != "0x0" {
 		var status bool
 		if data.Error == "" {
 			status = true
 			if _, ok := e.ContractOrMemberData[data.From]; !ok {
 				e.ContractOrMemberData[data.From] = &types.Account{
 					Owner:       data.From,
-					BlockNumber: field.NewInt(int64(e.block)),
+					BlockNumber: *field.NewInt(int64(e.block)),
 				}
 			}
 
 			if _, ok := e.ContractOrMemberData[data.To]; !ok {
 				e.ContractOrMemberData[data.To] = &types.Account{
 					Owner:       data.To,
-					BlockNumber: field.NewInt(int64(e.block)),
+					BlockNumber: *field.NewInt(int64(e.block)),
 				}
 			}
 		}
 		if prefix != "0" {
 			e.InternalTxs = append(e.InternalTxs, &types.InternalTx{
 				TransactionHash: e.tx,
-				BlockNumber:     field.NewInt(int64(e.block)),
+				BlockNumber:     *field.NewInt(int64(e.block)),
 				Status:          status,
 				CallType:        data.Type,
 				Depth:           prefix,
 				From:            data.From,
-				To:              &data.To,
+				To:              data.To,
 				Amount:          data.Value,
 				GasLimit:        data.Gas,
 			})
