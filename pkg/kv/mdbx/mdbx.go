@@ -18,6 +18,7 @@ package mdbx
 
 import (
 	"context"
+	"runtime"
 
 	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/log"
@@ -77,8 +78,10 @@ func NewMdbx(path string) *MdbxDB {
 }
 
 func (d *MdbxDB) BeginTx(ctx context.Context) (context.Context, error) {
+	runtime.LockOSThread()
 	tnx, err := d.env.BeginTxn(nil, 0)
 	if err != nil {
+		runtime.UnlockOSThread()
 		return nil, err
 	}
 
@@ -90,6 +93,7 @@ func (d *MdbxDB) Commit(ctx context.Context) {
 	if ok {
 		out.Commit()
 	}
+	runtime.UnlockOSThread()
 }
 
 func (d *MdbxDB) RollBack(ctx context.Context) {
@@ -97,6 +101,7 @@ func (d *MdbxDB) RollBack(ctx context.Context) {
 	if ok {
 		out.Abort()
 	}
+	runtime.UnlockOSThread()
 }
 
 func (d *MdbxDB) Put(ctx context.Context, key []byte, val []byte, opts *kv.WriteOption) error {

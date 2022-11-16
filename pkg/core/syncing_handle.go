@@ -2,7 +2,6 @@ package core
 
 import (
 	"context"
-	"runtime"
 
 	"github.com/Ankr-network/uscan/pkg/contract"
 	"github.com/Ankr-network/uscan/pkg/contract/eip"
@@ -60,9 +59,6 @@ func newBlockHandle(
 }
 
 func (n *blockHandle) handle() error {
-	runtime.LockOSThread()
-	defer runtime.UnlockOSThread()
-
 	var (
 		ctx, err = n.db.BeginTx(context.Background())
 	)
@@ -72,8 +68,8 @@ func (n *blockHandle) handle() error {
 
 	defer func() {
 		if err == nil {
-			log.Infof("write block complete: %d", n.blockData.Number.ToUint64())
 			n.db.Commit(ctx)
+			log.Infof("write block complete: %d", n.blockData.Number.ToUint64())
 		} else {
 			n.db.RollBack(ctx)
 		}

@@ -81,7 +81,7 @@ func (n *blockHandle) writeErc20Transfer(ctx context.Context, data *types.Erc20T
 
 func (n *blockHandle) writeAccountErc20TransferIndex(ctx context.Context, addr common.Address, transfer20Index *field.BigInt) (err error) {
 	var total = &field.BigInt{}
-	if BytesRes, ok := erc20TrasferAccountTotalMap.Get(addr.Bytes()); ok {
+	if BytesRes, ok := erc20TrasferAccountTotalMap.Get(addr); ok {
 		total.SetBytes(BytesRes.([]byte))
 	} else {
 		total, err = rawdb.ReadAccountErc20Total(ctx, n.db, addr)
@@ -103,7 +103,7 @@ func (n *blockHandle) writeAccountErc20TransferIndex(ctx context.Context, addr c
 
 	err = rawdb.WriteAccountErc20Total(ctx, n.db, addr, total)
 	if err == nil {
-		erc20TrasferAccountTotalMap.Add(addr.Bytes(), total.Bytes())
+		erc20TrasferAccountTotalMap.Add(addr, total.Bytes())
 	}
 	return err
 }
@@ -202,7 +202,7 @@ func (n *blockHandle) writeErc721Transfer(ctx context.Context, data *types.Erc72
 
 func (n *blockHandle) writeAccountErc721TransferIndex(ctx context.Context, addr common.Address, transfer721Index *field.BigInt) (err error) {
 	var total = &field.BigInt{}
-	if BytesRes, ok := erc721TrasferAccountTotalMap.Get(addr.Bytes()); ok {
+	if BytesRes, ok := erc721TrasferAccountTotalMap.Get(addr); ok {
 		total.SetBytes(BytesRes.([]byte))
 	} else {
 		total, err = rawdb.ReadAccountErc721Total(ctx, n.db, addr)
@@ -224,7 +224,7 @@ func (n *blockHandle) writeAccountErc721TransferIndex(ctx context.Context, addr 
 
 	err = rawdb.WriteAccountErc721Total(ctx, n.db, addr, total)
 	if err == nil {
-		erc721TrasferAccountTotalMap.Add(addr.Bytes(), total.Bytes())
+		erc721TrasferAccountTotalMap.Add(addr, total.Bytes())
 	}
 	return err
 }
@@ -300,7 +300,7 @@ func (n *blockHandle) writeErc1155Transfer(ctx context.Context, data *types.Erc1
 
 func (n *blockHandle) writeAccountErc1155TransferIndex(ctx context.Context, addr common.Address, transfer1155Index *field.BigInt) (err error) {
 	var total = &field.BigInt{}
-	if BytesRes, ok := erc1155TrasferAccountTotalMap.Get(addr.Bytes()); ok {
+	if BytesRes, ok := erc1155TrasferAccountTotalMap.Get(addr); ok {
 		total.SetBytes(BytesRes.([]byte))
 	} else {
 		total, err = rawdb.ReadAccountErc1155Total(ctx, n.db, addr)
@@ -322,7 +322,7 @@ func (n *blockHandle) writeAccountErc1155TransferIndex(ctx context.Context, addr
 
 	err = rawdb.WriteAccountErc1155Total(ctx, n.db, addr, total)
 	if err == nil {
-		erc1155TrasferAccountTotalMap.Add(addr.Bytes(), total.Bytes())
+		erc1155TrasferAccountTotalMap.Add(addr, total.Bytes())
 	}
 	return err
 }

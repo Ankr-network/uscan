@@ -63,7 +63,7 @@ func (n *blockHandle) writeTxAndRt(ctx context.Context, tx *types.Tx, rt *types.
 
 func (n *blockHandle) writeAccountTx(ctx context.Context, addr common.Address, hash common.Hash) (err error) {
 	var total = &field.BigInt{}
-	if bytesRes, ok := accountTxTotalMap.Get(addr.Bytes()); ok {
+	if bytesRes, ok := accountTxTotalMap.Get(addr); ok {
 		total.SetBytes(bytesRes.([]byte))
 	} else {
 		total, err = rawdb.ReadAccountTxTotal(ctx, n.db, addr)
@@ -82,7 +82,7 @@ func (n *blockHandle) writeAccountTx(ctx context.Context, addr common.Address, h
 	}
 	err = rawdb.WriteAccountTxTotal(ctx, n.db, addr, total)
 	if err == nil {
-		accountItxTotalMap.Add(addr.Bytes(), total.Bytes())
+		accountItxTotalMap.Add(addr, total.Bytes())
 	}
 	return
 }

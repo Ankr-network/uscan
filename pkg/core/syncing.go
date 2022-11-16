@@ -38,6 +38,7 @@ func NewSync(
 		storeChan:      make(chan *job.SyncJob, chanSize*2),
 	}
 	go s.storeEvent()
+	job.GlobalInit(int(chanSize))
 	return s
 }
 

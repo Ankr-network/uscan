@@ -20,14 +20,22 @@ import (
 	"context"
 
 	"github.com/Ankr-network/uscan/pkg/apis"
+	"github.com/Ankr-network/uscan/pkg/contract"
+	"github.com/Ankr-network/uscan/pkg/core"
+	"github.com/Ankr-network/uscan/pkg/kv/mdbx"
+	"github.com/Ankr-network/uscan/pkg/rpcclient"
+	"github.com/Ankr-network/uscan/share"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/sunvim/utils/grace"
 )
 
 func MainRun(cmd *cobra.Command, args []string) {
+	rpcMgr := rpcclient.NewRpcClient(viper.GetStringSlice(share.RpcUrls))
+	sync := core.NewSync(rpcMgr, contract.NewClient(rpcMgr), mdbx.NewMdbx("./"), viper.GetUint64(share.WorkChan))
+	go sync.Execute(context.Background())
+
 	_, svc := grace.New(context.Background())
-
 	svc.RegisterService("web service", apis.Apis)
-
 	svc.Wait()
 }

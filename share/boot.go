@@ -21,4 +21,7 @@ const (
 	HttpPort = "http_port"
 	TlsPath  = "tls_path"
 	TLS      = "tls"
+
+	RpcUrls  = "rpc_urls"
+	WorkChan = "work_chan"
 )

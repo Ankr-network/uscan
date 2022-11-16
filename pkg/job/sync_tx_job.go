@@ -43,6 +43,10 @@ func (e *SyncTxJob) Execute() {
 		e.TransactionData.Method = e.TransactionData.Data[:4]
 	}
 
+	if e.TransactionData.To == nil {
+		e.TransactionData.To = &common.Address{}
+	}
+
 	e.ContractOrMemberData[e.TransactionData.From] = &types.Account{
 		Owner:       e.TransactionData.From,
 		BlockNumber: e.TransactionData.BlockNum,
