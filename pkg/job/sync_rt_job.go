@@ -37,5 +37,8 @@ func (e *SyncRtJob) Execute() {
 			break
 		}
 	}
+	if e.ReceiptData.ContractAddress == nil {
+		e.ReceiptData.ContractAddress = &common.Address{}
+	}
 	e.Completed = true
 }
