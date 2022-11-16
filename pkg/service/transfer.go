@@ -6,7 +6,6 @@ import (
 	store "github.com/Ankr-network/uscan/pkg/rawdb"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 func ListErc20Txs(pager *types.Pager) ([]*types.Erc20TxResp, string, error) {
@@ -44,17 +43,11 @@ func ListErc20Txs(pager *types.Pager) ([]*types.Erc20TxResp, string, error) {
 			Contract:        tx.Contract.String(),
 			ContractName:    "",
 			ContractSymbol:  "",
-			Method:          tx.Method,
-			From:            tx.From.Hex(),
-			//FromName:        "",
-			//FromSymbol:      "",
-			//FromCode:        "",
-			To: tx.To.Hex(),
-			//ToName:          "",
-			//ToSymbol:        "",
-			//ToCode:          "",
-			Value:       tx.Amount.String(),
-			CreatedTime: 0, // TODO
+			//Method:          tx.Method, TODO
+			From:  tx.From.Hex(),
+			To:    tx.To.Hex(),
+			Value: tx.Amount.String(),
+			//CreatedTime: , // TODO
 		}
 		resp = append(resp, t)
 
@@ -71,12 +64,12 @@ func ListErc20Txs(pager *types.Pager) ([]*types.Erc20TxResp, string, error) {
 		if from, ok := accounts[t.From]; ok {
 			t.FromName = from.Name
 			t.FromSymbol = from.Symbol
-			t.FromCode = hexutil.Encode(from.Code)
+			//t.FromCode = hexutil.Encode(from.Code) TODO
 		}
 		if to, ok := accounts[t.To]; ok {
 			t.FromName = to.Name
 			t.FromSymbol = to.Symbol
-			t.FromCode = hexutil.Encode(to.Code)
+			//t.FromCode = hexutil.Encode(to.Code) TODO
 		}
 		if c, ok := accounts[t.Contract]; ok {
 			t.ContractName = c.Name
@@ -119,11 +112,11 @@ func ListErc721Txs(pager *types.Pager) ([]*types.Erc721TxResp, string, error) {
 			BlockHash:       tx.TransactionHash.String(),
 			BlockNumber:     blockNumber,
 			Contract:        tx.Contract.String(),
-			Method:          tx.Method,
-			From:            tx.From.Hex(),
-			To:              tx.To.Hex(),
-			TokenID:         tx.TokenId.ToUint64(),
-			CreatedTime:     0, // TODO
+			//Method:          tx.Method,
+			From:        tx.From.Hex(),
+			To:          tx.To.Hex(),
+			TokenID:     tx.TokenId.ToUint64(),
+			CreatedTime: 0, // TODO
 		}
 		resp = append(resp, t)
 
@@ -140,12 +133,12 @@ func ListErc721Txs(pager *types.Pager) ([]*types.Erc721TxResp, string, error) {
 		if from, ok := accounts[t.From]; ok {
 			t.FromName = from.Name
 			t.FromSymbol = from.Symbol
-			t.FromCode = hexutil.Encode(from.Code)
+			//t.FromCode = hexutil.Encode(from.Code)
 		}
 		if to, ok := accounts[t.To]; ok {
 			t.FromName = to.Name
 			t.FromSymbol = to.Symbol
-			t.FromCode = hexutil.Encode(to.Code)
+			//t.FromCode = hexutil.Encode(to.Code)
 		}
 		if c, ok := accounts[t.Contract]; ok {
 			t.ContractName = c.Name
@@ -188,12 +181,12 @@ func ListErc1155Txs(pager *types.Pager) ([]*types.Erc1155TxResp, string, error) 
 			BlockHash:       tx.TransactionHash.String(),
 			BlockNumber:     blockNumber,
 			Contract:        tx.Contract.String(),
-			Method:          tx.Method,
-			From:            tx.From.Hex(),
-			To:              tx.To.Hex(),
-			TokenID:         tx.TokenID.ToUint64(),
-			Value:           tx.Quantity.String(),
-			CreatedTime:     0, // TODO
+			//Method:          tx.Method,
+			From:        tx.From.Hex(),
+			To:          tx.To.Hex(),
+			TokenID:     tx.TokenID.ToUint64(),
+			Value:       tx.Quantity.String(),
+			CreatedTime: 0, // TODO
 		}
 		resp = append(resp, t)
 
@@ -210,12 +203,12 @@ func ListErc1155Txs(pager *types.Pager) ([]*types.Erc1155TxResp, string, error) 
 		if from, ok := accounts[t.From]; ok {
 			t.FromName = from.Name
 			t.FromSymbol = from.Symbol
-			t.FromCode = hexutil.Encode(from.Code)
+			//t.FromCode = hexutil.Encode(from.Code)
 		}
 		if to, ok := accounts[t.To]; ok {
 			t.FromName = to.Name
 			t.FromSymbol = to.Symbol
-			t.FromCode = hexutil.Encode(to.Code)
+			//t.FromCode = hexutil.Encode(to.Code)
 		}
 		if c, ok := accounts[t.Contract]; ok {
 			t.ContractName = c.Name

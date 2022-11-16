@@ -18,7 +18,9 @@ type Tx struct {
 	From      common.Address  `json:"from"`
 	To        *common.Address `json:"to"` // nil means contract creation
 	Value     *field.BigInt   `json:"value"`
+	Method    hexutil.Bytes   `json:"-"`
 	Data      hexutil.Bytes   `json:"input"`
+	TimeStamp *field.BigInt   `json:"-"`
 
 	// Signature values
 	V *field.BigInt `json:"v"`

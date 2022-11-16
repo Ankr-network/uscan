@@ -67,12 +67,12 @@ func ListTxs(pager *types.Pager) ([]*types.ListTransactionResp, string, error) {
 		if from, ok := accounts[t.From]; ok {
 			t.FromName = from.Name
 			t.FromSymbol = from.Symbol
-			t.FromCode = hexutil.Encode(from.Code)
+			//t.FromCode = hexutil.Encode(from.Code)
 		}
 		if to, ok := accounts[t.To]; ok {
 			t.FromName = to.Name
 			t.FromSymbol = to.Symbol
-			t.FromCode = hexutil.Encode(to.Code)
+			//t.FromCode = hexutil.Encode(to.Code)
 		}
 	}
 	return resp, num.String(), nil
@@ -133,9 +133,13 @@ func GetTx(tx string) (*types.TxResp, error) {
 		num := DecodeBig(txData.BlockNum.String()).String()
 		blockNumber = &num
 	}
+	method, err := txData.Method.MarshalText()
+	if err != nil {
+		return nil, err
+	}
 	resp := &types.TxResp{
-		Hash: txData.Hash.String(),
-		// Method:               txData, TODO
+		Hash:                 txData.Hash.String(),
+		Method:               string(method),
 		BlockHash:            txData.BlockNum.StringPointer(),
 		BlockNumber:          blockNumber,
 		From:                 txData.From.Hex(),
@@ -170,16 +174,14 @@ func GetTx(tx string) (*types.TxResp, error) {
 		}
 		bloom := string(bloomByte)
 		rtResp := types.RtResp{
-			ContractAddress:       rtCA,
-			ContractAddressName:   "",
-			ContractAddressSymbol: "",
-			CumulativeGasUsed:     rtData.CumulativeGasUsed.StringPointer(),
-			EffectiveGasPrice:     rtData.EffectiveGasPrice.StringPointer(),
-			GasUsed:               rtData.GasUsed.String(),
-			LogsBloom:             &bloom,
-			Root:                  rtData.PostState.String(),
-			Status:                rtData.Status.ToUint64(),
-			ErrorReturn:           rtData.ReturnErr,
+			ContractAddress:   rtCA,
+			CumulativeGasUsed: rtData.CumulativeGasUsed.StringPointer(),
+			EffectiveGasPrice: rtData.EffectiveGasPrice.StringPointer(),
+			GasUsed:           rtData.GasUsed.String(),
+			LogsBloom:         &bloom,
+			Root:              rtData.PostState.String(),
+			Status:            rtData.Status.ToUint64(),
+			ErrorReturn:       rtData.ReturnErr,
 		}
 		resp.RtResp = rtResp
 	}
@@ -198,7 +200,6 @@ func GetTx(tx string) (*types.TxResp, error) {
 	if rtData != nil && rtData.ContractAddress != nil {
 		addresses[rtData.ContractAddress.String()] = *rtData.ContractAddress
 	}
-	// get address from accounts table
 
 	accounts, err := GetAccounts(addresses)
 	if err != nil {
@@ -207,12 +208,12 @@ func GetTx(tx string) (*types.TxResp, error) {
 	if from, ok := accounts[txData.From.Hex()]; ok {
 		resp.FromName = from.Name
 		resp.FromSymbol = from.Symbol
-		resp.FromCode = hexutil.Encode(from.Code)
+		//resp.FromCode = hexutil.Encode(from.Code)
 	}
 	if to, ok := accounts[txData.To.Hex()]; ok {
 		resp.FromName = to.Name
 		resp.FromSymbol = to.Symbol
-		resp.FromCode = hexutil.Encode(to.Code)
+		//resp.FromCode = hexutil.Encode(to.Code)
 	}
 	if rtData != nil && rtData.ContractAddress != nil {
 		if ca, ok := accounts[rtData.ContractAddress.Hex()]; ok {
@@ -276,7 +277,7 @@ func GetTx(tx string) (*types.TxResp, error) {
 		}
 	}
 
-	if resp.Method != nil {
+	if resp.Method != "" {
 		// TODO
 		//mid := strings.Split(*resp.Method, "0x")
 		//if len(mid) == 2 {

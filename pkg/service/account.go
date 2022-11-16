@@ -14,8 +14,11 @@ func GetAccountInfo(address string) (*types.AccountResp, error) {
 	if err != nil {
 		return nil, err
 	}
+	c, err := store.ReadContract(context.Background(), nil, common.HexToAddress(address))
+	if err != nil {
+		return nil, err
+	}
 
-	hexutil.Encode(account.Code)
 	resp := &types.AccountResp{
 		Owner:            account.Owner.String(),
 		Balance:          account.Balance.String(),
@@ -25,22 +28,18 @@ func GetAccountInfo(address string) (*types.AccountResp, error) {
 		TokenTotalSupply: account.TokenTotalSupply.StringPointer(),
 		NftTotalSupply:   account.NftTotalSupply.StringPointer(),
 		Decimals:         account.Decimals.ToUint64(),
-		//CreatedTime:      account., TODO
 	}
-	var creator string
 	if account.Creator != nil {
-		creator = account.Creator.Hex()
+		creator := account.Creator.Hex()
 		resp.Creator = &creator
 	}
-	var txHash string
 	if account.TxHash != nil {
-		txHash = account.TxHash.Hex()
+		txHash := account.TxHash.Hex()
 		resp.TxHash = &txHash
 	}
 
-	var code string
-	if account.Creator != nil {
-		code = hexutil.Encode(account.Code)
+	if c.ByteCode != nil {
+		code := hexutil.Encode(c.ByteCode)
 		resp.Code = &code
 	}
 	return resp, nil
@@ -103,12 +102,12 @@ func GetAccountTxs(pager *types.Pager, address string) (map[string]interface{}, 
 		if from, ok := accounts[t.From]; ok {
 			t.FromName = from.Name
 			t.FromSymbol = from.Symbol
-			t.FromCode = hexutil.Encode(from.Code)
+			//t.FromCode = hexutil.Encode(from.Code)
 		}
 		if to, ok := accounts[t.To]; ok {
 			t.FromName = to.Name
 			t.FromSymbol = to.Symbol
-			t.FromCode = hexutil.Encode(to.Code)
+			//t.FromCode = hexutil.Encode(to.Code)
 		}
 	}
 
@@ -212,15 +211,9 @@ func GetAccountErc20Txns(pager *types.Pager, address string) ([]*types.Erc20TxRe
 			Contract:        tx.Contract.String(),
 			ContractName:    "",
 			ContractSymbol:  "",
-			Method:          tx.Method,
-			From:            tx.From.Hex(),
-			//FromName:        "",
-			//FromSymbol:      "",
-			//FromCode:        "",
-			To: tx.To.Hex(),
-			//ToName:          "",
-			//ToSymbol:        "",
-			//ToCode:          "",
+			//Method:          tx.Method,
+			From:        tx.From.Hex(),
+			To:          tx.To.Hex(),
 			Value:       tx.Amount.String(),
 			CreatedTime: 0, // TODO
 		}
@@ -239,12 +232,12 @@ func GetAccountErc20Txns(pager *types.Pager, address string) ([]*types.Erc20TxRe
 		if from, ok := accounts[t.From]; ok {
 			t.FromName = from.Name
 			t.FromSymbol = from.Symbol
-			t.FromCode = hexutil.Encode(from.Code)
+			//t.FromCode = hexutil.Encode(from.Code)
 		}
 		if to, ok := accounts[t.To]; ok {
 			t.FromName = to.Name
 			t.FromSymbol = to.Symbol
-			t.FromCode = hexutil.Encode(to.Code)
+			//t.FromCode = hexutil.Encode(to.Code)
 		}
 		if c, ok := accounts[t.Contract]; ok {
 			t.ContractName = c.Name
@@ -288,11 +281,11 @@ func GetAccountErc721Txs(pager *types.Pager, address string) ([]*types.Erc721TxR
 			BlockHash:       tx.TransactionHash.String(),
 			BlockNumber:     blockNumber,
 			Contract:        tx.Contract.String(),
-			Method:          tx.Method,
-			From:            tx.From.Hex(),
-			To:              tx.To.Hex(),
-			TokenID:         tx.TokenId.ToUint64(),
-			CreatedTime:     0, // TODO
+			//Method:          tx.Method,
+			From:        tx.From.Hex(),
+			To:          tx.To.Hex(),
+			TokenID:     tx.TokenId.ToUint64(),
+			CreatedTime: 0, // TODO
 		}
 		resp = append(resp, t)
 
@@ -309,12 +302,12 @@ func GetAccountErc721Txs(pager *types.Pager, address string) ([]*types.Erc721TxR
 		if from, ok := accounts[t.From]; ok {
 			t.FromName = from.Name
 			t.FromSymbol = from.Symbol
-			t.FromCode = hexutil.Encode(from.Code)
+			//t.FromCode = hexutil.Encode(from.Code)
 		}
 		if to, ok := accounts[t.To]; ok {
 			t.FromName = to.Name
 			t.FromSymbol = to.Symbol
-			t.FromCode = hexutil.Encode(to.Code)
+			//t.FromCode = hexutil.Encode(to.Code)
 		}
 		if c, ok := accounts[t.Contract]; ok {
 			t.ContractName = c.Name
@@ -358,12 +351,12 @@ func GetAccountErc1155Txs(pager *types.Pager, address string) ([]*types.Erc1155T
 			BlockHash:       tx.TransactionHash.String(),
 			BlockNumber:     blockNumber,
 			Contract:        tx.Contract.String(),
-			Method:          tx.Method,
-			From:            tx.From.Hex(),
-			To:              tx.To.Hex(),
-			TokenID:         tx.TokenID.ToUint64(),
-			Value:           tx.Quantity.String(),
-			CreatedTime:     0, // TODO
+			//Method:          tx.Method,
+			From:        tx.From.Hex(),
+			To:          tx.To.Hex(),
+			TokenID:     tx.TokenID.ToUint64(),
+			Value:       tx.Quantity.String(),
+			CreatedTime: 0, // TODO
 		}
 		resp = append(resp, t)
 
@@ -380,12 +373,12 @@ func GetAccountErc1155Txs(pager *types.Pager, address string) ([]*types.Erc1155T
 		if from, ok := accounts[t.From]; ok {
 			t.FromName = from.Name
 			t.FromSymbol = from.Symbol
-			t.FromCode = hexutil.Encode(from.Code)
+			//t.FromCode = hexutil.Encode(from.Code)
 		}
 		if to, ok := accounts[t.To]; ok {
 			t.FromName = to.Name
 			t.FromSymbol = to.Symbol
-			t.FromCode = hexutil.Encode(to.Code)
+			//t.FromCode = hexutil.Encode(to.Code)
 		}
 		if c, ok := accounts[t.Contract]; ok {
 			t.ContractName = c.Name

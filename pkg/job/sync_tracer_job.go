@@ -27,6 +27,7 @@ type SyncTracerJob struct {
 	InternalTxs []*types.InternalTx
 	// address => map
 	ContractOrMemberData map[common.Address]*types.Account
+	ContractInfoMap      map[common.Address]*types.Contract
 }
 
 func NewSyncTracerJob(block uint64,
@@ -39,6 +40,7 @@ func NewSyncTracerJob(block uint64,
 		client:               client,
 		InternalTxs:          make([]*types.InternalTx, 0, 1),
 		ContractOrMemberData: make(map[common.Address]*types.Account),
+		ContractInfoMap:      make(map[common.Address]*types.Contract),
 	}
 }
 
@@ -80,12 +82,17 @@ func (e *SyncTracerJob) handleCall(prefix string, data *types.CallFrame) {
 	}
 
 	if data.Type == "CREATE2" || data.Type == "CREATE" {
+		in, arg := getByteCodeAndArg(data.To, data.Input, data.Output)
 		e.ContractOrMemberData[data.To] = &types.Account{
 			Owner:       data.To,
 			BlockNumber: field.NewInt(int64(e.block)),
 			Creator:     &data.From,
 			TxHash:      &e.tx,
-			Code:        data.Output,
+		}
+		e.ContractInfoMap[data.To] = &types.Contract{
+			ByteCode:              in,
+			ConstructorArguements: arg,
+			DeployedCode:          data.Output,
 		}
 	}
 
@@ -138,4 +145,15 @@ func decodeParameter(typ string, data []byte) ([]interface{}, error) {
 	},
 	}
 	return args.UnpackValues(data)
+}
+
+func getByteCodeAndArg(to common.Address, in []byte, out []byte) (bytecode []byte, arg []byte) {
+	splitOp := out[len(out)-32:]
+
+	res := bytes.Split(in, splitOp)
+	if len(res) == 2 {
+		return append(res[0], splitOp...), res[1]
+	}
+	log.Errorf("Bytecode does not match: %s", to.Hex())
+	return in, []byte{}
 }

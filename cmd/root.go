@@ -57,7 +57,6 @@ func init() {
 	// bind viper
 	viper.BindPFlag(share.HttpAddr, rootCmd.Flags().Lookup(share.HttpAddr))
 	viper.BindPFlag(share.HttpPort, rootCmd.Flags().Lookup(share.HttpPort))
-
 }
 
 // initConfig reads in config file and ENV variables if set.

@@ -12,7 +12,7 @@ import (
 var (
 	txKey      []byte = []byte("/tx/")
 	rtKey      []byte = []byte("/rt/")
-	txNumKey   []byte = []byte("/all/tx/total")
+	txTotalKey []byte = []byte("/all/tx/total")
 	txIndexKey []byte = []byte("/all/tx/")
 )
 
@@ -68,6 +68,21 @@ func ReadTxByIndex(ctx context.Context, db kv.Getter, index *field.BigInt) (data
 	return ReadTx(ctx, db, hash)
 }
 
+func WriteTxTotal(ctx context.Context, db kv.Putter, total *field.BigInt) error {
+	return db.Put(ctx, txTotalKey, total.Bytes(), &kv.WriteOption{Table: share.TxTbl})
+}
+
+func ReadTxTotal(ctx context.Context, db kv.Getter) (total *field.BigInt, err error) {
+	var bytesRes []byte
+	bytesRes, err = db.Get(ctx, txTotalKey, &kv.ReadOption{Table: share.TxTbl})
+	if err != nil {
+		return
+	}
+	total = &field.BigInt{}
+	total.SetBytes(bytesRes)
+	return
+}
+
 func WriteRt(ctx context.Context, db kv.Putter, hash common.Hash, data *types.Rt) (err error) {
 	var (
 		key      = append(rtKey, hash.Bytes()...)
@@ -94,15 +109,5 @@ func ReadRt(ctx context.Context, db kv.Getter, hash common.Hash) (data *types.Rt
 	if err == nil {
 		data.TxHash = hash
 	}
-	return
-}
-
-func ReadTxTotal(ctx context.Context, db kv.Getter) (total *field.BigInt, error error) {
-	bytesRes, err := db.Get(ctx, txNumKey, &kv.ReadOption{Table: share.TxTbl})
-	if err != nil {
-		return nil, err
-	}
-	total = &field.BigInt{}
-	total.SetBytes(bytesRes)
 	return
 }

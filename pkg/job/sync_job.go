@@ -20,8 +20,9 @@ type SyncJob struct {
 	TransactionDatas     []*types.Tx
 	ReceiptDatas         []*types.Rt
 	CallFrames           map[common.Hash]*types.CallFrame
-	InternalTxs          []*types.InternalTx
+	InternalTxs          map[common.Hash][]*types.InternalTx
 	ContractOrMemberData map[common.Address]*types.Account
+	ContractInfoMap      map[common.Address]*types.Contract
 }
 
 func NewSyncJob(block uint64, client rpcclient.RpcClient) *SyncJob {
@@ -29,6 +30,7 @@ func NewSyncJob(block uint64, client rpcclient.RpcClient) *SyncJob {
 		Block:                block,
 		client:               client,
 		ContractOrMemberData: make(map[common.Address]*types.Account),
+		ContractInfoMap:      make(map[common.Address]*types.Contract),
 	}
 }
 
@@ -60,7 +62,7 @@ func (e *SyncJob) Execute() {
 		e.TransactionDatas = make([]*types.Tx, 0, len(e.BlockData.Transactions))
 		e.ReceiptDatas = make([]*types.Rt, 0, len(e.BlockData.Transactions))
 		e.CallFrames = make(map[common.Hash]*types.CallFrame, len(e.BlockData.Transactions))
-		e.InternalTxs = make([]*types.InternalTx, 0, len(e.BlockData.Transactions))
+		e.InternalTxs = make(map[common.Hash][]*types.InternalTx)
 
 		data := make([]*Jobs, len(e.BlockData.Transactions))
 		for i, tx := range e.BlockData.Transactions {
@@ -81,13 +83,15 @@ func (e *SyncJob) Execute() {
 					if len(v.tracerJob.InternalTxs) > 0 {
 						v.rtJob.ReceiptData.ExistInternalTx = true
 					}
+					v.txJob.TransactionData.TimeStamp = e.BlockData.TimeStamp
 					v.rtJob.ReceiptData.ReturnErr = v.tracerJob.Error
 					e.TransactionDatas = append(e.TransactionDatas, v.txJob.TransactionData)
 					e.ReceiptDatas = append(e.ReceiptDatas, v.rtJob.ReceiptData)
 					e.CallFrames[v.tracerJob.tx] = v.tracerJob.CallFrame
-					e.InternalTxs = append(e.InternalTxs, v.tracerJob.InternalTxs...)
+					e.InternalTxs[v.tracerJob.tx] = v.tracerJob.InternalTxs
 					e.ContractOrMemberData = e.mergeContractOrMember(e.ContractOrMemberData, v.tracerJob.ContractOrMemberData)
 					e.ContractOrMemberData = e.mergeContractOrMember(e.ContractOrMemberData, v.txJob.ContractOrMemberData)
+					e.ContractInfoMap = e.mergeContract(e.ContractInfoMap, v.tracerJob.ContractInfoMap)
 					break
 				} else {
 					time.Sleep(time.Millisecond * 500)
@@ -121,9 +125,6 @@ func (e *SyncJob) Execute() {
 func (e *SyncJob) mergeContractOrMember(data map[common.Address]*types.Account, data2 map[common.Address]*types.Account) map[common.Address]*types.Account {
 	for k, v := range data2 {
 		if _, ok := data[k]; ok {
-			if len(v.Code) != 0 {
-				data[k].Code = v.Code
-			}
 			if v.Creator != nil {
 				data[k].Creator = v.Creator
 			}
@@ -131,6 +132,15 @@ func (e *SyncJob) mergeContractOrMember(data map[common.Address]*types.Account, 
 				data[k].TxHash = v.TxHash
 			}
 		} else {
+			data[k] = v
+		}
+	}
+	return data
+}
+
+func (e *SyncJob) mergeContract(data map[common.Address]*types.Contract, data2 map[common.Address]*types.Contract) map[common.Address]*types.Contract {
+	for k, v := range data2 {
+		if _, ok := data[k]; !ok {
 			data[k] = v
 		}
 	}

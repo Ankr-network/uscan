@@ -136,7 +136,7 @@ func (d *MdbxDB) Has(ctx context.Context, key []byte, opts *kv.ReadOption) (rs b
 		var res []byte
 		res, err = out.Get(d.tables[opts.Table], key)
 		if mdbx.IsNotFound(err) {
-			err = nil
+			err = kv.NotFound
 			return
 		}
 		if err == nil {
@@ -149,7 +149,7 @@ func (d *MdbxDB) Has(ctx context.Context, key []byte, opts *kv.ReadOption) (rs b
 			var res []byte
 			res, err = txn.Get(d.tables[opts.Table], key)
 			if mdbx.IsNotFound(err) {
-				err = nil
+				err = kv.NotFound
 				return nil
 			}
 			if err == nil {

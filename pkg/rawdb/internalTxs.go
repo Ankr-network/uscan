@@ -42,6 +42,7 @@ func ReadITx(ctx context.Context, db kv.Getter, hash common.Hash, index *field.B
 	if err != nil {
 		return
 	}
+	data = &types.InternalTx{}
 	err = data.Unmarshal(bytesRes)
 	if err == nil {
 		data.TransactionHash = hash
@@ -59,6 +60,8 @@ func ReadITxTotal(ctx context.Context, db kv.Getter, hash common.Hash) (total *f
 	if err != nil {
 		return
 	}
+
+	total = &field.BigInt{}
 	total.SetBytes(bytesRes)
 	return
 }

@@ -9,12 +9,13 @@ import (
 
 type Erc20Transfer struct {
 	TransactionHash common.Hash
-	BlockNumber     *field.BigInt
-	Contract        common.Address
-	Method          string
-	From            common.Address
-	To              common.Address
-	Amount          field.BigInt
+
+	BlockNumber *field.BigInt
+	Contract    common.Address
+	Method      []byte
+	From        common.Address
+	To          common.Address
+	Amount      field.BigInt
 }
 
 func (b *Erc20Transfer) Marshal() ([]byte, error) {

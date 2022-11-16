@@ -53,7 +53,7 @@ type ListBlockResp struct {
 
 type TxResp struct {
 	Hash                 string               `json:"hash"`
-	Method               *string              `json:"method"`
+	Method               string               `json:"method"`
 	BlockHash            *string              `json:"blockHash"`
 	BlockNumber          *string              `json:"blockNumber"`
 	From                 string               `json:"from"`
@@ -155,7 +155,7 @@ type AccountResp struct {
 	TokenTotalSupply *string `json:"tokenTotalSupply"`
 	NftTotalSupply   *string `json:"nftTotalSupply"`
 	Decimals         uint64  `json:"decimals"`
-	CreatedTime      uint64  `json:"createdTime"`
+	//CreatedTime      uint64  `json:"createdTime"`
 }
 
 type InternalTxResp struct {

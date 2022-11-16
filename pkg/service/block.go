@@ -148,14 +148,14 @@ func Search(f *types.SearchFilter) (map[string]interface{}, error) {
 				return resp, nil
 			}
 		}
-		//transaction, err := store.GetTransaction(common.HexToHash(f.Keyword).Hex())
-		//if err != nil && err != gorm.ErrRecordNotFound {
-		//	return nil, err
-		//}
-		//if transaction.ID > 0 {
-		//	resp["type"] = searchTxnHash
-		//	return resp, nil
-		//}
+		transaction, err := store.ReadTx(context.Background(), nil, common.HexToHash(f.Keyword))
+		if err != nil && err != kv.NotFound {
+			return nil, err
+		}
+		if transaction != nil {
+			resp["type"] = searchTxnHash
+			return resp, nil
+		}
 		//accounts, err := store.GetAccountsByNameOrSymbol(f.Keyword)
 		//if err != nil && err != gorm.ErrRecordNotFound {
 		//	return nil, err
@@ -164,7 +164,7 @@ func Search(f *types.SearchFilter) (map[string]interface{}, error) {
 		//	resp["type"] = searchName
 		//	return resp, nil
 		//}
-		//resp["type"] = searchNull
+		resp["type"] = searchNull
 		return resp, nil
 	default:
 		return nil, response.ErrInvalidParameter
@@ -220,7 +220,7 @@ func GetBlock(blockNum string) (*types.BlockResp, error) {
 		Sha3Uncles:        block.UncleHash.Hex(),
 		Size:              block.Size.String(),
 		StateRoot:         block.Root.Hex(),
-		Timestamp:         block.Time.ToUint64(),
+		Timestamp:         block.TimeStamp.ToUint64(),
 		TotalDifficulty:   block.TotalDifficulty.ToUint64(),
 		Transactions:      txs,
 		TransactionsTotal: block.TransactionTotal.ToUint64(),
@@ -230,16 +230,16 @@ func GetBlock(blockNum string) (*types.BlockResp, error) {
 }
 
 func ListBlocks(pager *types.Pager) ([]*types.Block, string, error) {
-	num, err := store.GetBlockNum(nil)
+	home, err := store.ReadHome(context.Background(), nil)
 	if err != nil {
 		return nil, "0", err
 	}
-	total := num.String()
+	total := home.BlockNumber.String()
 	blocks := make([]*types.Block, 0)
-	if num == nil {
+	if total == "" {
 		return blocks, "0", nil
 	}
-	begin, end := ParsePage(num, pager.Offset, pager.Limit)
+	begin, end := ParsePage(home.BlockNumber, pager.Offset, pager.Limit)
 	p := begin
 	for {
 		block, err := store.ReadBlock(context.Background(), nil, p)
@@ -268,18 +268,11 @@ func ListFullFieldBlocks(pager *types.Pager) ([]*types.ListBlockResp, string, er
 			GasUsed:           block.GasUsed.String(),
 			Miner:             block.Coinbase.String(),
 			Number:            block.Number.String(),
-			Timestamp:         block.Time.ToUint64(),
+			Timestamp:         block.TimeStamp.ToUint64(),
 			TransactionsTotal: block.TransactionTotal.ToUint64(),
 		}
 	}
 	return resp, total, nil
-}
-
-func BigIntReduce(n *big.Int, num int64) *big.Int {
-	m := new(big.Int)
-	m.SetInt64(-num)
-	m.Add(n, m)
-	return m
 }
 
 func ParsePage(num *field.BigInt, offset, limit int64) (*field.BigInt, *field.BigInt) {

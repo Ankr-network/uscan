@@ -24,7 +24,7 @@ func TestBlockSerialize(t *testing.T) {
 		Hash:             common.HexToHash("0x537e032e5bc31b5e52f5e28c61c5aefd631b438bf5b9c71913c19d022a4ae528"),
 		GasLimit:         field.NewInt(1112),
 		GasUsed:          field.NewInt(213),
-		Time:             field.NewInt(1231),
+		TimeStamp:        field.NewInt(1231),
 		Extra:            []byte("adsdada291s92sada"),
 		MixDigest:        common.HexToHash("0xd883010b00846765746888676f312e31392e31856c696e7578"),
 		Nonce:            [8]byte{12, 3, 4, 33, 1},
@@ -52,7 +52,7 @@ func TestBlockSerialize(t *testing.T) {
 	assert.Equal(t, out.Difficulty, b.Difficulty)
 	assert.Equal(t, out.Hash, b.Hash)
 	assert.Equal(t, out.GasLimit, b.GasLimit)
-	assert.Equal(t, out.Time, b.Time)
+	assert.Equal(t, out.TimeStamp, b.TimeStamp)
 	assert.Equal(t, out.Extra, b.Extra)
 	assert.Equal(t, out.MixDigest, b.MixDigest)
 	assert.Equal(t, out.Nonce, b.Nonce)
