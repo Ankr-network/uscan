@@ -31,7 +31,7 @@ import (
 )
 
 func MainRun(cmd *cobra.Command, args []string) {
-	mdbx.NewDB("/Users/johnson/goWork/Ankr-network/uscan/uscandb")
+	mdbx.NewDB(viper.GetString(share.MdbxPath))
 	rpcMgr := rpcclient.NewRpcClient(viper.GetStringSlice(share.RpcUrls))
 	sync := core.NewSync(rpcMgr, contract.NewClient(rpcMgr), mdbx.DB, viper.GetUint64(share.WorkChan))
 	go sync.Execute(context.Background())

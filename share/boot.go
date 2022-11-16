@@ -24,4 +24,6 @@ const (
 
 	RpcUrls  = "rpc_urls"
 	WorkChan = "work_chan"
+
+	MdbxPath = "db_path"
 )

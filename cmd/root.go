@@ -54,12 +54,14 @@ func init() {
 	rootCmd.Flags().StringP(share.HttpPort, "", "4322", "service boot with this address")
 	rootCmd.Flags().StringSliceP(share.RpcUrls, "", []string{}, "get data from blockchain, use wsurl")
 	rootCmd.Flags().Uint64P(share.WorkChan, "", 24, "Open multiple works to get data")
+	rootCmd.Flags().StringP(share.MdbxPath, "", "uscandb", "mdbx path")
 
 	// bind viper
 	viper.BindPFlag(share.HttpAddr, rootCmd.Flags().Lookup(share.HttpAddr))
 	viper.BindPFlag(share.HttpPort, rootCmd.Flags().Lookup(share.HttpPort))
 	viper.BindPFlag(share.RpcUrls, rootCmd.Flags().Lookup(share.RpcUrls))
 	viper.BindPFlag(share.WorkChan, rootCmd.Flags().Lookup(share.WorkChan))
+	viper.BindPFlag(share.MdbxPath, rootCmd.Flags().Lookup(share.MdbxPath))
 
 }
 
