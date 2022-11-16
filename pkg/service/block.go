@@ -60,12 +60,12 @@ func Home() (map[string]interface{}, error) {
 	txs := make([]*types.HomeTx, 0)
 	for _, tx := range home.Txs {
 		txs = append(txs, &types.HomeTx{
-			Hash:        tx.Hash.Hex(),
-			From:        tx.From.Hex(),
-			To:          tx.To.Hex(),
-			GasPrice:    tx.GasPrice.StringPointer(),
-			Gas:         tx.Gas.StringPointer(),
-			CreatedTime: 0, // TODO 少时间
+			Hash:     tx.Hash.Hex(),
+			From:     tx.From.Hex(),
+			To:       tx.To.Hex(),
+			GasPrice: tx.GasPrice.StringPointer(),
+			Gas:      tx.Gas.StringPointer(),
+			//CreatedTime: tx. // TODO
 		})
 	}
 
@@ -274,7 +274,7 @@ func ListFullFieldBlocks(pager *types.Pager) ([]*types.ListBlockResp, string, er
 			TransactionsTotal: block.TransactionTotal.ToUint64(),
 		}
 	}
-	return resp, total, nil
+	return resp, DecodeBig(total).String(), nil
 }
 
 func ParsePage(num *field.BigInt, offset, limit int64) (*field.BigInt, *field.BigInt) {
@@ -286,13 +286,13 @@ func ParsePage(num *field.BigInt, offset, limit int64) (*field.BigInt, *field.Bi
 
 	num.Add(field.NewInt(-(limit - 1)))
 	endHex := num.String()
+	if num.Cmp(field.NewInt(0)) <= 0 {
+		endHex = "0x1"
+	}
 
 	begin := field.BigInt(*DecodeBig(beginHex))
 	end := field.BigInt(*DecodeBig(endHex))
 
-	if end.ToUint64() <= 0 {
-		end = *(field.NewInt(1))
-	}
 	return &begin, &end
 }
 

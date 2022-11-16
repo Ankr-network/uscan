@@ -15,6 +15,7 @@ type Erc1155Transfer struct {
 	To              common.Address
 	TokenID         field.BigInt
 	Quantity        field.BigInt
+	TimeStamp       field.BigInt
 }
 
 func (b *Erc1155Transfer) Marshal() ([]byte, error) {

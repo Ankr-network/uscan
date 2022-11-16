@@ -14,6 +14,7 @@ type Erc721Transfer struct {
 	From            common.Address
 	To              common.Address
 	TokenId         field.BigInt
+	TimeStamp       field.BigInt
 }
 
 func (b *Erc721Transfer) Marshal() ([]byte, error) {

@@ -46,6 +46,10 @@ func (b *BigInt) Sub(num *BigInt) *BigInt {
 	return (*BigInt)((*big.Int)(b).Sub((*big.Int)(b), (*big.Int)(num)))
 }
 
+func (b *BigInt) Cmp(num *BigInt) int {
+	return (*big.Int)(b).Cmp((*big.Int)(num))
+}
+
 func (b *BigInt) SetBytes(bin []byte) {
 	(*big.Int)(b).SetBytes(bin)
 }

@@ -30,6 +30,7 @@ func (n *blockHandle) writeITx(ctx context.Context, itxmap map[common.Hash][]*ty
 		}
 
 		for _, v := range itxs {
+			v.TimeStamp = n.blockData.TimeStamp
 			if err = rawdb.WriteITx(ctx, n.db, k, itxTotal.Add(field.NewInt(1)), v); err != nil {
 				log.Errorf("write itx(%s): %v", k.Hex(), err)
 				return err

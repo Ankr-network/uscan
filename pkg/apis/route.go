@@ -31,7 +31,7 @@ func SetupRouter(g fiber.Router) {
 	g.Get("/accounts/:address", getAccountInfo)
 	g.Get("/accounts/:address/txns", getAccountTxns)
 	//g.Get("/accounts/:address/txns/download", downloadAccountTxns)
-	g.Get("/accounts/:address/txns-erc20", getAccountErc20Txns) // TODO
+	g.Get("/accounts/:address/txns-erc20", getAccountErc20Txns)
 	//g.Get("/accounts/:address/txns-erc20/download", downloadAccountErc20Txns)
 	g.Get("/accounts/:address/txns-erc721", getAccountErc721Txns)
 	//g.Get("/accounts/:address/txns-erc721/download", downloadAccountErc721Txns)
@@ -148,11 +148,11 @@ func getTxBase(c *fiber.Ctx) error {
 }
 
 func listAccounts(c *fiber.Ctx) error {
-	f := &types.Pager{}
-	if err := c.QueryParser(f); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
-	}
-	f.Complete()
+	//f := &types.Pager{}
+	//if err := c.QueryParser(f); err != nil {
+	//	return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
+	//}
+	//f.Complete()
 	//resp, total, err := service.ListAccount(f)
 	//if err != nil {
 	//	return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
@@ -181,6 +181,7 @@ func getAccountTxns(c *fiber.Ctx) error {
 	if err := c.QueryParser(f); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
 	}
+	f.Complete()
 	resp, err := service.GetAccountTxs(f, address)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
@@ -197,6 +198,7 @@ func getAccountErc20Txns(c *fiber.Ctx) error {
 	if err := c.QueryParser(f); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
 	}
+	f.Complete()
 	resp, total, err := service.GetAccountErc20Txns(f, address)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
@@ -213,6 +215,7 @@ func getAccountErc721Txns(c *fiber.Ctx) error {
 	if err := c.QueryParser(f); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
 	}
+	f.Complete()
 	resp, total, err := service.GetAccountErc721Txs(f, address)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
@@ -229,6 +232,7 @@ func getAccountErc1155Txns(c *fiber.Ctx) error {
 	if err := c.QueryParser(f); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
 	}
+	f.Complete()
 	resp, total, err := service.GetAccountErc1155Txs(f, address)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
@@ -245,6 +249,7 @@ func getAccountInternalTxns(c *fiber.Ctx) error {
 	if err := c.QueryParser(f); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
 	}
+	f.Complete()
 	resp, total, err := service.GetAccountItxs(f, address)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
@@ -257,7 +262,7 @@ func listTokenTxnsErc20(c *fiber.Ctx) error {
 	if err := c.QueryParser(f); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
 	}
-
+	f.Complete()
 	resp, total, err := service.ListErc20Txs(f)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
@@ -270,7 +275,7 @@ func listTokenTxnsErc721(c *fiber.Ctx) error {
 	if err := c.QueryParser(f); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
 	}
-
+	f.Complete()
 	resp, total, err := service.ListErc721Txs(f)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
@@ -283,7 +288,7 @@ func listTokenTxnsErc1155(c *fiber.Ctx) error {
 	if err := c.QueryParser(f); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
 	}
-
+	f.Complete()
 	resp, total, err := service.ListErc1155Txs(f)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
@@ -332,6 +337,7 @@ func listTokenTransfers(c *fiber.Ctx) error {
 	if err := c.QueryParser(f); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
 	}
+	f.Complete()
 	typ := c.Query("type")
 	resp, err := service.ListTokenTransfers(typ, f)
 	if err != nil {

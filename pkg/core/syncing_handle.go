@@ -163,6 +163,7 @@ func (n *blockHandle) writeTxAndRtLog(ctx context.Context, transactionData []*ty
 								From:            erc20Transfer.From,
 								To:              erc20Transfer.To,
 								Amount:          (field.BigInt)(*erc20Transfer.Value),
+								TimeStamp:       n.blockData.TimeStamp,
 							}); err != nil {
 								log.Errorf("write erc20Transfer: %v", err)
 								return err
@@ -179,6 +180,7 @@ func (n *blockHandle) writeTxAndRtLog(ctx context.Context, transactionData []*ty
 								From:            erc721Transfer.From,
 								To:              erc721Transfer.To,
 								TokenId:         (field.BigInt)(*erc721Transfer.TokenId),
+								TimeStamp:       n.blockData.TimeStamp,
 							}); err != nil {
 								log.Errorf("write erc721Transfer: %v", err)
 								return err
@@ -198,6 +200,7 @@ func (n *blockHandle) writeTxAndRtLog(ctx context.Context, transactionData []*ty
 							To:              erc1155TransferSignle.To,
 							TokenID:         (field.BigInt)(*erc1155TransferSignle.Id),
 							Quantity:        (field.BigInt)(*erc1155TransferSignle.Value),
+							TimeStamp:       n.blockData.TimeStamp,
 						}); err != nil {
 							log.Errorf("write erc1155Transfer single: %v", err)
 							return err
@@ -216,6 +219,7 @@ func (n *blockHandle) writeTxAndRtLog(ctx context.Context, transactionData []*ty
 								To:              erc1155TransferBatch.To,
 								TokenID:         (field.BigInt)(*erc1155TransferBatch.Ids[i]),
 								Quantity:        (field.BigInt)(*erc1155TransferBatch.Values[i]),
+								TimeStamp:       n.blockData.TimeStamp,
 							}); err != nil {
 								log.Errorf("write erc1155Transfer single: %v", err)
 								return err

@@ -3,19 +3,22 @@ package service
 import (
 	"context"
 	"github.com/Ankr-network/uscan/pkg/field"
+	"github.com/Ankr-network/uscan/pkg/kv"
+	"github.com/Ankr-network/uscan/pkg/kv/mdbx"
 	store "github.com/Ankr-network/uscan/pkg/rawdb"
+	"github.com/Ankr-network/uscan/pkg/response"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"math/big"
 )
 
 func GetAccountInfo(address string) (*types.AccountResp, error) {
-	account, err := store.ReadAccount(context.Background(), nil, common.HexToAddress(address))
+	account, err := store.ReadAccount(context.Background(), mdbx.DB, common.HexToAddress(address))
 	if err != nil {
-		return nil, err
-	}
-	c, err := store.ReadContract(context.Background(), nil, common.HexToAddress(address))
-	if err != nil {
+		if err == kv.NotFound {
+			return nil, response.ErrRecordNotFind
+		}
 		return nil, err
 	}
 
@@ -29,33 +32,54 @@ func GetAccountInfo(address string) (*types.AccountResp, error) {
 		NftTotalSupply:   account.NftTotalSupply.StringPointer(),
 		Decimals:         account.Decimals.ToUint64(),
 	}
-	if account.Creator.Hex() != "" {
+	if account.Creator != (common.Address{}) {
 		creator := account.Creator.Hex()
 		resp.Creator = &creator
 	}
-	if account.TxHash.Hex() != "" {
+	if account.TxHash != (common.Hash{}) {
 		txHash := account.TxHash.Hex()
 		resp.TxHash = &txHash
 	}
-
-	if c.ByteCode != nil {
-		code := hexutil.Encode(c.ByteCode)
-		resp.Code = &code
+	c, err := store.ReadContract(context.Background(), mdbx.DB, common.HexToAddress(address))
+	if err != nil && err != kv.NotFound {
+		return nil, err
+	}
+	if c != nil {
+		if c.ByteCode != nil {
+			code := hexutil.Encode(c.ByteCode)
+			resp.Code = &code
+		}
 	}
 	return resp, nil
 }
 
 func GetAccountTxs(pager *types.Pager, address string) (map[string]interface{}, error) {
-	num, err := store.ReadAccountTxTotal(context.Background(), nil, common.HexToAddress(address))
-	if err != nil {
-
+	num, err := store.ReadAccountTxTotal(context.Background(), mdbx.DB, common.HexToAddress(address))
+	if err != nil && err != kv.NotFound {
+		return nil, err
+	}
+	txsResp := make([]*types.ListTransactionResp, 0)
+	otherTotal := map[string]string{
+		"internalTotal": "0",
+		"erc20Total":    "0",
+		"erc721Total":   "0",
+		"erc1155Total":  "0",
+	}
+	resp := map[string]interface{}{
+		"items":      txsResp,
+		"total":      "0",
+		"otherTotal": otherTotal,
+	}
+	if num == nil {
+		return resp, nil
 	}
 	total := num.String()
+
 	begin, end := ParsePage(num, pager.Offset, pager.Limit)
 	p := begin
 	txs := make([]*types.Tx, 0)
 	for {
-		tx, err := store.ReadAccountTxByIndex(context.Background(), nil, common.HexToAddress(address), p)
+		tx, err := store.ReadAccountTxByIndex(context.Background(), mdbx.DB, common.HexToAddress(address), p)
 		if err != nil {
 			return nil, err
 		}
@@ -65,29 +89,22 @@ func GetAccountTxs(pager *types.Pager, address string) (map[string]interface{}, 
 		}
 		p.Add(field.NewInt(-1))
 	}
-	txsResp := make([]*types.ListTransactionResp, 0)
+
 	addresses := make(map[string]common.Address)
 	for _, tx := range txs {
-		var blockNumber *string
-		if tx.BlockNum.String() != "" {
-			num := DecodeBig(tx.BlockNum.String()).String()
-			blockNumber = &num
-		}
 		t := &types.ListTransactionResp{
 			Hash:        tx.Hash.Hex(),
-			Method:      nil, // TODO
-			BlockHash:   tx.BlockNum.StringPointer(),
-			BlockNumber: blockNumber,
+			Method:      tx.Method.String(),
+			BlockHash:   tx.BlockNum.String(),
+			BlockNumber: DecodeBig(tx.BlockNum.String()).String(),
 			From:        tx.From.Hex(),
 			To:          tx.To.Hex(),
-			ToName:      "",
-			ToSymbol:    "",
-			ToCode:      "",
 			Gas:         tx.Gas.StringPointer(),
 			GasPrice:    tx.GasPrice.StringPointer(),
 			Value:       tx.Value.StringPointer(),
-			CreatedTime: 0, // TODO
+			CreatedTime: tx.TimeStamp.ToUint64(),
 		}
+
 		txsResp = append(txsResp, t)
 		addresses[tx.From.String()] = tx.From
 		if tx.To != nil {
@@ -102,44 +119,72 @@ func GetAccountTxs(pager *types.Pager, address string) (map[string]interface{}, 
 		if from, ok := accounts[t.From]; ok {
 			t.FromName = from.Name
 			t.FromSymbol = from.Symbol
-			//t.FromCode = hexutil.Encode(from.Code)
+			if from.Erc20 || from.Erc721 || from.Erc1155 {
+				t.FromContract = true
+			}
 		}
 		if to, ok := accounts[t.To]; ok {
-			t.FromName = to.Name
-			t.FromSymbol = to.Symbol
-			//t.FromCode = hexutil.Encode(to.Code)
+			t.ToName = to.Name
+			t.ToSymbol = to.Symbol
+			if to.Erc20 || to.Erc721 || to.Erc1155 {
+				t.ToContract = true
+			}
 		}
 	}
 
-	itxTotal, err := store.ReadAccountITxTotal(context.Background(), nil, common.HexToAddress(address))
-	erc20Total, err := store.ReadAccountErc20Total(context.Background(), nil, common.HexToAddress(address))
-	erc721Total, err := store.ReadAccountErc721Total(context.Background(), nil, common.HexToAddress(address))
-	erc1155Total, err := store.ReadAccountErc1155Total(context.Background(), nil, common.HexToAddress(address))
-	otherTotal := map[string]string{
-		"internalTotal": itxTotal.String(),
-		"erc20Total":    erc20Total.String(),
-		"erc721Total":   erc721Total.String(),
-		"erc1155Total":  erc1155Total.String(),
+	itxTotal, err := store.ReadAccountITxTotal(context.Background(), mdbx.DB, common.HexToAddress(address))
+	if err != nil && err != kv.NotFound {
+		return nil, err
 	}
-	resp := map[string]interface{}{
+	erc20Total, err := store.ReadAccountErc20Total(context.Background(), mdbx.DB, common.HexToAddress(address))
+	if err != nil && err != kv.NotFound {
+		return nil, err
+	}
+	erc721Total, err := store.ReadAccountErc721Total(context.Background(), mdbx.DB, common.HexToAddress(address))
+	if err != nil && err != kv.NotFound {
+		return nil, err
+	}
+	erc1155Total, err := store.ReadAccountErc1155Total(context.Background(), mdbx.DB, common.HexToAddress(address))
+	if err != nil && err != kv.NotFound {
+		return nil, err
+	}
+
+	if itxTotal != nil {
+		otherTotal["internalTotal"] = (*big.Int)(itxTotal).String()
+	}
+	if erc20Total != nil {
+		otherTotal["erc20Total"] = (*big.Int)(erc20Total).String()
+	}
+	if erc721Total != nil {
+		otherTotal["erc721Total"] = (*big.Int)(erc721Total).String()
+	}
+	if erc1155Total != nil {
+		otherTotal["erc1155Total"] = (*big.Int)(erc1155Total).String()
+	}
+	resp = map[string]interface{}{
 		"items":      txsResp,
-		"total":      total,
+		"total":      DecodeBig(total).String(),
 		"otherTotal": otherTotal,
 	}
 	return resp, nil
 }
 
 func GetAccountItxs(pager *types.Pager, address string) ([]*types.InternalTxResp, string, error) {
-	num, err := store.ReadITxTotal(context.Background(), nil, common.HexToHash(address))
-	if err != nil {
+	num, err := store.ReadITxTotal(context.Background(), mdbx.DB, common.HexToHash(address))
+	if err != nil && err != kv.NotFound {
 		return nil, "0", err
 	}
+	resp := make([]*types.InternalTxResp, 0)
+	if num == nil {
+		return resp, "0", nil
+	}
 	total := num.String()
+
 	begin, end := ParsePage(num, pager.Offset, pager.Limit)
 	p := begin
 	txs := make([]*types.InternalTx, 0)
 	for {
-		tx, err := store.ReadAccountITxByIndex(context.Background(), nil, common.HexToAddress(address), p)
+		tx, err := store.ReadAccountITxByIndex(context.Background(), mdbx.DB, common.HexToAddress(address), p)
 		if err != nil {
 			return nil, "0", err
 		}
@@ -150,43 +195,39 @@ func GetAccountItxs(pager *types.Pager, address string) ([]*types.InternalTxResp
 		p.Add(field.NewInt(-1))
 	}
 
-	resp := make([]*types.InternalTxResp, len(txs))
+	resp = make([]*types.InternalTxResp, len(txs))
 	for i, tx := range txs {
-		var blockNumber string
-		if tx.BlockNumber.String() != "" {
-			blockNumber = DecodeBig(tx.BlockNumber.String()).String()
-		}
-		var to string
-		if tx.To.String() != "" {
-			to = tx.To.String()
-		}
 		resp[i] = &types.InternalTxResp{
 			TransactionHash: tx.TransactionHash.String(),
-			BlockNumber:     blockNumber,
+			BlockNumber:     DecodeBig(tx.BlockNumber.String()).String(),
 			Status:          tx.Status,
 			CallType:        tx.CallType,
 			Depth:           tx.Depth,
 			From:            tx.From.String(),
-			To:              &to,
+			To:              tx.To.String(),
 			Amount:          tx.Amount.String(),
 			GasLimit:        tx.GasLimit.String(),
-			//CreatedTime:     tx.,// TODO
+			CreatedTime:     tx.TimeStamp.ToUint64(),
 		}
 	}
-	return resp, total, nil
+	return resp, DecodeBig(total).String(), nil
 }
 
 func GetAccountErc20Txns(pager *types.Pager, address string) ([]*types.Erc20TxResp, string, error) {
-	num, err := store.ReadAccountErc20Total(context.Background(), nil, common.HexToAddress(address))
-	if err != nil {
+	num, err := store.ReadAccountErc20Total(context.Background(), mdbx.DB, common.HexToAddress(address))
+	if err != nil && err != kv.NotFound {
 		return nil, "0", err
+	}
+	resp := make([]*types.Erc20TxResp, 0)
+	if num == nil {
+		return resp, "0", nil
 	}
 	total := num.String()
 	begin, end := ParsePage(num, pager.Offset, pager.Limit)
 	p := begin
 	txs := make([]*types.Erc20Transfer, 0)
 	for {
-		tx, err := store.ReadAccountErc20ByIndex(context.Background(), nil, common.HexToAddress(address), p)
+		tx, err := store.ReadAccountErc20ByIndex(context.Background(), mdbx.DB, common.HexToAddress(address), p)
 		if err != nil {
 			return nil, "0", err
 		}
@@ -196,26 +237,19 @@ func GetAccountErc20Txns(pager *types.Pager, address string) ([]*types.Erc20TxRe
 		}
 		p.Add(field.NewInt(-1))
 	}
-	resp := make([]*types.Erc20TxResp, 0)
-	addresses := make(map[string]common.Address)
 
+	addresses := make(map[string]common.Address)
 	for _, tx := range txs {
-		var blockNumber string
-		if tx.BlockNumber.String() != "" {
-			blockNumber = DecodeBig(tx.BlockNumber.String()).String()
-		}
 		t := &types.Erc20TxResp{
 			TransactionHash: tx.TransactionHash.String(),
 			BlockHash:       tx.TransactionHash.String(),
-			BlockNumber:     blockNumber,
+			BlockNumber:     DecodeBig(tx.BlockNumber.String()).String(),
 			Contract:        tx.Contract.String(),
-			ContractName:    "",
-			ContractSymbol:  "",
-			//Method:          tx.Method,
-			From:        tx.From.Hex(),
-			To:          tx.To.Hex(),
-			Value:       tx.Amount.String(),
-			CreatedTime: 0, // TODO
+			Method:          hexutil.Bytes(tx.Method).String(),
+			From:            tx.From.Hex(),
+			To:              tx.To.Hex(),
+			Value:           tx.Amount.String(),
+			CreatedTime:     tx.TimeStamp.ToUint64(),
 		}
 		resp = append(resp, t)
 
@@ -232,12 +266,16 @@ func GetAccountErc20Txns(pager *types.Pager, address string) ([]*types.Erc20TxRe
 		if from, ok := accounts[t.From]; ok {
 			t.FromName = from.Name
 			t.FromSymbol = from.Symbol
-			//t.FromCode = hexutil.Encode(from.Code)
+			if from.Erc20 || from.Erc721 || from.Erc1155 {
+				t.FromContract = true
+			}
 		}
 		if to, ok := accounts[t.To]; ok {
-			t.FromName = to.Name
-			t.FromSymbol = to.Symbol
-			//t.FromCode = hexutil.Encode(to.Code)
+			t.ToName = to.Name
+			t.ToSymbol = to.Symbol
+			if to.Erc20 || to.Erc721 || to.Erc1155 {
+				t.ToContract = true
+			}
 		}
 		if c, ok := accounts[t.Contract]; ok {
 			t.ContractName = c.Name
@@ -245,20 +283,24 @@ func GetAccountErc20Txns(pager *types.Pager, address string) ([]*types.Erc20TxRe
 		}
 	}
 
-	return resp, total, nil
+	return resp, DecodeBig(total).String(), nil
 }
 
 func GetAccountErc721Txs(pager *types.Pager, address string) ([]*types.Erc721TxResp, string, error) {
-	num, err := store.ReadAccountErc721Total(context.Background(), nil, common.HexToAddress(address))
-	if err != nil {
+	num, err := store.ReadAccountErc721Total(context.Background(), mdbx.DB, common.HexToAddress(address))
+	if err != nil && err != kv.NotFound {
 		return nil, "0", err
+	}
+	resp := make([]*types.Erc721TxResp, 0)
+	if num == nil {
+		return resp, "0", nil
 	}
 	total := num.String()
 	begin, end := ParsePage(num, pager.Offset, pager.Limit)
 	p := begin
 	txs := make([]*types.Erc721Transfer, 0)
 	for {
-		tx, err := store.ReadAccountErc721ByIndex(context.Background(), nil, common.HexToAddress(address), p)
+		tx, err := store.ReadAccountErc721ByIndex(context.Background(), mdbx.DB, common.HexToAddress(address), p)
 		if err != nil {
 			return nil, "0", err
 		}
@@ -268,24 +310,19 @@ func GetAccountErc721Txs(pager *types.Pager, address string) ([]*types.Erc721TxR
 		}
 		p.Add(field.NewInt(-1))
 	}
-	resp := make([]*types.Erc721TxResp, 0)
-	addresses := make(map[string]common.Address)
 
+	addresses := make(map[string]common.Address)
 	for _, tx := range txs {
-		var blockNumber string
-		if tx.BlockNumber.String() != "" {
-			blockNumber = DecodeBig(tx.BlockNumber.String()).String()
-		}
 		t := &types.Erc721TxResp{
 			TransactionHash: tx.TransactionHash.String(),
 			BlockHash:       tx.TransactionHash.String(),
-			BlockNumber:     blockNumber,
+			BlockNumber:     DecodeBig(tx.BlockNumber.String()).String(),
 			Contract:        tx.Contract.String(),
-			//Method:          tx.Method,
-			From:        tx.From.Hex(),
-			To:          tx.To.Hex(),
-			TokenID:     tx.TokenId.ToUint64(),
-			CreatedTime: 0, // TODO
+			Method:          hexutil.Bytes(tx.Method).String(),
+			From:            tx.From.Hex(),
+			To:              tx.To.Hex(),
+			TokenID:         tx.TokenId.ToUint64(),
+			CreatedTime:     tx.TimeStamp.ToUint64(),
 		}
 		resp = append(resp, t)
 
@@ -302,12 +339,16 @@ func GetAccountErc721Txs(pager *types.Pager, address string) ([]*types.Erc721TxR
 		if from, ok := accounts[t.From]; ok {
 			t.FromName = from.Name
 			t.FromSymbol = from.Symbol
-			//t.FromCode = hexutil.Encode(from.Code)
+			if from.Erc20 || from.Erc721 || from.Erc1155 {
+				t.FromContract = true
+			}
 		}
 		if to, ok := accounts[t.To]; ok {
-			t.FromName = to.Name
-			t.FromSymbol = to.Symbol
-			//t.FromCode = hexutil.Encode(to.Code)
+			t.ToName = to.Name
+			t.ToSymbol = to.Symbol
+			if to.Erc20 || to.Erc721 || to.Erc1155 {
+				t.ToContract = true
+			}
 		}
 		if c, ok := accounts[t.Contract]; ok {
 			t.ContractName = c.Name
@@ -315,20 +356,24 @@ func GetAccountErc721Txs(pager *types.Pager, address string) ([]*types.Erc721TxR
 		}
 	}
 
-	return resp, total, nil
+	return resp, DecodeBig(total).String(), nil
 }
 
 func GetAccountErc1155Txs(pager *types.Pager, address string) ([]*types.Erc1155TxResp, string, error) {
-	num, err := store.ReadAccountErc1155Total(context.Background(), nil, common.HexToAddress(address))
-	if err != nil {
+	num, err := store.ReadAccountErc1155Total(context.Background(), mdbx.DB, common.HexToAddress(address))
+	if err != nil && err != kv.NotFound {
 		return nil, "0", err
+	}
+	resp := make([]*types.Erc1155TxResp, 0)
+	if num == nil {
+		return resp, "0", nil
 	}
 	total := num.String()
 	begin, end := ParsePage(num, pager.Offset, pager.Limit)
 	p := begin
 	txs := make([]*types.Erc1155Transfer, 0)
 	for {
-		tx, err := store.ReadAccountErc1155ByIndex(context.Background(), nil, common.HexToAddress(address), p)
+		tx, err := store.ReadAccountErc1155ByIndex(context.Background(), mdbx.DB, common.HexToAddress(address), p)
 		if err != nil {
 			return nil, "0", err
 		}
@@ -338,25 +383,21 @@ func GetAccountErc1155Txs(pager *types.Pager, address string) ([]*types.Erc1155T
 		}
 		p.Add(field.NewInt(-1))
 	}
-	resp := make([]*types.Erc1155TxResp, 0)
+
 	addresses := make(map[string]common.Address)
 
 	for _, tx := range txs {
-		var blockNumber string
-		if tx.BlockNumber.String() != "" {
-			blockNumber = DecodeBig(tx.BlockNumber.String()).String()
-		}
 		t := &types.Erc1155TxResp{
 			TransactionHash: tx.TransactionHash.String(),
 			BlockHash:       tx.TransactionHash.String(),
-			BlockNumber:     blockNumber,
+			BlockNumber:     DecodeBig(tx.BlockNumber.String()).String(),
 			Contract:        tx.Contract.String(),
-			//Method:          tx.Method,
-			From:        tx.From.Hex(),
-			To:          tx.To.Hex(),
-			TokenID:     tx.TokenID.ToUint64(),
-			Value:       tx.Quantity.String(),
-			CreatedTime: 0, // TODO
+			Method:          hexutil.Bytes(tx.Method).String(),
+			From:            tx.From.Hex(),
+			To:              tx.To.Hex(),
+			TokenID:         tx.TokenID.ToUint64(),
+			Value:           tx.Quantity.String(),
+			CreatedTime:     tx.TimeStamp.ToUint64(),
 		}
 		resp = append(resp, t)
 
@@ -373,12 +414,16 @@ func GetAccountErc1155Txs(pager *types.Pager, address string) ([]*types.Erc1155T
 		if from, ok := accounts[t.From]; ok {
 			t.FromName = from.Name
 			t.FromSymbol = from.Symbol
-			//t.FromCode = hexutil.Encode(from.Code)
+			if from.Erc20 || from.Erc721 || from.Erc1155 {
+				t.FromContract = true
+			}
 		}
 		if to, ok := accounts[t.To]; ok {
-			t.FromName = to.Name
-			t.FromSymbol = to.Symbol
-			//t.FromCode = hexutil.Encode(to.Code)
+			t.ToName = to.Name
+			t.ToSymbol = to.Symbol
+			if to.Erc20 || to.Erc721 || to.Erc1155 {
+				t.ToContract = true
+			}
 		}
 		if c, ok := accounts[t.Contract]; ok {
 			t.ContractName = c.Name
@@ -386,5 +431,5 @@ func GetAccountErc1155Txs(pager *types.Pager, address string) ([]*types.Erc1155T
 		}
 	}
 
-	return resp, total, nil
+	return resp, DecodeBig(total).String(), nil
 }

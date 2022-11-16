@@ -16,6 +16,7 @@ type Erc20Transfer struct {
 	From        common.Address
 	To          common.Address
 	Amount      field.BigInt
+	TimeStamp   field.BigInt
 }
 
 func (b *Erc20Transfer) Marshal() ([]byte, error) {
