@@ -35,11 +35,15 @@ func (b *BigInt) StringPointer() *string {
 }
 
 func (b *BigInt) Bytes() []byte {
-	return b.Bytes()
+	return (*big.Int)(b).Bytes()
 }
 
 func (b *BigInt) Add(num *BigInt) *BigInt {
 	return (*BigInt)((*big.Int)(b).Add((*big.Int)(b), (*big.Int)(num)))
+}
+
+func (b *BigInt) Sub(num *BigInt) *BigInt {
+	return (*BigInt)((*big.Int)(b).Sub((*big.Int)(b), (*big.Int)(num)))
 }
 
 func (b *BigInt) SetBytes(bin []byte) {
@@ -69,12 +73,14 @@ func (b *BigInt) UnmarshalJSON(bs []byte) error {
 }
 
 func (b *BigInt) DecodeRLP(s *rlp.Stream) (err error) {
-	res := &big.Int{}
-	err = s.Decode(res)
-	if err == nil {
-		(*big.Int)(b).SetBytes(res.Bytes())
+
+	bs, _ := s.BigInt()
+
+	if bs != nil {
+		b.SetBytes(bs.Bytes())
 	}
-	return err
+
+	return nil
 }
 
 func (b *BigInt) EncodeRLP(w io.Writer) error {

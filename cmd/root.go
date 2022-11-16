@@ -52,11 +52,15 @@ func init() {
 
 	rootCmd.Flags().StringP(share.HttpAddr, "", "0.0.0.0", "service boot with this address")
 	rootCmd.Flags().StringP(share.HttpPort, "", "4322", "service boot with this address")
-	rootCmd.Flags().StringP(share.MdbxPath, "", "uscandb", "uscan db path")
+	rootCmd.Flags().StringSliceP(share.RpcUrls, "", []string{}, "get data from blockchain, use wsurl")
+	rootCmd.Flags().Uint64P(share.WorkChan, "", 24, "Open multiple works to get data")
 
 	// bind viper
 	viper.BindPFlag(share.HttpAddr, rootCmd.Flags().Lookup(share.HttpAddr))
 	viper.BindPFlag(share.HttpPort, rootCmd.Flags().Lookup(share.HttpPort))
+	viper.BindPFlag(share.RpcUrls, rootCmd.Flags().Lookup(share.RpcUrls))
+	viper.BindPFlag(share.WorkChan, rootCmd.Flags().Lookup(share.WorkChan))
+
 }
 
 // initConfig reads in config file and ENV variables if set.

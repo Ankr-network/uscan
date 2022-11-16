@@ -64,7 +64,7 @@ func (e *SyncDebugJob) Execute() {
 
 	err = rawdb.WriteTraceTx(context.Background(), e.db, e.txhash, &types.TraceTx{
 		Res:    res.JsonToString(),
-		LogNum: field.NewInt(int64(logNum)),
+		LogNum: *field.NewInt(int64(logNum)),
 	})
 	if err != nil {
 		log.Errorf("write trace tx: %v", err)

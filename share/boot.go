@@ -21,5 +21,7 @@ const (
 	HttpPort = "http_port"
 	TlsPath  = "tls_path"
 	TLS      = "tls"
-	MdbxPath = "mdbx_path"
+
+	RpcUrls  = "rpc_urls"
+	WorkChan = "work_chan"
 )

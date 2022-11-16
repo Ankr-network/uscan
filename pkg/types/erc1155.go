@@ -8,7 +8,7 @@ import (
 
 type Erc1155Transfer struct {
 	TransactionHash common.Hash
-	BlockNumber     *field.BigInt
+	BlockNumber     field.BigInt
 	Contract        common.Address
 	Method          []byte
 	From            common.Address

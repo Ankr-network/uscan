@@ -42,21 +42,22 @@ type Block struct {
 	TxHash           common.Hash    `json:"transactionsRoot"`
 	ReceiptHash      common.Hash    `json:"receiptsRoot"`
 	Bloom            Bloom          `json:"logsBloom"`
-	Difficulty       *field.BigInt  `json:"difficulty"`
-	GasLimit         *field.BigInt  `json:"gasLimit"`
-	GasUsed          *field.BigInt  `json:"gasUsed"`
-	TimeStamp        *field.BigInt  `json:"timestamp"`
+	Difficulty       field.BigInt   `json:"difficulty"`
+	GasLimit         field.BigInt   `json:"gasLimit"`
+	GasUsed          field.BigInt   `json:"gasUsed"`
+	TimeStamp        field.BigInt   `json:"timestamp"`
 	Extra            []byte         `json:"extraData"`
 	MixDigest        common.Hash    `json:"mixHash"`
 	Nonce            BlockNonce     `json:"nonce"`
-	BaseFee          *field.BigInt  `json:"baseFeePerGas"`
-	Size             *field.BigInt  `json:"size"`
-	TotalDifficulty  *field.BigInt  `json:"totalDifficulty"`
+	BaseFee          field.BigInt   `json:"baseFeePerGas"`
+	Size             field.BigInt   `json:"size"`
+	TotalDifficulty  field.BigInt   `json:"totalDifficulty"`
 	Transactions     []common.Hash  `json:"transactions" rlp:"-"`
-	TransactionTotal *field.BigInt  `json:"-"`
+	TransactionTotal field.BigInt   `json:"-"`
 }
 
 func (b *Block) Marshal() ([]byte, error) {
+	b.TransactionTotal = *field.NewInt(int64(len(b.Transactions)))
 	return rlp.EncodeToBytes(b)
 }
 

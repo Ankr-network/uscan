@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/Ankr-network/uscan/pkg/kv"
+	"github.com/Ankr-network/uscan/pkg/kv/mdbx"
 	store "github.com/Ankr-network/uscan/pkg/rawdb"
 	"github.com/Ankr-network/uscan/pkg/response"
 	"github.com/Ankr-network/uscan/pkg/types"
@@ -26,7 +27,7 @@ const (
 )
 
 func Home() (map[string]interface{}, error) {
-	home, err := store.ReadHome(context.Background(), nil)
+	home, err := store.ReadHome(context.Background(), mdbx.DB)
 	if err != nil {
 
 	}
@@ -35,22 +36,22 @@ func Home() (map[string]interface{}, error) {
 
 	// Blocks
 	blocks := make([]*types.HomeBlock, 0)
-	var totalTxs int
-	var beginTime, endTime int
+	var totalTxs uint64
+	var beginTime, endTime uint64
 	for i, block := range home.Blocks {
 		blocks = append(blocks, &types.HomeBlock{
 			Number:            block.Number.String(),
-			Timestamp:         uint64(block.Timestamp),
+			Timestamp:         block.Timestamp.ToUint64(),
 			Miner:             block.Miner.String(),
 			GasUsed:           block.GasUsed.String(),
-			TransactionsTotal: uint64(block.TransactionsTotal),
+			TransactionsTotal: block.TransactionsTotal.ToUint64(),
 		})
-		totalTxs += block.TransactionsTotal
+		totalTxs += block.TransactionsTotal.ToUint64()
 		if i == 0 {
-			endTime = block.Timestamp
+			endTime = block.Timestamp.ToUint64()
 		}
 		if i == len(blocks)-1 {
-			beginTime = block.Timestamp
+			beginTime = block.Timestamp.ToUint64()
 		}
 	}
 	t := endTime - beginTime
@@ -77,7 +78,7 @@ func Home() (map[string]interface{}, error) {
 	return resp, nil
 }
 
-func GetHomeMetrics(home *types.Home, dateTxs []map[string]string, totalTxs, t int) map[string]interface{} {
+func GetHomeMetrics(home *types.Home, dateTxs []map[string]string, totalTxs, t uint64) map[string]interface{} {
 	metrics := make(map[string]interface{})
 	metrics["address"] = home.AddressTotal.String()
 	metrics["tx"] = home.TxTotal.String()
@@ -85,7 +86,7 @@ func GetHomeMetrics(home *types.Home, dateTxs []map[string]string, totalTxs, t i
 	metrics["avgBlockTime"] = 3
 	metrics["dailyTx"] = 0
 	if len(dateTxs) > 0 {
-		metrics["dailyTx"] = dateTxs[len(dateTxs)-1]
+		metrics["dailyTx"] = dateTxs[len(dateTxs)-1]["txCount"]
 	}
 	if t == 0 {
 		metrics["tps"] = 0
@@ -187,7 +188,7 @@ func GetBlock(blockNum string) (*types.BlockResp, error) {
 		return nil, errors.New("parse block num error")
 	}
 	num := field.BigInt(*n)
-	block, err := store.ReadBlock(context.Background(), nil, &num)
+	block, err := store.ReadBlock(context.Background(), mdbx.DB, &num)
 	if err != nil {
 		return nil, err
 	}
@@ -203,10 +204,11 @@ func GetBlock(blockNum string) (*types.BlockResp, error) {
 	for _, transaction := range block.Transactions {
 		txs = append(txs, transaction.String())
 	}
+
 	resp := &types.BlockResp{
 		BaseFeePerGas:     block.BaseFee.StringPointer(),
 		Difficulty:        block.Difficulty.String(),
-		ExtraData:         string(block.Extra),
+		ExtraData:         hexutil.Encode(block.Extra),
 		GasLimit:          block.GasLimit.String(),
 		GasUsed:           block.GasUsed.String(),
 		Hash:              block.Hash.Hex(),
@@ -230,7 +232,7 @@ func GetBlock(blockNum string) (*types.BlockResp, error) {
 }
 
 func ListBlocks(pager *types.Pager) ([]*types.Block, string, error) {
-	home, err := store.ReadHome(context.Background(), nil)
+	home, err := store.ReadHome(context.Background(), mdbx.DB)
 	if err != nil {
 		return nil, "0", err
 	}
@@ -239,10 +241,10 @@ func ListBlocks(pager *types.Pager) ([]*types.Block, string, error) {
 	if total == "" {
 		return blocks, "0", nil
 	}
-	begin, end := ParsePage(home.BlockNumber, pager.Offset, pager.Limit)
+	begin, end := ParsePage(&home.BlockNumber, pager.Offset, pager.Limit)
 	p := begin
 	for {
-		block, err := store.ReadBlock(context.Background(), nil, p)
+		block, err := store.ReadBlock(context.Background(), mdbx.DB, p)
 		if err != nil {
 			return nil, "0", err
 		}

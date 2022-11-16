@@ -13,20 +13,23 @@ const (
 )
 
 type Account struct {
-	BlockNumber *field.BigInt
-	Owner       common.Address `rlp:"-"`
-	Balance     *field.BigInt
+	Owner common.Address `rlp:"-"`
 
 	Erc20            bool `rlp:"-"`
 	Erc721           bool `rlp:"-"`
 	Erc1155          bool `rlp:"-"`
 	ErcFlag          byte
-	Creator          *common.Address
-	TxHash           *common.Hash
+	BlockNumber      field.BigInt
+	Balance          field.BigInt
 	Name, Symbol     string
-	TokenTotalSupply *field.BigInt
-	NftTotalSupply   *field.BigInt
-	Decimals         *field.BigInt // erc20 decimals
+	TokenTotalSupply field.BigInt
+	NftTotalSupply   field.BigInt
+	Decimals         field.BigInt // erc20 decimals
+
+	Creator common.Address
+	TxHash  common.Hash
+
+	Retry field.BigInt
 }
 
 func (b *Account) Marshal() ([]byte, error) {

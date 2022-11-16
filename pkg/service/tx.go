@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/Ankr-network/uscan/pkg/kv"
+	"github.com/Ankr-network/uscan/pkg/kv/mdbx"
 	store "github.com/Ankr-network/uscan/pkg/rawdb"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -11,7 +12,7 @@ import (
 )
 
 func ListTxs(pager *types.Pager) ([]*types.ListTransactionResp, string, error) {
-	num, err := store.ReadTxTotal(context.Background(), nil)
+	num, err := store.ReadTxTotal(context.Background(), mdbx.DB)
 	if err != nil {
 		return nil, "0", err
 	}
@@ -19,7 +20,7 @@ func ListTxs(pager *types.Pager) ([]*types.ListTransactionResp, string, error) {
 	p := begin
 	txs := make([]*types.Tx, 0)
 	for {
-		tx, err := store.ReadTxByIndex(context.Background(), nil, p)
+		tx, err := store.ReadTxByIndex(context.Background(), mdbx.DB, p)
 		if err != nil {
 			return nil, "0", err
 		}
@@ -34,7 +35,7 @@ func ListTxs(pager *types.Pager) ([]*types.ListTransactionResp, string, error) {
 	addresses := make(map[string]common.Address)
 	for _, tx := range txs {
 		var blockNumber *string
-		if tx.BlockNum != nil {
+		if tx.BlockNum.String() != "" {
 			num := DecodeBig(tx.BlockNum.String()).String()
 			blockNumber = &num
 		}
@@ -86,11 +87,11 @@ var TokenTopics = []string{
 
 func GetTxBase(tx string) (*types.TransactionBaseResp, error) {
 	txHash := common.HexToHash(tx)
-	txData, err := store.ReadTx(context.Background(), nil, txHash)
+	txData, err := store.ReadTx(context.Background(), mdbx.DB, txHash)
 	if err != nil {
 		return nil, err
 	}
-	rtData, err := store.ReadRt(context.Background(), nil, txHash)
+	rtData, err := store.ReadRt(context.Background(), mdbx.DB, txHash)
 	if err != nil && err != kv.NotFound {
 		return nil, err
 	}
@@ -106,8 +107,8 @@ func GetTxBase(tx string) (*types.TransactionBaseResp, error) {
 		resp.GasUsed = rtData.GasUsed.String()
 	}
 
-	if txData.BlockNum != nil {
-		block, _ := store.ReadBlock(context.Background(), nil, txData.BlockNum)
+	if txData.BlockNum.String() != "" {
+		block, _ := store.ReadBlock(context.Background(), mdbx.DB, &txData.BlockNum)
 		resp.GasLimit = block.GasLimit.String()
 		text, err := block.Nonce.MarshalText()
 		if err != nil {
@@ -120,16 +121,16 @@ func GetTxBase(tx string) (*types.TransactionBaseResp, error) {
 
 func GetTx(tx string) (*types.TxResp, error) {
 	txHash := common.HexToHash(tx)
-	txData, err := store.ReadTx(context.Background(), nil, txHash)
+	txData, err := store.ReadTx(context.Background(), mdbx.DB, txHash)
 	if err != nil {
 		return nil, err
 	}
-	rtData, err := store.ReadRt(context.Background(), nil, txHash)
+	rtData, err := store.ReadRt(context.Background(), mdbx.DB, txHash)
 	if err != nil && err != kv.NotFound {
 		return nil, err
 	}
 	var blockNumber *string
-	if txData.BlockNum != nil {
+	if txData.BlockNum.String() != "" {
 		num := DecodeBig(txData.BlockNum.String()).String()
 		blockNumber = &num
 	}
@@ -186,8 +187,8 @@ func GetTx(tx string) (*types.TxResp, error) {
 		resp.RtResp = rtResp
 	}
 
-	if txData.BlockNum != nil {
-		block, _ := store.ReadBlock(context.Background(), nil, txData.BlockNum)
+	if txData.BlockNum.String() != "" {
+		block, _ := store.ReadBlock(context.Background(), mdbx.DB, &txData.BlockNum)
 		resp.BaseFeePerGas = block.BaseFee.StringPointer()
 		resp.GasLimit = block.GasLimit.String()
 	}
@@ -295,8 +296,11 @@ func GetTx(tx string) (*types.TxResp, error) {
 func GetAccounts(addresses map[string]common.Address) (map[string]*types.Account, error) {
 	accounts := make(map[string]*types.Account, 0)
 	for _, address := range addresses {
-		account, err := store.ReadAccount(context.Background(), nil, address)
+		account, err := store.ReadAccount(context.Background(), mdbx.DB, address)
 		if err != nil {
+			if err == kv.NotFound {
+				continue
+			}
 			return nil, err
 		}
 		accounts[account.Owner.String()] = account

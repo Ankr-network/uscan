@@ -4,6 +4,7 @@ import (
 	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rlp"
 )
 
@@ -13,17 +14,25 @@ type Log struct {
 	Data    hexutil.Bytes  `json:"data"`
 }
 
+func (l *Log) ToEthLog() ethTypes.Log {
+	return ethTypes.Log{
+		Address: l.Address,
+		Topics:  l.Topics,
+		Data:    l.Data,
+	}
+}
+
 type Rt struct {
 	TxHash            common.Hash     `json:"transactionHash"  rlp:"-"`
-	Type              *field.BigInt   `json:"type,omitempty"`
+	Type              field.BigInt    `json:"type,omitempty"`
 	PostState         hexutil.Bytes   `json:"root"`
-	Status            *field.BigInt   `json:"status"`
-	CumulativeGasUsed *field.BigInt   `json:"cumulativeGasUsed"`
+	Status            field.BigInt    `json:"status"`
+	CumulativeGasUsed field.BigInt    `json:"cumulativeGasUsed"`
 	Bloom             Bloom           `json:"logsBloom"`
 	Logs              []*Log          `json:"logs"`
 	ContractAddress   *common.Address `json:"contractAddress"`
-	GasUsed           *field.BigInt   `json:"gasUsed"`
-	EffectiveGasPrice *field.BigInt   `json:"effectiveGasPrice"`
+	GasUsed           field.BigInt    `json:"gasUsed"`
+	EffectiveGasPrice field.BigInt    `json:"effectiveGasPrice"`
 	ExistInternalTx   bool
 	ReturnErr         string
 }

@@ -13,10 +13,10 @@ import (
 
 func TestRtSerialize(t *testing.T) {
 	b := &Rt{
-		Type:              field.NewInt(1),
+		Type:              *field.NewInt(1),
 		PostState:         []byte{111, 22, 1, 231, 31},
-		Status:            field.NewInt(1),
-		CumulativeGasUsed: field.NewInt(11),
+		Status:            *field.NewInt(1),
+		CumulativeGasUsed: *field.NewInt(11),
 		Bloom:             [types.BloomByteLength]byte{11, 22, 22, 21, 245, 221, 2, 3, 4, 52, 3},
 		Logs: []*Log{
 			{
@@ -28,9 +28,9 @@ func TestRtSerialize(t *testing.T) {
 
 		TxHash:          common.HexToHash(""),
 		ContractAddress: &common.Address{},
-		GasUsed:         field.NewInt(232),
+		GasUsed:         *field.NewInt(232),
 
-		EffectiveGasPrice: field.NewInt(111),
+		EffectiveGasPrice: *field.NewInt(111),
 	}
 
 	res, err := b.Marshal()

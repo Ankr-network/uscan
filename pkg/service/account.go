@@ -29,11 +29,11 @@ func GetAccountInfo(address string) (*types.AccountResp, error) {
 		NftTotalSupply:   account.NftTotalSupply.StringPointer(),
 		Decimals:         account.Decimals.ToUint64(),
 	}
-	if account.Creator != nil {
+	if account.Creator.Hex() != "" {
 		creator := account.Creator.Hex()
 		resp.Creator = &creator
 	}
-	if account.TxHash != nil {
+	if account.TxHash.Hex() != "" {
 		txHash := account.TxHash.Hex()
 		resp.TxHash = &txHash
 	}
@@ -69,7 +69,7 @@ func GetAccountTxs(pager *types.Pager, address string) (map[string]interface{}, 
 	addresses := make(map[string]common.Address)
 	for _, tx := range txs {
 		var blockNumber *string
-		if tx.BlockNum != nil {
+		if tx.BlockNum.String() != "" {
 			num := DecodeBig(tx.BlockNum.String()).String()
 			blockNumber = &num
 		}
@@ -153,11 +153,11 @@ func GetAccountItxs(pager *types.Pager, address string) ([]*types.InternalTxResp
 	resp := make([]*types.InternalTxResp, len(txs))
 	for i, tx := range txs {
 		var blockNumber string
-		if tx.BlockNumber != nil {
+		if tx.BlockNumber.String() != "" {
 			blockNumber = DecodeBig(tx.BlockNumber.String()).String()
 		}
 		var to string
-		if tx.To != nil {
+		if tx.To.String() != "" {
 			to = tx.To.String()
 		}
 		resp[i] = &types.InternalTxResp{
@@ -201,7 +201,7 @@ func GetAccountErc20Txns(pager *types.Pager, address string) ([]*types.Erc20TxRe
 
 	for _, tx := range txs {
 		var blockNumber string
-		if tx.BlockNumber != nil {
+		if tx.BlockNumber.String() != "" {
 			blockNumber = DecodeBig(tx.BlockNumber.String()).String()
 		}
 		t := &types.Erc20TxResp{
@@ -273,7 +273,7 @@ func GetAccountErc721Txs(pager *types.Pager, address string) ([]*types.Erc721TxR
 
 	for _, tx := range txs {
 		var blockNumber string
-		if tx.BlockNumber != nil {
+		if tx.BlockNumber.String() != "" {
 			blockNumber = DecodeBig(tx.BlockNumber.String()).String()
 		}
 		t := &types.Erc721TxResp{
@@ -343,7 +343,7 @@ func GetAccountErc1155Txs(pager *types.Pager, address string) ([]*types.Erc1155T
 
 	for _, tx := range txs {
 		var blockNumber string
-		if tx.BlockNumber != nil {
+		if tx.BlockNumber.String() != "" {
 			blockNumber = DecodeBig(tx.BlockNumber.String()).String()
 		}
 		t := &types.Erc1155TxResp{

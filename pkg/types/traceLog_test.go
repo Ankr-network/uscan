@@ -10,7 +10,7 @@ import (
 func TestTraceTx(t *testing.T) {
 	traceTx := TraceTx{
 		Res:    "dsadadsada",
-		LogNum: field.NewInt(1111),
+		LogNum: *field.NewInt(1111),
 	}
 
 	val, err := traceTx.Marshal()

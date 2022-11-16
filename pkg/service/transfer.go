@@ -33,7 +33,7 @@ func ListErc20Txs(pager *types.Pager) ([]*types.Erc20TxResp, string, error) {
 
 	for _, tx := range txs {
 		var blockNumber string
-		if tx.BlockNumber != nil {
+		if tx.BlockNumber.String() != "" {
 			blockNumber = DecodeBig(tx.BlockNumber.String()).String()
 		}
 		t := &types.Erc20TxResp{
@@ -104,7 +104,7 @@ func ListErc721Txs(pager *types.Pager) ([]*types.Erc721TxResp, string, error) {
 
 	for _, tx := range txs {
 		var blockNumber string
-		if tx.BlockNumber != nil {
+		if tx.BlockNumber.String() != "" {
 			blockNumber = DecodeBig(tx.BlockNumber.String()).String()
 		}
 		t := &types.Erc721TxResp{
@@ -173,7 +173,7 @@ func ListErc1155Txs(pager *types.Pager) ([]*types.Erc1155TxResp, string, error) 
 
 	for _, tx := range txs {
 		var blockNumber string
-		if tx.BlockNumber != nil {
+		if tx.BlockNumber.String() != "" {
 			blockNumber = DecodeBig(tx.BlockNumber.String()).String()
 		}
 		t := &types.Erc1155TxResp{

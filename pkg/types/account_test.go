@@ -19,20 +19,20 @@ func TestAccount(t *testing.T) {
 	creator := common.HexToAddress("0x3c10ec535d1a8cba60536a963cc62a1df855e71c")
 	txhash := common.HexToHash("0x537e032e5bc31b5e52f5e28c61c5aefd631b438bf5b9c71913c19d022a4ae528")
 	a := &Account{
-		BlockNumber: field.NewInt(12231),
+		BlockNumber: *field.NewInt(12231),
 		Owner:       common.HexToAddress("0x473780deaf4a2ac070bbba936b0cdefe7f267dfc"),
-		Balance:     field.NewInt(1111),
+		Balance:     *field.NewInt(1111),
 
 		Erc20:            true,
-		Erc721:           true,
+		Erc721:           false,
 		Erc1155:          true,
-		Creator:          &creator,
-		TxHash:           &txhash,
+		Creator:          creator,
+		TxHash:           txhash,
 		Name:             "dasdada",
 		Symbol:           "Da",
-		TokenTotalSupply: field.NewInt(219282312313),
-		NftTotalSupply:   field.NewInt(431421),
-		Decimals:         field.NewInt(18),
+		TokenTotalSupply: *field.NewInt(219282312313),
+		NftTotalSupply:   *field.NewInt(431421),
+		Decimals:         *field.NewInt(18),
 	}
 	res, err := a.Marshal()
 
@@ -77,5 +77,28 @@ func TestByteCode(t *testing.T) {
 	assert.Equal(t, len(res), 2)
 	t.Log(hexutil.Bytes(append(resNotArg[0], end...)).String())
 	t.Log(hexutil.Bytes(resNotArg[1]).String())
+}
 
+func TestAccountNil(t *testing.T) {
+
+	testAcc := &Account{
+		BlockNumber: *field.NewInt(2222),
+		Owner:       common.HexToAddress("0x473780deaf4a2ac070bbba936b0cdefe7f267dfc"),
+		Balance:     *field.NewInt(1111),
+		Erc20:       true,
+		Erc721:      false,
+		Erc1155:     true,
+		Name:        "dasdada",
+		Symbol:      "Da",
+	}
+
+	bytesReq, err := testAcc.Marshal()
+	assert.NoError(t, err)
+	t.Log(hexutil.Encode(bytesReq))
+
+	out := &Account{}
+	err = out.Unmarshal(bytesReq)
+	assert.NoError(t, err)
+	t.Log(out)
+	assert.Equal(t, out.BlockNumber, *field.NewInt(2222))
 }
