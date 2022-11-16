@@ -10,10 +10,8 @@ import (
 )
 
 var (
-	homeKey      = []byte("/home")
-	syncingKey   = []byte("/syncing")
-	homeData     *types.Home
-	syncingBlock *field.BigInt
+	homeKey    = []byte("/home")
+	syncingKey = []byte("/syncing")
 )
 
 /*
@@ -24,9 +22,6 @@ table: home
 */
 
 func ReadHome(ctx context.Context, db kv.Getter) (home *types.Home, err error) {
-	if homeData != nil {
-		return homeData, nil
-	}
 	var bytesRes []byte
 	bytesRes, err = db.Get(ctx, homeKey, &kv.ReadOption{Table: share.HomeTbl})
 	if err != nil {
@@ -35,7 +30,6 @@ func ReadHome(ctx context.Context, db kv.Getter) (home *types.Home, err error) {
 	home = &types.Home{}
 	err = home.Unmarshal(bytesRes)
 	if err == nil {
-		homeData = home
 		home.DateTxs = make(map[string]*field.BigInt)
 	}
 	return
@@ -47,17 +41,10 @@ func WriteHome(ctx context.Context, db kv.Putter, home *types.Home) (err error) 
 	if err != nil {
 		return
 	}
-	err = db.Put(ctx, homeKey, bytesRes, &kv.WriteOption{Table: share.HomeTbl})
-	if err == nil {
-		homeData = home
-	}
-	return
+	return db.Put(ctx, homeKey, bytesRes, &kv.WriteOption{Table: share.HomeTbl})
 }
 
 func ReadSyncingBlock(ctx context.Context, db kv.Getter) (bk *field.BigInt, err error) {
-	if syncingBlock != nil {
-		return syncingBlock, nil
-	}
 	var bytesRes []byte
 	bytesRes, err = db.Get(ctx, syncingKey, &kv.ReadOption{Table: share.HomeTbl})
 
@@ -66,14 +53,9 @@ func ReadSyncingBlock(ctx context.Context, db kv.Getter) (bk *field.BigInt, err 
 	}
 	bk = &field.BigInt{}
 	bk.SetBytes(bytesRes)
-	syncingBlock = bk
 	return
 }
 
 func WriteSyncingBlock(ctx context.Context, db kv.Putter, bk *field.BigInt) (err error) {
-	err = db.Put(ctx, syncingKey, bk.Bytes(), &kv.WriteOption{Table: share.HomeTbl})
-	if err == nil {
-		syncingBlock = bk
-	}
-	return
+	return db.Put(ctx, syncingKey, bk.Bytes(), &kv.WriteOption{Table: share.HomeTbl})
 }

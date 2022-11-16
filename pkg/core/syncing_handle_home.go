@@ -12,23 +12,32 @@ import (
 	"github.com/Ankr-network/uscan/pkg/types"
 )
 
-func (n *blockHandle) updateHome(ctx context.Context) error {
-	home, err := rawdb.ReadHome(ctx, n.db)
-	if err != nil {
-		if errors.Is(err, kv.NotFound) {
-			log.Infof("read home not found")
-			home = &types.Home{
-				TxTotal:      *field.NewInt(0),
-				AddressTotal: *field.NewInt(0),
-				Blocks:       make([]*types.BkSim, 0, 1),
-				Txs:          make([]*types.TxSim, 0, 10),
-				DateTxs:      make(map[string]*field.BigInt),
+var homeCache *types.Home
+
+func (n *blockHandle) updateHome(ctx context.Context) (err error) {
+	var home *types.Home
+	if homeCache == nil {
+		home, err = rawdb.ReadHome(ctx, n.db)
+		if err != nil {
+			if errors.Is(err, kv.NotFound) {
+				log.Infof("read home not found")
+				home = &types.Home{
+					TxTotal:      *field.NewInt(0),
+					AddressTotal: *field.NewInt(0),
+					Blocks:       make([]*types.BkSim, 0, 1),
+					Txs:          make([]*types.TxSim, 0, 10),
+					DateTxs:      make(map[string]*field.BigInt),
+				}
+				err = nil
+				homeCache = home
+			} else {
+				return err
 			}
-			err = nil
-		} else {
-			return err
 		}
+	} else {
+		home = homeCache
 	}
+
 	home.BlockNumber = *n.blockData.Number
 
 	home.TxTotal.Add(field.NewInt(int64(len(n.transactionData))))
