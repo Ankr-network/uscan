@@ -1,6 +1,8 @@
 package types
 
 import (
+	"encoding/json"
+
 	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
@@ -32,12 +34,20 @@ type Home struct {
 	Blocks       []*BkSim
 	Txs          []*TxSim
 	DateTxs      map[string]*field.BigInt `rlp:"-"` // example : 20221023 => 0x2
+	DateTxsByte  []byte
 }
 
 func (b *Home) Marshal() ([]byte, error) {
+	b.DateTxsByte, _ = json.Marshal(b.DateTxs)
 	return rlp.EncodeToBytes(b)
 }
 
-func (b *Home) Unmarshal(bin []byte) error {
-	return rlp.DecodeBytes(bin, &b)
+func (b *Home) Unmarshal(bin []byte) (err error) {
+
+	err = rlp.DecodeBytes(bin, &b)
+	if err == nil {
+		json.Unmarshal(b.DateTxsByte, &b.DateTxs)
+		b.DateTxsByte = []byte{}
+	}
+	return
 }
