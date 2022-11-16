@@ -16,6 +16,7 @@ type InternalTx struct {
 	To              common.Address
 	Amount          field.BigInt
 	GasLimit        field.BigInt
+	TimeStamp       field.BigInt
 }
 
 func (b *InternalTx) Marshal() ([]byte, error) {
