@@ -60,12 +60,12 @@ func Home() (map[string]interface{}, error) {
 	txs := make([]*types.HomeTx, 0)
 	for _, tx := range home.Txs {
 		txs = append(txs, &types.HomeTx{
-			Hash:     tx.Hash.Hex(),
-			From:     tx.From.Hex(),
-			To:       tx.To.Hex(),
-			GasPrice: tx.GasPrice.StringPointer(),
-			Gas:      tx.Gas.StringPointer(),
-			//CreatedTime: tx. // TODO
+			Hash:        tx.Hash.Hex(),
+			From:        tx.From.Hex(),
+			To:          tx.To.Hex(),
+			GasPrice:    tx.GasPrice.StringPointer(),
+			Gas:         tx.Gas.StringPointer(),
+			CreatedTime: tx.Timestamp.ToUint64(),
 		})
 	}
 
@@ -93,10 +93,11 @@ func GetHomeMetrics(home *types.Home, dateTxs []map[string]string, totalTxs, t u
 	} else {
 		metrics["tps"] = totalTxs / t
 	}
-	// TODO 舍弃
+
 	metrics["diff"] = 0
-	metrics["erc20"] = 0
-	metrics["erc721"] = 0
+	metrics["erc20"] = home.Erc20Total.String()
+	metrics["erc721"] = home.Erc721Total.String()
+	metrics["erc1155"] = home.Erc1155Total.String()
 	return metrics
 }
 
@@ -122,8 +123,7 @@ func Search(f *types.SearchFilter) (map[string]interface{}, error) {
 	case allFilters:
 		address := common.IsHexAddress(f.Keyword)
 		if address {
-			// common.HexToAddress(f.Keyword).Hex()
-			account, err := store.ReadAccount(context.Background(), nil, common.HexToAddress(f.Keyword))
+			account, err := store.ReadAccount(context.Background(), mdbx.DB, common.HexToAddress(f.Keyword))
 			if err != nil {
 				return nil, err
 			}
@@ -140,7 +140,7 @@ func Search(f *types.SearchFilter) (map[string]interface{}, error) {
 				return nil, errors.New("parse block num error")
 			}
 			num := field.BigInt(*n)
-			block, err := store.ReadBlock(context.Background(), nil, &num)
+			block, err := store.ReadBlock(context.Background(), mdbx.DB, &num)
 			if err != nil && err != kv.NotFound {
 				return nil, err
 			}
@@ -149,7 +149,7 @@ func Search(f *types.SearchFilter) (map[string]interface{}, error) {
 				return resp, nil
 			}
 		}
-		transaction, err := store.ReadTx(context.Background(), nil, common.HexToHash(f.Keyword))
+		transaction, err := store.ReadTx(context.Background(), mdbx.DB, common.HexToHash(f.Keyword))
 		if err != nil && err != kv.NotFound {
 			return nil, err
 		}
@@ -232,16 +232,16 @@ func GetBlock(blockNum string) (*types.BlockResp, error) {
 }
 
 func ListBlocks(pager *types.Pager) ([]*types.Block, string, error) {
-	home, err := store.ReadHome(context.Background(), mdbx.DB)
+	home, err := store.ReadSyncingBlock(context.Background(), mdbx.DB)
 	if err != nil {
 		return nil, "0", err
 	}
-	total := home.BlockNumber.String()
+	total := home.String()
 	blocks := make([]*types.Block, 0)
 	if total == "" {
 		return blocks, "0", nil
 	}
-	begin, end := ParsePage(&home.BlockNumber, pager.Offset, pager.Limit)
+	begin, end := ParsePage(home, pager.Offset, pager.Limit)
 	p := begin
 	for {
 		block, err := store.ReadBlock(context.Background(), mdbx.DB, p)
@@ -281,12 +281,15 @@ func ParsePage(num *field.BigInt, offset, limit int64) (*field.BigInt, *field.Bi
 	if uint64(offset) >= num.ToUint64() {
 		offset = 0
 	}
-	num.Add(field.NewInt(-offset))
-	beginHex := num.String()
 
-	num.Add(field.NewInt(-(limit - 1)))
-	endHex := num.String()
-	if num.Cmp(field.NewInt(0)) <= 0 {
+	n := field.BigInt(*DecodeBig(num.String()))
+
+	n.Add(field.NewInt(-offset))
+	beginHex := n.String()
+
+	n.Add(field.NewInt(-(limit - 1)))
+	endHex := n.String()
+	if n.Cmp(field.NewInt(0)) <= 0 {
 		endHex = "0x1"
 	}
 

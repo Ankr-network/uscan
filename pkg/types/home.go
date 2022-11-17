@@ -1,6 +1,8 @@
 package types
 
 import (
+	"encoding/json"
+
 	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
@@ -15,11 +17,12 @@ type BkSim struct {
 }
 
 type TxSim struct {
-	Hash     common.Hash    `json:"hash"`
-	From     common.Address `json:"from"`
-	To       common.Address `json:"to"`
-	GasPrice field.BigInt   `json:"gas_price"`
-	Gas      field.BigInt   `json:"gas"`
+	Hash      common.Hash    `json:"hash"`
+	From      common.Address `json:"from"`
+	To        common.Address `json:"to"`
+	GasPrice  field.BigInt   `json:"gas_price"`
+	Gas       field.BigInt   `json:"gas"`
+	Timestamp field.BigInt   `json:"timestamp"`
 }
 
 type Home struct {
@@ -32,12 +35,20 @@ type Home struct {
 	Blocks       []*BkSim
 	Txs          []*TxSim
 	DateTxs      map[string]*field.BigInt `rlp:"-"` // example : 20221023 => 0x2
+	DateTxsByte  []byte
 }
 
 func (b *Home) Marshal() ([]byte, error) {
+	b.DateTxsByte, _ = json.Marshal(b.DateTxs)
 	return rlp.EncodeToBytes(b)
 }
 
-func (b *Home) Unmarshal(bin []byte) error {
-	return rlp.DecodeBytes(bin, &b)
+func (b *Home) Unmarshal(bin []byte) (err error) {
+
+	err = rlp.DecodeBytes(bin, &b)
+	if err == nil {
+		json.Unmarshal(b.DateTxsByte, &b.DateTxs)
+		b.DateTxsByte = []byte{}
+	}
+	return
 }
