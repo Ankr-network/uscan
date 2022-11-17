@@ -29,7 +29,7 @@ func ReadHome(ctx context.Context, db kv.Getter) (home *types.Home, err error) {
 	}
 	home = &types.Home{}
 	err = home.Unmarshal(bytesRes)
-	if err == nil {
+	if err == nil && home.DateTxs == nil {
 		home.DateTxs = make(map[string]*field.BigInt)
 	}
 	return
