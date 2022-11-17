@@ -17,11 +17,12 @@ type BkSim struct {
 }
 
 type TxSim struct {
-	Hash     common.Hash    `json:"hash"`
-	From     common.Address `json:"from"`
-	To       common.Address `json:"to"`
-	GasPrice field.BigInt   `json:"gas_price"`
-	Gas      field.BigInt   `json:"gas"`
+	Hash      common.Hash    `json:"hash"`
+	From      common.Address `json:"from"`
+	To        common.Address `json:"to"`
+	GasPrice  field.BigInt   `json:"gas_price"`
+	Gas       field.BigInt   `json:"gas"`
+	Timestamp field.BigInt   `json:"timestamp"`
 }
 
 type Home struct {

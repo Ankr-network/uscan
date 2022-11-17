@@ -54,11 +54,12 @@ func (n *blockHandle) updateHome(ctx context.Context) (err error) {
 	})
 	for _, v := range n.transactionData {
 		home.Txs = append(home.Txs, &types.TxSim{
-			Hash:     v.Hash,
-			From:     v.From,
-			To:       *v.To,
-			GasPrice: v.GasPrice,
-			Gas:      v.Gas,
+			Hash:      v.Hash,
+			From:      v.From,
+			To:        *v.To,
+			GasPrice:  v.GasPrice,
+			Gas:       v.Gas,
+			Timestamp: v.TimeStamp,
 		})
 	}
 
