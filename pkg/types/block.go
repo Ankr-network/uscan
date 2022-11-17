@@ -61,6 +61,10 @@ func (b *Block) Marshal() ([]byte, error) {
 	return rlp.EncodeToBytes(b)
 }
 
-func (b *Block) Unmarshal(bin []byte) error {
-	return rlp.DecodeBytes(bin, &b)
+func (b *Block) Unmarshal(bin []byte) (err error) {
+	err = rlp.DecodeBytes(bin, &b)
+	if err == nil {
+		b.Number = &field.BigInt{}
+	}
+	return
 }
