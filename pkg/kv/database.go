@@ -30,26 +30,35 @@ type WriteOption struct {
 	Table string
 }
 
-type Putter interface {
+type Writer interface {
 	Put(ctx context.Context, key, val []byte, opts *WriteOption) error
+	Del(ctx context.Context, key []byte, opts *WriteOption) error
 }
 
-type Getter interface {
+type Reader interface {
 	Has(ctx context.Context, key []byte, opts *ReadOption) (bool, error)
 	Get(ctx context.Context, key []byte, opts *ReadOption) ([]byte, error)
 }
 type Closer interface {
 	Close() error
 }
-
 type Transactioner interface {
 	BeginTx(context.Context) (context.Context, error)
 	Commit(context.Context)
 	RollBack(context.Context)
 }
+
+type Sorter interface {
+	SPut(ctx context.Context, key, val []byte, opts *WriteOption) error
+	SDel(ctx context.Context, key, val []byte, opts *WriteOption) error
+	SCount(ctx context.Context, key []byte, opts *ReadOption) (uint64, error)
+	SGet(ctx context.Context, key []byte, page, pageSize uint64, opts *ReadOption) ([][]byte, error)
+}
+
 type Database interface {
 	Transactioner
-	Putter
-	Getter
+	Writer
+	Reader
+	Sorter
 	Closer
 }

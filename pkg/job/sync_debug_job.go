@@ -18,13 +18,13 @@ type SyncDebugJob struct {
 	txhash common.Hash
 	client rpcclient.RpcClient
 	retry  int
-	db     kv.Putter
+	db     kv.Writer
 }
 
 func NewSyncDebugJob(
 	txhash common.Hash,
 	client rpcclient.RpcClient,
-	db kv.Putter,
+	db kv.Writer,
 ) *SyncDebugJob {
 	return &SyncDebugJob{
 		txhash: txhash,

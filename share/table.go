@@ -17,10 +17,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package share
 
 const (
-	HomeTbl     = "home"
-	AccountsTbl = "accounts"
-	TxTbl       = "transactions"
-	BlockTbl    = "blocks"
-	TraceLogTbl = "traceLogs"
-	TransferTbl = "transfers"
+	HomeTbl        = "home"
+	AccountsTbl    = "accounts"
+	TxTbl          = "transactions"
+	BlockTbl       = "blocks"
+	TraceLogTbl    = "traceLogs"
+	TransferTbl    = "transfers"
+	HolderTbl      = "holders"
+	HolderSortTabl = "holdersSort"
 )

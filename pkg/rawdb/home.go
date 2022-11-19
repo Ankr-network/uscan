@@ -21,7 +21,7 @@ table: home
 /syncing => block number
 */
 
-func ReadHome(ctx context.Context, db kv.Getter) (home *types.Home, err error) {
+func ReadHome(ctx context.Context, db kv.Reader) (home *types.Home, err error) {
 	var bytesRes []byte
 	bytesRes, err = db.Get(ctx, homeKey, &kv.ReadOption{Table: share.HomeTbl})
 	if err != nil {
@@ -35,7 +35,7 @@ func ReadHome(ctx context.Context, db kv.Getter) (home *types.Home, err error) {
 	return
 }
 
-func WriteHome(ctx context.Context, db kv.Putter, home *types.Home) (err error) {
+func WriteHome(ctx context.Context, db kv.Writer, home *types.Home) (err error) {
 	var bytesRes []byte
 	bytesRes, err = home.Marshal()
 	if err != nil {
@@ -44,7 +44,7 @@ func WriteHome(ctx context.Context, db kv.Putter, home *types.Home) (err error) 
 	return db.Put(ctx, homeKey, bytesRes, &kv.WriteOption{Table: share.HomeTbl})
 }
 
-func ReadSyncingBlock(ctx context.Context, db kv.Getter) (bk *field.BigInt, err error) {
+func ReadSyncingBlock(ctx context.Context, db kv.Reader) (bk *field.BigInt, err error) {
 	var bytesRes []byte
 	bytesRes, err = db.Get(ctx, syncingKey, &kv.ReadOption{Table: share.HomeTbl})
 
@@ -56,6 +56,6 @@ func ReadSyncingBlock(ctx context.Context, db kv.Getter) (bk *field.BigInt, err 
 	return
 }
 
-func WriteSyncingBlock(ctx context.Context, db kv.Putter, bk *field.BigInt) (err error) {
+func WriteSyncingBlock(ctx context.Context, db kv.Writer, bk *field.BigInt) (err error) {
 	return db.Put(ctx, syncingKey, bk.Bytes(), &kv.WriteOption{Table: share.HomeTbl})
 }

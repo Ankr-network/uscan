@@ -18,6 +18,7 @@ package pkg
 
 import (
 	"context"
+
 	"github.com/Ankr-network/uscan/pkg/contract"
 	"github.com/Ankr-network/uscan/pkg/core"
 	"github.com/Ankr-network/uscan/pkg/rpcclient"

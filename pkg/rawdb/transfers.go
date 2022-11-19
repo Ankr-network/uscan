@@ -31,11 +31,11 @@ table: transfers
 /erc1155/<index> => erc1155 transfer info
 */
 
-func WriteErc20Total(ctx context.Context, db kv.Putter, total *field.BigInt) error {
+func WriteErc20Total(ctx context.Context, db kv.Writer, total *field.BigInt) error {
 	return db.Put(ctx, erc20TotalKey, total.Bytes(), &kv.WriteOption{Table: share.TransferTbl})
 }
 
-func ReadErc20Total(ctx context.Context, db kv.Getter) (total *field.BigInt, err error) {
+func ReadErc20Total(ctx context.Context, db kv.Reader) (total *field.BigInt, err error) {
 	var bytesRes []byte
 	bytesRes, err = db.Get(ctx, erc20TotalKey, &kv.ReadOption{Table: share.TransferTbl})
 	if err != nil {
@@ -46,11 +46,11 @@ func ReadErc20Total(ctx context.Context, db kv.Getter) (total *field.BigInt, err
 	return
 }
 
-func WriteErc721Total(ctx context.Context, db kv.Putter, total *field.BigInt) error {
+func WriteErc721Total(ctx context.Context, db kv.Writer, total *field.BigInt) error {
 	return db.Put(ctx, erc721TotalKey, total.Bytes(), &kv.WriteOption{Table: share.TransferTbl})
 }
 
-func ReadErc721Total(ctx context.Context, db kv.Getter) (total *field.BigInt, err error) {
+func ReadErc721Total(ctx context.Context, db kv.Reader) (total *field.BigInt, err error) {
 	var bytesRes []byte
 	bytesRes, err = db.Get(ctx, erc721TotalKey, &kv.ReadOption{Table: share.TransferTbl})
 	if err != nil {
@@ -62,11 +62,11 @@ func ReadErc721Total(ctx context.Context, db kv.Getter) (total *field.BigInt, er
 	return
 }
 
-func WriteErc1155Total(ctx context.Context, db kv.Putter, total *field.BigInt) error {
+func WriteErc1155Total(ctx context.Context, db kv.Writer, total *field.BigInt) error {
 	return db.Put(ctx, erc1155TotalKey, total.Bytes(), &kv.WriteOption{Table: share.TransferTbl})
 }
 
-func ReadErc1155Total(ctx context.Context, db kv.Getter) (total *field.BigInt, err error) {
+func ReadErc1155Total(ctx context.Context, db kv.Reader) (total *field.BigInt, err error) {
 	var bytesRes []byte
 	bytesRes, err = db.Get(ctx, erc1155TotalKey, &kv.ReadOption{Table: share.TransferTbl})
 	if err != nil {
@@ -78,7 +78,7 @@ func ReadErc1155Total(ctx context.Context, db kv.Getter) (total *field.BigInt, e
 	return
 }
 
-func WriteErc20Transfer(ctx context.Context, db kv.Putter, index *field.BigInt, data *types.Erc20Transfer) (err error) {
+func WriteErc20Transfer(ctx context.Context, db kv.Writer, index *field.BigInt, data *types.Erc20Transfer) (err error) {
 	var bytesRes []byte
 	bytesRes, err = data.Marshal()
 	if err != nil {
@@ -87,7 +87,7 @@ func WriteErc20Transfer(ctx context.Context, db kv.Putter, index *field.BigInt, 
 	return db.Put(ctx, append(erc20IndexPrefix, index.Bytes()...), bytesRes, &kv.WriteOption{Table: share.TransferTbl})
 }
 
-func ReadErc20Transfer(ctx context.Context, db kv.Getter, index *field.BigInt) (data *types.Erc20Transfer, err error) {
+func ReadErc20Transfer(ctx context.Context, db kv.Reader, index *field.BigInt) (data *types.Erc20Transfer, err error) {
 	var bytesRes []byte
 	bytesRes, err = db.Get(ctx, append(erc20IndexPrefix, index.Bytes()...), &kv.ReadOption{Table: share.TransferTbl})
 	if err != nil {
@@ -98,7 +98,7 @@ func ReadErc20Transfer(ctx context.Context, db kv.Getter, index *field.BigInt) (
 	return
 }
 
-func WriteErc721Transfer(ctx context.Context, db kv.Putter, index *field.BigInt, data *types.Erc721Transfer) (err error) {
+func WriteErc721Transfer(ctx context.Context, db kv.Writer, index *field.BigInt, data *types.Erc721Transfer) (err error) {
 	var bytesRes []byte
 	bytesRes, err = data.Marshal()
 	if err != nil {
@@ -107,7 +107,7 @@ func WriteErc721Transfer(ctx context.Context, db kv.Putter, index *field.BigInt,
 	return db.Put(ctx, append(erc721IndexPrefix, index.Bytes()...), bytesRes, &kv.WriteOption{Table: share.TransferTbl})
 }
 
-func ReadErc721Transfer(ctx context.Context, db kv.Getter, index *field.BigInt) (data *types.Erc721Transfer, err error) {
+func ReadErc721Transfer(ctx context.Context, db kv.Reader, index *field.BigInt) (data *types.Erc721Transfer, err error) {
 	var bytesRes []byte
 	bytesRes, err = db.Get(ctx, append(erc721IndexPrefix, index.Bytes()...), &kv.ReadOption{Table: share.TransferTbl})
 	if err != nil {
@@ -119,7 +119,7 @@ func ReadErc721Transfer(ctx context.Context, db kv.Getter, index *field.BigInt) 
 	return
 }
 
-func WriteErc1155Transfer(ctx context.Context, db kv.Putter, index *field.BigInt, data *types.Erc1155Transfer) (err error) {
+func WriteErc1155Transfer(ctx context.Context, db kv.Writer, index *field.BigInt, data *types.Erc1155Transfer) (err error) {
 	var bytesRes []byte
 	bytesRes, err = data.Marshal()
 	if err != nil {
@@ -128,7 +128,7 @@ func WriteErc1155Transfer(ctx context.Context, db kv.Putter, index *field.BigInt
 	return db.Put(ctx, append(erc1155IndexPrefix, index.Bytes()...), bytesRes, &kv.WriteOption{Table: share.TransferTbl})
 }
 
-func ReadErc1155Transfer(ctx context.Context, db kv.Getter, index *field.BigInt) (data *types.Erc1155Transfer, err error) {
+func ReadErc1155Transfer(ctx context.Context, db kv.Reader, index *field.BigInt) (data *types.Erc1155Transfer, err error) {
 	var bytesRes []byte
 	bytesRes, err = db.Get(ctx, append(erc1155IndexPrefix, index.Bytes()...), &kv.ReadOption{Table: share.TransferTbl})
 	if err != nil {

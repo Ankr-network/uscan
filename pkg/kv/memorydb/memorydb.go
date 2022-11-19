@@ -10,8 +10,9 @@ import (
 var _ kv.Database = (*Database)(nil)
 
 type Database struct {
-	db   map[string]map[string][]byte
-	lock sync.RWMutex
+	db     map[string]map[string][]byte
+	dbList map[string][][]byte
+	lock   sync.RWMutex
 }
 
 func NewMemoryDb() *Database {
@@ -31,6 +32,14 @@ func (db *Database) Put(ctx context.Context, key, val []byte, opts *kv.WriteOpti
 		db.db[opts.Table] = make(map[string][]byte)
 	}
 	db.db[opts.Table][string(key)] = val
+	return nil
+}
+
+func (db *Database) Del(ctx context.Context, key []byte, opts *kv.WriteOption) error {
+	_, ok := db.db[opts.Table]
+	if ok {
+		delete(db.db[opts.Table], string(key))
+	}
 	return nil
 }
 

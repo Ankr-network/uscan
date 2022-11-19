@@ -21,7 +21,7 @@ var (
 	iTxPrefix []byte = []byte("/iTx/")
 )
 
-func WriteITx(ctx context.Context, db kv.Putter, hash common.Hash, index *field.BigInt, data *types.InternalTx) (err error) {
+func WriteITx(ctx context.Context, db kv.Writer, hash common.Hash, index *field.BigInt, data *types.InternalTx) (err error) {
 	var (
 		key      = GetITxKey(hash, index)
 		bytesRes []byte
@@ -33,7 +33,7 @@ func WriteITx(ctx context.Context, db kv.Putter, hash common.Hash, index *field.
 	return db.Put(ctx, key, bytesRes, &kv.WriteOption{Table: share.TxTbl})
 }
 
-func ReadITx(ctx context.Context, db kv.Getter, hash common.Hash, index *field.BigInt) (data *types.InternalTx, err error) {
+func ReadITx(ctx context.Context, db kv.Reader, hash common.Hash, index *field.BigInt) (data *types.InternalTx, err error) {
 	var (
 		key      = GetITxKey(hash, index)
 		bytesRes []byte
@@ -50,11 +50,11 @@ func ReadITx(ctx context.Context, db kv.Getter, hash common.Hash, index *field.B
 	return
 }
 
-func WriteItxTotal(ctx context.Context, db kv.Putter, hash common.Hash, total *field.BigInt) (err error) {
+func WriteItxTotal(ctx context.Context, db kv.Writer, hash common.Hash, total *field.BigInt) (err error) {
 	return db.Put(ctx, GetITxTotalKey(hash), total.Bytes(), &kv.WriteOption{Table: share.TxTbl})
 }
 
-func ReadITxTotal(ctx context.Context, db kv.Getter, hash common.Hash) (total *field.BigInt, err error) {
+func ReadITxTotal(ctx context.Context, db kv.Reader, hash common.Hash) (total *field.BigInt, err error) {
 	var bytesRes []byte
 	bytesRes, err = db.Get(ctx, GetITxTotalKey(hash), &kv.ReadOption{Table: share.TxTbl})
 	if err != nil {

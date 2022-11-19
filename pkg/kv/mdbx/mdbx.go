@@ -43,6 +43,11 @@ var schemas = []string{
 	share.BlockTbl,
 	share.TraceLogTbl,
 	share.TransferTbl,
+	share.HolderTbl,
+}
+
+var schemasSort = []string{
+	share.HolderSortTabl,
 }
 
 var DB *MdbxDB
@@ -72,6 +77,14 @@ func NewMdbx(path string) *MdbxDB {
 	env.Update(func(txn *mdbx.Txn) error {
 		for _, name := range schemas {
 			dbi, err := txn.CreateDBI(name)
+			if err != nil {
+				log.Fatal(err)
+			}
+			d.tables[name] = dbi
+		}
+
+		for _, name := range schemasSort {
+			dbi, err := txn.OpenDBI(name, mdbx.Create|mdbx.DupSort, nil, nil)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -117,6 +130,17 @@ func (d *MdbxDB) Put(ctx context.Context, key []byte, val []byte, opts *kv.Write
 	} else {
 		return d.env.Update(func(txn *mdbx.Txn) error {
 			return txn.Put(d.tables[opts.Table], key, val, mdbx.Upsert)
+		})
+	}
+}
+
+func (d *MdbxDB) Del(ctx context.Context, key []byte, opts *kv.WriteOption) error {
+	out, ok := ctx.Value(txKey{}).(*mdbx.Txn)
+	if ok {
+		return out.Del(d.tables[opts.Table], key, nil)
+	} else {
+		return d.env.Update(func(txn *mdbx.Txn) error {
+			return txn.Del(d.tables[opts.Table], key, nil)
 		})
 	}
 }

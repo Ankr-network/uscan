@@ -21,11 +21,13 @@ var (
 func (n *blockHandle) writeTxAndRt(ctx context.Context, tx *types.Tx, rt *types.Rt) (err error) {
 	if txTotal == nil {
 		txTotal, err = rawdb.ReadTxTotal(ctx, n.db)
-		if errors.Is(err, kv.NotFound) {
-			txTotal = field.NewInt(0)
-		} else {
-			log.Errorf("get tx total: %v", err)
-			return err
+		if err != nil {
+			if errors.Is(err, kv.NotFound) {
+				txTotal = field.NewInt(0)
+			} else {
+				log.Errorf("get tx total: %v", err)
+				return err
+			}
 		}
 	}
 

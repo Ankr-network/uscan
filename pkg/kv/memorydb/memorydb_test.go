@@ -36,4 +36,11 @@ func TestMemoryDb(t *testing.T) {
 	assert.Equal(t, err, kv.NotFound)
 	assert.Nil(t, v)
 
+	err = db.Del(context.Background(), key, &kv.WriteOption{Table: table})
+	assert.NoError(t, err)
+
+	exists, err = db.Has(context.Background(), key, &kv.ReadOption{Table: table})
+	assert.NoError(t, err)
+	assert.False(t, exists)
+
 }

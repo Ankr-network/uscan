@@ -2,6 +2,7 @@ package rawdb
 
 import (
 	"context"
+
 	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/types"
@@ -24,7 +25,7 @@ table : transactions
 /all/tx/total => total
 /all/tx/<index> => <txhash>
 */
-func WriteTx(ctx context.Context, db kv.Putter, hash common.Hash, data *types.Tx) (err error) {
+func WriteTx(ctx context.Context, db kv.Writer, hash common.Hash, data *types.Tx) (err error) {
 	var (
 		key      = append(txKey, hash.Bytes()...)
 		bytesRes []byte
@@ -36,7 +37,7 @@ func WriteTx(ctx context.Context, db kv.Putter, hash common.Hash, data *types.Tx
 	return db.Put(ctx, key, bytesRes, &kv.WriteOption{Table: share.TxTbl})
 }
 
-func ReadTx(ctx context.Context, db kv.Getter, hash common.Hash) (data *types.Tx, err error) {
+func ReadTx(ctx context.Context, db kv.Reader, hash common.Hash) (data *types.Tx, err error) {
 	var (
 		key      = append(txKey, hash.Bytes()...)
 		bytesRes []byte
@@ -54,11 +55,11 @@ func ReadTx(ctx context.Context, db kv.Getter, hash common.Hash) (data *types.Tx
 	return
 }
 
-func WriteTxIndex(ctx context.Context, db kv.Putter, index *field.BigInt, hash common.Hash) error {
+func WriteTxIndex(ctx context.Context, db kv.Writer, index *field.BigInt, hash common.Hash) error {
 	return db.Put(ctx, append(txIndexKey, index.Bytes()...), hash.Bytes(), &kv.WriteOption{Table: share.TxTbl})
 }
 
-func ReadTxByIndex(ctx context.Context, db kv.Getter, index *field.BigInt) (data *types.Tx, err error) {
+func ReadTxByIndex(ctx context.Context, db kv.Reader, index *field.BigInt) (data *types.Tx, err error) {
 	var hashByte []byte
 	hashByte, err = db.Get(ctx, append(txIndexKey, index.Bytes()...), &kv.ReadOption{Table: share.TxTbl})
 	if err != nil {
@@ -68,11 +69,11 @@ func ReadTxByIndex(ctx context.Context, db kv.Getter, index *field.BigInt) (data
 	return ReadTx(ctx, db, hash)
 }
 
-func WriteTxTotal(ctx context.Context, db kv.Putter, total *field.BigInt) error {
+func WriteTxTotal(ctx context.Context, db kv.Writer, total *field.BigInt) error {
 	return db.Put(ctx, txTotalKey, total.Bytes(), &kv.WriteOption{Table: share.TxTbl})
 }
 
-func ReadTxTotal(ctx context.Context, db kv.Getter) (total *field.BigInt, err error) {
+func ReadTxTotal(ctx context.Context, db kv.Reader) (total *field.BigInt, err error) {
 	var bytesRes []byte
 	bytesRes, err = db.Get(ctx, txTotalKey, &kv.ReadOption{Table: share.TxTbl})
 	if err != nil {
@@ -83,7 +84,7 @@ func ReadTxTotal(ctx context.Context, db kv.Getter) (total *field.BigInt, err er
 	return
 }
 
-func WriteRt(ctx context.Context, db kv.Putter, hash common.Hash, data *types.Rt) (err error) {
+func WriteRt(ctx context.Context, db kv.Writer, hash common.Hash, data *types.Rt) (err error) {
 	var (
 		key      = append(rtKey, hash.Bytes()...)
 		bytesRes []byte
@@ -95,7 +96,7 @@ func WriteRt(ctx context.Context, db kv.Putter, hash common.Hash, data *types.Rt
 	return db.Put(ctx, key, bytesRes, &kv.WriteOption{Table: share.TxTbl})
 }
 
-func ReadRt(ctx context.Context, db kv.Getter, hash common.Hash) (data *types.Rt, err error) {
+func ReadRt(ctx context.Context, db kv.Reader, hash common.Hash) (data *types.Rt, err error) {
 	var (
 		key      = append(rtKey, hash.Bytes()...)
 		bytesRes []byte

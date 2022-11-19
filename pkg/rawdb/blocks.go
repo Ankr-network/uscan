@@ -19,7 +19,7 @@ table: blocks
 /block/<block num> => block info
 */
 
-func ReadBlock(ctx context.Context, db kv.Getter, blockNum *field.BigInt) (bk *types.Block, err error) {
+func ReadBlock(ctx context.Context, db kv.Reader, blockNum *field.BigInt) (bk *types.Block, err error) {
 	var (
 		key      = append(blockKey, blockNum.Bytes()...)
 		bytesRes []byte
@@ -38,7 +38,7 @@ func ReadBlock(ctx context.Context, db kv.Getter, blockNum *field.BigInt) (bk *t
 	return
 }
 
-func WriteBlock(ctx context.Context, db kv.Putter, blockNum *field.BigInt, bk *types.Block) (err error) {
+func WriteBlock(ctx context.Context, db kv.Writer, blockNum *field.BigInt, bk *types.Block) (err error) {
 	var (
 		key      = append(blockKey, blockNum.Bytes()...)
 		bytesRes []byte

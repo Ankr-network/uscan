@@ -9,7 +9,7 @@
 *.test
 uscan
 bin/
-
+uscandb
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 *.bak
