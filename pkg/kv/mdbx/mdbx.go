@@ -48,6 +48,7 @@ var schemas = []string{
 
 var schemasSort = []string{
 	share.HolderSortTabl,
+	share.InventorySortTabl,
 }
 
 var DB *MdbxDB

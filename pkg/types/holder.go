@@ -23,3 +23,22 @@ func ByteToHolder(bin []byte) (*Holder, error) {
 func (h Holder) ToBytes() []byte {
 	return append(common.BytesToHash(h.Quantity.Bytes()).Bytes(), h.Addr.Bytes()...)
 }
+
+type Inventory struct {
+	Addr    common.Address
+	TokenID field.BigInt
+}
+
+func ByteToInventory(bin []byte) (*Inventory, error) {
+	if len(bin) != 52 {
+		return nil, ErrorInvalidByte
+	}
+	h := &Inventory{}
+	h.TokenID.SetBytes(bin[:32])
+	h.Addr.SetBytes(bin[32:])
+	return h, nil
+}
+
+func (h Inventory) ToBytes() []byte {
+	return append(common.BytesToHash(h.TokenID.Bytes()).Bytes(), h.Addr.Bytes()...)
+}

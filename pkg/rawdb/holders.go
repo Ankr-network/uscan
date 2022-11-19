@@ -113,29 +113,22 @@ func GetErc721Holder(ctx context.Context, db kv.Sorter, contract common.Address,
 	return
 }
 
-// func DelErc721InventoryTokenId(ctx context.Context, db kv.Sorter, contract common.Address, holder *types.Holder) (err error) {
-// 	var (
-// 		key = append(erc721HolderPrefix, contract.Bytes()...)
-// 	)
-// 	return db.SDel(ctx, key, holder.ToBytes(), &kv.WriteOption{Table: share.HolderSortTabl})
-// }
-
-// func GetErc721Inventory(ctx context.Context, db kv.Sorter, contract common.Address, page, pageSize uint64) (holders []*types.Holder, err error) {
-// 	var key = append(erc721HolderPrefix, contract.Bytes()...)
-// 	var res [][]byte
-// 	res, err = db.SGet(ctx, key, page, pageSize, &kv.ReadOption{Table: share.HolderSortTabl})
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	holders = make([]*types.Holder, len(res))
-// 	for i, v := range res {
-// 		holders[i], err = types.ByteToHolder(v)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 	}
-// 	return
-// }
+func GetErc721Inventory(ctx context.Context, db kv.Sorter, contract common.Address, page, pageSize uint64) (inventorys []*types.Inventory, err error) {
+	var key = append(append(erc721HolderPrefix, contract.Bytes()...), []byte("/tokenId")...)
+	var res [][]byte
+	res, err = db.SGet(ctx, key, page, pageSize, &kv.ReadOption{Table: share.InventorySortTabl})
+	if err != nil {
+		return nil, err
+	}
+	inventorys = make([]*types.Inventory, len(res))
+	for i, v := range res {
+		inventorys[i], err = types.ByteToInventory(v)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return
+}
 
 func WriteErc721HolderAmount(ctx context.Context, db kv.Database, contract common.Address, holder *types.Holder) (err error) {
 	var key = getErc721HolderKey(contract, holder.Addr)
@@ -161,13 +154,24 @@ func ReadErc721HolderAmount(ctx context.Context, db kv.Reader, contract common.A
 	return
 }
 
-func WriteErc721HolderTokenIdQuantity(ctx context.Context, db kv.Writer, contract common.Address, addr common.Address, tokenId *field.BigInt, quantity *field.BigInt) (err error) {
+func WriteErc721HolderTokenIdQuantity(ctx context.Context, db kv.Database, contract common.Address, addr common.Address, tokenId *field.BigInt, quantity *field.BigInt) (err error) {
 	var key = getErc721TokenIdHolderKey(contract, addr, tokenId)
-	if quantity.Cmp(field.NewInt(0)) == 0 {
-		return db.Del(ctx, key, &kv.WriteOption{Table: share.HolderTbl})
-	} else {
-		return db.Put(ctx, key, quantity.Bytes(), &kv.WriteOption{Table: share.HolderTbl})
+	inventory := types.Inventory{
+		Addr:    addr,
+		TokenID: *tokenId,
 	}
+	if quantity.Cmp(field.NewInt(0)) == 0 {
+		err = db.SDel(ctx, append(append(erc721HolderPrefix, contract.Bytes()...), []byte("/tokenId")...), inventory.ToBytes(), &kv.WriteOption{Table: share.InventorySortTabl})
+		if err == nil {
+			err = db.Del(ctx, key, &kv.WriteOption{Table: share.HolderTbl})
+		}
+	} else {
+		err = db.SPut(ctx, append(append(erc721HolderPrefix, contract.Bytes()...), []byte("/tokenId")...), inventory.ToBytes(), &kv.WriteOption{Table: share.InventorySortTabl})
+		if err == nil {
+			err = db.Put(ctx, key, quantity.Bytes(), &kv.WriteOption{Table: share.HolderTbl})
+		}
+	}
+	return err
 }
 
 func ReadErc721HolderTokenIdQuantity(ctx context.Context, db kv.Reader, contract common.Address, addr common.Address, tokenId *field.BigInt) (quantity *field.BigInt, err error) {
@@ -188,6 +192,22 @@ func DelErc1155HolderAmount(ctx context.Context, db kv.Sorter, contract common.A
 		key = append(erc1155HolderPrefix, contract.Bytes()...)
 	)
 	return db.SDel(ctx, key, holder.ToBytes(), &kv.WriteOption{Table: share.HolderSortTabl})
+}
+
+func GetErc1155Inventory(ctx context.Context, db kv.Sorter, contract common.Address, page, pageSize uint64) (inventorys []*field.BigInt, err error) {
+	var key = append(append(erc1155HolderPrefix, contract.Bytes()...), []byte("/tokenId")...)
+	var res [][]byte
+	res, err = db.SGet(ctx, key, page, pageSize, &kv.ReadOption{Table: share.InventorySortTabl})
+	if err != nil {
+		return nil, err
+	}
+	inventorys = make([]*field.BigInt, len(res))
+	for i, v := range res {
+		bi := &field.BigInt{}
+		bi.SetBytes(v)
+		inventorys[i] = bi
+	}
+	return
 }
 
 func GetErc1155Holder(ctx context.Context, db kv.Sorter, contract common.Address, page, pageSize uint64) (holders []*types.Holder, err error) {
@@ -231,13 +251,17 @@ func ReadErc1155HolderAmount(ctx context.Context, db kv.Reader, contract common.
 	return
 }
 
-func WriteErc1155HolderTokenIdQuantity(ctx context.Context, db kv.Writer, contract common.Address, addr common.Address, tokenId *field.BigInt, quantity *field.BigInt) (err error) {
+func WriteErc1155HolderTokenIdQuantity(ctx context.Context, db kv.Database, contract common.Address, addr common.Address, tokenId *field.BigInt, quantity *field.BigInt) (err error) {
 	var key = getErc1155TokenIdHolderKey(contract, addr, tokenId)
-	if quantity.Cmp(field.NewInt(0)) == 0 {
-		return db.Del(ctx, key, &kv.WriteOption{Table: share.HolderTbl})
-	} else {
-		return db.Put(ctx, key, quantity.Bytes(), &kv.WriteOption{Table: share.HolderTbl})
+	err = db.SPut(ctx, append(append(erc1155HolderPrefix, contract.Bytes()...), []byte("/tokenId")...), tokenId.Bytes(), &kv.WriteOption{Table: share.InventorySortTabl})
+	if err == nil {
+		if quantity.Cmp(field.NewInt(0)) == 0 {
+			err = db.Del(ctx, key, &kv.WriteOption{Table: share.HolderTbl})
+		} else {
+			err = db.Put(ctx, key, quantity.Bytes(), &kv.WriteOption{Table: share.HolderTbl})
+		}
 	}
+	return err
 }
 
 func ReadErc1155HolderTokenIdQuantity(ctx context.Context, db kv.Reader, contract common.Address, addr common.Address, tokenId *field.BigInt) (quantity *field.BigInt, err error) {
