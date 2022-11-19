@@ -6,8 +6,8 @@ import (
 )
 
 type Holder struct {
-	Addr   common.Address
-	Amount field.BigInt
+	Addr     common.Address
+	Quantity field.BigInt
 }
 
 func ByteToHolder(bin []byte) (*Holder, error) {
@@ -15,11 +15,11 @@ func ByteToHolder(bin []byte) (*Holder, error) {
 		return nil, ErrorInvalidByte
 	}
 	h := &Holder{}
-	h.Amount.SetBytes(bin[:32])
+	h.Quantity.SetBytes(bin[:32])
 	h.Addr.SetBytes(bin[32:])
 	return h, nil
 }
 
 func (h Holder) ToBytes() []byte {
-	return append(common.BytesToHash(h.Amount.Bytes()).Bytes(), h.Addr.Bytes()...)
+	return append(common.BytesToHash(h.Quantity.Bytes()).Bytes(), h.Addr.Bytes()...)
 }

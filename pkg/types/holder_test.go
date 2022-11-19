@@ -10,8 +10,8 @@ import (
 
 func TestHolder(t *testing.T) {
 	h := &Holder{
-		Addr:   common.HexToAddress("0x473780deaf4a2ac070bbba936b0cdefe7f267dfc"),
-		Amount: *field.NewInt(1111),
+		Addr:     common.HexToAddress("0x473780deaf4a2ac070bbba936b0cdefe7f267dfc"),
+		Quantity: *field.NewInt(1111),
 	}
 	bytesRes := h.ToBytes()
 	t.Log(bytesRes)
@@ -20,5 +20,5 @@ func TestHolder(t *testing.T) {
 	out, err := ByteToHolder(bytesRes)
 	assert.NoError(t, err)
 	assert.Equal(t, h.Addr, out.Addr)
-	assert.Equal(t, h.Amount, out.Amount)
+	assert.Equal(t, h.Quantity, out.Quantity)
 }

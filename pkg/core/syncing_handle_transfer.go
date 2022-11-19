@@ -175,7 +175,7 @@ func (n *blockHandle) writeErc20HolderAmount(ctx context.Context, contract commo
 			return err
 		}
 	}
-	err = rawdb.DelErc20HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Amount: *oriAmount})
+	err = rawdb.DelErc20HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
 	if err != nil {
 		return err
 	}
@@ -187,7 +187,7 @@ func (n *blockHandle) writeErc20HolderAmount(ctx context.Context, contract commo
 			oriAmount = field.NewInt(0)
 		}
 	}
-	return rawdb.WriteErc20HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Amount: *oriAmount})
+	return rawdb.WriteErc20HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
 }
 
 // ------------------- erc721 transfer -----------------
@@ -327,7 +327,7 @@ func (n *blockHandle) writeErc721HolderAmount(ctx context.Context, contract comm
 		}
 		oriAmount = field.NewInt(0)
 	}
-	err = rawdb.DelErc721HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Amount: *oriAmount})
+	err = rawdb.DelErc721HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
 	if err != nil {
 		return err
 	}
@@ -347,7 +347,7 @@ func (n *blockHandle) writeErc721HolderAmount(ctx context.Context, contract comm
 	if oriAmount.Cmp(field.NewInt(0)) < 0 {
 		oriAmount = field.NewInt(0)
 	}
-	return rawdb.WriteErc721HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Amount: *oriAmount})
+	return rawdb.WriteErc721HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
 }
 
 // ------------------- erc1155 transfer -----------------
@@ -483,7 +483,7 @@ func (n *blockHandle) writeErc1155HolderAmount(ctx context.Context, contract com
 		}
 		oriAmount = field.NewInt(0)
 	}
-	err = rawdb.DelErc721HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Amount: *oriAmount})
+	err = rawdb.DelErc721HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
 	if err != nil {
 		return err
 	}
@@ -517,7 +517,7 @@ func (n *blockHandle) writeErc1155HolderAmount(ctx context.Context, contract com
 	if oriAmount.Cmp(field.NewInt(0)) < 0 {
 		oriAmount = field.NewInt(0)
 	}
-	return rawdb.WriteErc1155HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Amount: *oriAmount})
+	return rawdb.WriteErc1155HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
 }
 
 // write total for erc20

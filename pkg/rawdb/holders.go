@@ -23,9 +23,14 @@ import (
 
 /*
 	// key = > sort
-	/erc20/<contract> => value + amount
-	/erc721/<contract> => value + amount
-	/erc1155/<contract> => value + amount
+	// holder
+	/erc20/<contract> => value + address
+	/erc721/<contract> => value + address
+	/erc1155/<contract> => value + address
+
+	// inventory
+	/erc721/<contract>/tokenId => tokenId + address
+	/erc1155/<contract>/tokenId => tokenId
 */
 
 var (
@@ -61,7 +66,7 @@ func GetErc20Holder(ctx context.Context, db kv.Sorter, contract common.Address, 
 
 func WriteErc20HolderAmount(ctx context.Context, db kv.Database, contract common.Address, holder *types.Holder) (err error) {
 	var key = getErc20HolderKey(contract, holder.Addr)
-	err = db.Put(ctx, key, holder.Amount.Bytes(), &kv.WriteOption{Table: share.HolderTbl})
+	err = db.Put(ctx, key, holder.Quantity.Bytes(), &kv.WriteOption{Table: share.HolderTbl})
 	if err == nil {
 		var (
 			sortKey = append(erc20HolderPrefix, contract.Bytes()...)
@@ -108,9 +113,33 @@ func GetErc721Holder(ctx context.Context, db kv.Sorter, contract common.Address,
 	return
 }
 
+// func DelErc721InventoryTokenId(ctx context.Context, db kv.Sorter, contract common.Address, holder *types.Holder) (err error) {
+// 	var (
+// 		key = append(erc721HolderPrefix, contract.Bytes()...)
+// 	)
+// 	return db.SDel(ctx, key, holder.ToBytes(), &kv.WriteOption{Table: share.HolderSortTabl})
+// }
+
+// func GetErc721Inventory(ctx context.Context, db kv.Sorter, contract common.Address, page, pageSize uint64) (holders []*types.Holder, err error) {
+// 	var key = append(erc721HolderPrefix, contract.Bytes()...)
+// 	var res [][]byte
+// 	res, err = db.SGet(ctx, key, page, pageSize, &kv.ReadOption{Table: share.HolderSortTabl})
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	holders = make([]*types.Holder, len(res))
+// 	for i, v := range res {
+// 		holders[i], err = types.ByteToHolder(v)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 	}
+// 	return
+// }
+
 func WriteErc721HolderAmount(ctx context.Context, db kv.Database, contract common.Address, holder *types.Holder) (err error) {
 	var key = getErc721HolderKey(contract, holder.Addr)
-	err = db.Put(ctx, key, holder.Amount.Bytes(), &kv.WriteOption{Table: share.HolderTbl})
+	err = db.Put(ctx, key, holder.Quantity.Bytes(), &kv.WriteOption{Table: share.HolderTbl})
 	if err == nil {
 		var (
 			sortKey = append(erc721HolderPrefix, contract.Bytes()...)
@@ -180,7 +209,7 @@ func GetErc1155Holder(ctx context.Context, db kv.Sorter, contract common.Address
 
 func WriteErc1155HolderAmount(ctx context.Context, db kv.Database, contract common.Address, holder *types.Holder) (err error) {
 	var key = getErc1155HolderKey(contract, holder.Addr)
-	err = db.Put(ctx, key, holder.Amount.Bytes(), &kv.WriteOption{Table: share.HolderTbl})
+	err = db.Put(ctx, key, holder.Quantity.Bytes(), &kv.WriteOption{Table: share.HolderTbl})
 	if err == nil {
 		var (
 			sortKey = append(erc1155HolderPrefix, contract.Bytes()...)
