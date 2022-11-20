@@ -18,7 +18,6 @@ package mdbx
 
 import (
 	"context"
-
 	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/torquem-ch/mdbx-go/mdbx"
 )
@@ -55,18 +54,53 @@ func (d *MdbxDB) SDel(ctx context.Context, key, val []byte, opts *kv.WriteOption
 	return
 }
 
-func (d *MdbxDB) SGet(ctx context.Context, key []byte, page, pageSize uint64, opts *kv.ReadOption) (rs [][]byte, err error) {
-	// d.env.View(func(txn *mdbx.Txn) error {
-	// 	c, err := txn.OpenCursor(d.tables[opts.Table])
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	defer c.Close()
-	// 	_, _, err = c.Get(key, nil, mdbx.SetRange)
-	// 	count, err = c.Count()
-	// 	return err
-	// })
-	return nil, nil
+func (d *MdbxDB) SGet(ctx context.Context, key []byte, offset, limit uint64, opts *kv.ReadOption) (rs [][]byte, err error) {
+	d.env.View(func(txn *mdbx.Txn) error {
+		c, err := txn.OpenCursor(d.tables[opts.Table])
+		if err != nil {
+			return err
+		}
+		defer c.Close()
+		var k, v []byte
+		k, v, err = c.Get(key, nil, mdbx.Set)
+		if err != nil {
+			if mdbx.IsNotFound(err) {
+				err = kv.NotFound
+			}
+			return err
+		}
+		count, err := c.Count()
+		if err != nil {
+			if mdbx.IsNotFound(err) {
+				err = kv.NotFound
+			}
+			return err
+		}
+		k, v, err = c.Get(k, v, mdbx.LastDup)
+		if err != nil {
+			if mdbx.IsNotFound(err) {
+				err = kv.NotFound
+			}
+			return err
+		}
+		rs = make([][]byte, 0)
+		begin := offset + 1
+		end := offset + limit
+		var i uint64
+		i = 1
+		for k, v, err := c.Get(k, v, mdbx.GetCurrent); k != nil && err == nil; k, v, err = c.Get(nil, nil, mdbx.PrevDup) {
+			if i >= begin {
+				rs = append(rs, v)
+			}
+			if i == end || i == count {
+				break
+			}
+			i++
+		}
+		return err
+	})
+
+	return
 }
 
 func (d *MdbxDB) SCount(ctx context.Context, key []byte, opts *kv.ReadOption) (count uint64, err error) {
@@ -76,7 +110,13 @@ func (d *MdbxDB) SCount(ctx context.Context, key []byte, opts *kv.ReadOption) (c
 			return err
 		}
 		defer c.Close()
-		_, _, err = c.Get(key, nil, mdbx.SetRange)
+		_, _, err = c.Get(key, nil, mdbx.Set)
+		if err != nil {
+			if mdbx.IsNotFound(err) {
+				err = kv.NotFound
+			}
+			return err
+		}
 		count, err = c.Count()
 		return err
 	})

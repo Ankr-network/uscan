@@ -240,3 +240,12 @@ type TraceTxResp struct {
 type TraceTx2Resp struct {
 	Res string `json:"res"`
 }
+type HolderResp struct {
+	Address  string
+	Quantity string
+}
+
+type InventoryResp struct {
+	Address string
+	TokenID uint64
+}

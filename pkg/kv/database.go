@@ -52,7 +52,7 @@ type Sorter interface {
 	SPut(ctx context.Context, key, val []byte, opts *WriteOption) error
 	SDel(ctx context.Context, key, val []byte, opts *WriteOption) error
 	SCount(ctx context.Context, key []byte, opts *ReadOption) (uint64, error)
-	SGet(ctx context.Context, key []byte, page, pageSize uint64, opts *ReadOption) ([][]byte, error)
+	SGet(ctx context.Context, key []byte, offset, limit uint64, opts *ReadOption) ([][]byte, error)
 }
 
 type Database interface {

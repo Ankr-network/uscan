@@ -46,8 +46,8 @@ func SetupRouter(g fiber.Router) {
 	g.Get("/tokens/:address/type", getTokenType)
 	g.Get("/tokens/:address/transfers", listTokenTransfers)
 	//g.Get("/tokens/:address/transfers/download", downloadTokenTransfers)
-	//g.Get("/tokens/:address/holders", listTokenHolders)
-	//g.Get("/tokens/:address/inventory", listInventory)
+	g.Get("/tokens/:address/holders", listTokenHolders)
+	g.Get("/tokens/:address/inventory", listInventory)
 	//g.Get("/nfts/:address/:tokenID", getNft)
 	//g.Get("/contracts/:address/verify", validateContract)
 	//g.Get("/contracts-verify/:id/status", getValidateContractStatus)
@@ -199,7 +199,7 @@ func getAccountErc20Txns(c *fiber.Ctx) error {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
 	}
 	f.Complete()
-	resp, total, err := service.GetAccountErc20Txns(f, address)
+	resp, total, err := service.GetAccountErc20Txns(f, common.HexToAddress(address))
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}
@@ -216,7 +216,7 @@ func getAccountErc721Txns(c *fiber.Ctx) error {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
 	}
 	f.Complete()
-	resp, total, err := service.GetAccountErc721Txs(f, address)
+	resp, total, err := service.GetAccountErc721Txs(f, common.HexToAddress(address))
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}
@@ -233,7 +233,7 @@ func getAccountErc1155Txns(c *fiber.Ctx) error {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
 	}
 	f.Complete()
-	resp, total, err := service.GetAccountErc1155Txs(f, address)
+	resp, total, err := service.GetAccountErc1155Txs(f, common.HexToAddress(address))
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}
@@ -333,13 +333,17 @@ func getTokenType(c *fiber.Ctx) error {
 }
 
 func listTokenTransfers(c *fiber.Ctx) error {
+	address := c.Params("address")
+	if address == "" {
+		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
+	}
 	f := &types.Pager{}
 	if err := c.QueryParser(f); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
 	}
 	f.Complete()
 	typ := c.Query("type")
-	resp, err := service.ListTokenTransfers(typ, f)
+	resp, err := service.ListTokenTransfers(common.HexToAddress(address), typ, f)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}
@@ -364,4 +368,40 @@ func downloadAccountTxns(c *fiber.Ctx) error {
 	//c.Header("Content-Disposition", "attachment; filename="+url.QueryEscape(fileName))
 	//c.Data(http.StatusOK, "text/xlsx", resp)
 	return nil
+}
+
+func listTokenHolders(c *fiber.Ctx) error {
+	address := c.Params("address")
+	if address == "" {
+		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
+	}
+	typ := c.Query("type")
+	f := &types.Pager{}
+	if err := c.QueryParser(f); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
+	}
+	f.Complete()
+	resp, err := service.ListTokenHolders(typ, f, common.HexToAddress(address))
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
+	}
+	return c.Status(http.StatusOK).JSON(response.Ok(resp))
+}
+
+func listInventory(c *fiber.Ctx) error {
+	address := c.Params("address")
+	if address == "" {
+		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
+	}
+	typ := c.Query("type")
+	f := &types.Pager{}
+	if err := c.QueryParser(f); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
+	}
+	f.Complete()
+	resp, err := service.ListInventory(typ, f, common.HexToAddress(address))
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
+	}
+	return c.Status(http.StatusOK).JSON(response.Ok(resp))
 }

@@ -213,8 +213,8 @@ func GetAccountItxs(pager *types.Pager, address string) ([]*types.InternalTxResp
 	return resp, DecodeBig(total).String(), nil
 }
 
-func GetAccountErc20Txns(pager *types.Pager, address string) ([]*types.Erc20TxResp, string, error) {
-	num, err := store.ReadAccountErc20Total(context.Background(), mdbx.DB, common.HexToAddress(address))
+func GetAccountErc20Txns(pager *types.Pager, address common.Address) ([]*types.Erc20TxResp, string, error) {
+	num, err := store.ReadAccountErc20Total(context.Background(), mdbx.DB, address)
 	if err != nil && err != kv.NotFound {
 		return nil, "0", err
 	}
@@ -227,7 +227,7 @@ func GetAccountErc20Txns(pager *types.Pager, address string) ([]*types.Erc20TxRe
 	p := begin
 	txs := make([]*types.Erc20Transfer, 0)
 	for {
-		tx, err := store.ReadAccountErc20ByIndex(context.Background(), mdbx.DB, common.HexToAddress(address), p)
+		tx, err := store.ReadAccountErc20ByIndex(context.Background(), mdbx.DB, address, p)
 		if err != nil {
 			return nil, "0", err
 		}
@@ -286,8 +286,8 @@ func GetAccountErc20Txns(pager *types.Pager, address string) ([]*types.Erc20TxRe
 	return resp, DecodeBig(total).String(), nil
 }
 
-func GetAccountErc721Txs(pager *types.Pager, address string) ([]*types.Erc721TxResp, string, error) {
-	num, err := store.ReadAccountErc721Total(context.Background(), mdbx.DB, common.HexToAddress(address))
+func GetAccountErc721Txs(pager *types.Pager, address common.Address) ([]*types.Erc721TxResp, string, error) {
+	num, err := store.ReadAccountErc721Total(context.Background(), mdbx.DB, address)
 	if err != nil && err != kv.NotFound {
 		return nil, "0", err
 	}
@@ -300,7 +300,7 @@ func GetAccountErc721Txs(pager *types.Pager, address string) ([]*types.Erc721TxR
 	p := begin
 	txs := make([]*types.Erc721Transfer, 0)
 	for {
-		tx, err := store.ReadAccountErc721ByIndex(context.Background(), mdbx.DB, common.HexToAddress(address), p)
+		tx, err := store.ReadAccountErc721ByIndex(context.Background(), mdbx.DB, address, p)
 		if err != nil {
 			return nil, "0", err
 		}
@@ -359,8 +359,8 @@ func GetAccountErc721Txs(pager *types.Pager, address string) ([]*types.Erc721TxR
 	return resp, DecodeBig(total).String(), nil
 }
 
-func GetAccountErc1155Txs(pager *types.Pager, address string) ([]*types.Erc1155TxResp, string, error) {
-	num, err := store.ReadAccountErc1155Total(context.Background(), mdbx.DB, common.HexToAddress(address))
+func GetAccountErc1155Txs(pager *types.Pager, address common.Address) ([]*types.Erc1155TxResp, string, error) {
+	num, err := store.ReadAccountErc1155Total(context.Background(), mdbx.DB, address)
 	if err != nil && err != kv.NotFound {
 		return nil, "0", err
 	}
@@ -373,7 +373,7 @@ func GetAccountErc1155Txs(pager *types.Pager, address string) ([]*types.Erc1155T
 	p := begin
 	txs := make([]*types.Erc1155Transfer, 0)
 	for {
-		tx, err := store.ReadAccountErc1155ByIndex(context.Background(), mdbx.DB, common.HexToAddress(address), p)
+		tx, err := store.ReadAccountErc1155ByIndex(context.Background(), mdbx.DB, address, p)
 		if err != nil {
 			return nil, "0", err
 		}

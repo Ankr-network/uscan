@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/kv/mdbx"
@@ -278,27 +279,198 @@ func GetTokenType(address common.Address) (interface{}, error) {
 	return map[string]string{"erc20": erc20Count.String(), "erc721": erc721Count.String(), "erc1155": erc1155Count.String()}, nil
 }
 
-func ListTokenTransfers(typ string, pager *types.Pager) (map[string]interface{}, error) {
+func ListTokenTransfers(address common.Address, typ string, pager *types.Pager) (map[string]interface{}, error) {
 	var items interface{}
 	var total string
 	var err error
 	switch typ {
 	case "erc20":
-		items, total, err = ListErc20Txs(pager)
+		items, total, err = GetAccountErc20Txns(pager, address)
 		if err != nil {
 			return nil, err
 		}
 	case "erc721":
-		items, total, err = ListErc721Txs(pager)
+		items, total, err = GetAccountErc721Txs(pager, address)
 		if err != nil {
 			return nil, err
 		}
 	case "erc1155":
-		items, total, err = ListErc1155Txs(pager)
+		items, total, err = GetAccountErc1155Txs(pager, address)
 		if err != nil {
 			return nil, err
 		}
 	}
 	resp := map[string]interface{}{"items": items, "total": total}
 	return resp, nil
+}
+func ListErc20Holders(pager *types.Pager, address common.Address) ([]*types.HolderResp, string, error) {
+	resp := make([]*types.HolderResp, 0)
+	holders, err := store.GetErc20Holder(context.Background(), mdbx.DB, address, uint64(pager.Offset), uint64(pager.Limit))
+	if err != nil {
+		if err == kv.NotFound {
+			return resp, "0", nil
+		}
+		return nil, "0", err
+	}
+
+	for _, holder := range holders {
+		resp = append(resp, &types.HolderResp{
+			Address:  holder.Addr.String(),
+			Quantity: holder.Quantity.String(),
+		})
+	}
+
+	if len(holders) > 0 {
+		count, err := store.GetErc20HolderCount(context.Background(), mdbx.DB, address)
+		if err != nil {
+			return nil, "0", err
+		}
+		return resp, fmt.Sprint(count), nil
+	}
+	return resp, "0", nil
+}
+
+func ListErc721Holders(pager *types.Pager, address common.Address) ([]*types.HolderResp, string, error) {
+	resp := make([]*types.HolderResp, 0)
+	holders, err := store.GetErc721Holder(context.Background(), mdbx.DB, address, uint64(pager.Offset), uint64(pager.Limit))
+	if err != nil {
+		if err == kv.NotFound {
+			return resp, "0", nil
+		}
+		return nil, "0", err
+	}
+
+	for _, holder := range holders {
+		resp = append(resp, &types.HolderResp{
+			Address:  holder.Addr.String(),
+			Quantity: holder.Quantity.String(),
+		})
+	}
+	if len(holders) > 0 {
+		count, err := store.GetErc721HolderCount(context.Background(), mdbx.DB, address)
+		if err != nil {
+			return nil, "0", err
+		}
+		return resp, fmt.Sprint(count), nil
+	}
+	return resp, "0", nil
+}
+
+func ListErc1155Holders(pager *types.Pager, address common.Address) ([]*types.HolderResp, string, error) {
+	resp := make([]*types.HolderResp, 0)
+	holders, err := store.GetErc1155Holder(context.Background(), mdbx.DB, address, uint64(pager.Offset), uint64(pager.Limit))
+	if err != nil {
+		if err == kv.NotFound {
+			return resp, "0", nil
+		}
+		return nil, "0", err
+	}
+
+	for _, holder := range holders {
+		resp = append(resp, &types.HolderResp{
+			Address:  holder.Addr.String(),
+			Quantity: holder.Quantity.String(),
+		})
+	}
+	if len(holders) > 0 {
+		count, err := store.GetErc1155HolderCount(context.Background(), mdbx.DB, address)
+		if err != nil {
+			return nil, "0", err
+		}
+		return resp, fmt.Sprint(count), nil
+	}
+	return resp, "0", nil
+}
+
+func ListTokenHolders(typ string, pager *types.Pager, address common.Address) (map[string]interface{}, error) {
+	var items interface{}
+	var total string
+	var err error
+	switch typ {
+	case "erc20":
+		items, total, err = ListErc20Holders(pager, address)
+		if err != nil {
+			return nil, err
+		}
+	case "erc721":
+		items, total, err = ListErc721Holders(pager, address)
+		if err != nil {
+			return nil, err
+		}
+	case "erc1155":
+		items, total, err = ListErc1155Holders(pager, address)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return map[string]interface{}{"items": items, "total": total}, nil
+}
+
+func ListInventory(typ string, pager *types.Pager, address common.Address) (map[string]interface{}, error) {
+	var items interface{}
+	var total string
+	var err error
+	switch typ {
+	case "erc721":
+		items, total, err = ListErc721Inventory(pager, address)
+		if err != nil {
+			return nil, err
+		}
+	case "erc1155":
+		items, total, err = ListErc1155Inventory(pager, address)
+		if err != nil {
+			return nil, err
+		}
+	}
+	resp := map[string]interface{}{"items": items, "total": total}
+	return resp, nil
+}
+
+func ListErc721Inventory(pager *types.Pager, address common.Address) ([]*types.InventoryResp, string, error) {
+	resp := make([]*types.InventoryResp, 0)
+	holders, err := store.GetErc721Inventory(context.Background(), mdbx.DB, address, uint64(pager.Offset), uint64(pager.Limit))
+	if err != nil {
+		if err == kv.NotFound {
+			return resp, "0", nil
+		}
+		return nil, "0", err
+	}
+
+	for _, holder := range holders {
+		resp = append(resp, &types.InventoryResp{
+			Address: holder.Addr.String(),
+			TokenID: holder.TokenID.ToUint64(),
+		})
+	}
+	if len(holders) > 0 {
+		count, err := store.GetErc721InventoryCount(context.Background(), mdbx.DB, address)
+		if err != nil {
+			return nil, "0", err
+		}
+		return resp, fmt.Sprint(count), nil
+	}
+	return resp, "0", nil
+}
+
+func ListErc1155Inventory(pager *types.Pager, address common.Address) ([]uint64, string, error) {
+	resp := make([]uint64, 0)
+	tokenIDs, err := store.GetErc1155Inventory(context.Background(), mdbx.DB, address, uint64(pager.Offset), uint64(pager.Limit))
+	if err != nil {
+		if err == kv.NotFound {
+			return resp, "0", nil
+		}
+		return nil, "0", err
+	}
+
+	for _, tokenID := range tokenIDs {
+		resp = append(resp, tokenID.ToUint64())
+	}
+	if len(tokenIDs) > 0 {
+		count, err := store.GetErc1155InventoryCount(context.Background(), mdbx.DB, address)
+		if err != nil {
+			return nil, "0", err
+		}
+		return resp, fmt.Sprint(count), nil
+	}
+	return resp, "0", nil
 }

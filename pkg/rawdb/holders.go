@@ -39,7 +39,7 @@ var (
 	erc1155HolderPrefix = []byte("/erc1155/")
 )
 
-/// ------------------- erc20 holder ---------------------
+// / ------------------- erc20 holder ---------------------
 func DelErc20HolderAmount(ctx context.Context, db kv.Sorter, contract common.Address, holder *types.Holder) (err error) {
 	var (
 		key = append(erc20HolderPrefix, contract.Bytes()...)
@@ -47,10 +47,10 @@ func DelErc20HolderAmount(ctx context.Context, db kv.Sorter, contract common.Add
 	return db.SDel(ctx, key, holder.ToBytes(), &kv.WriteOption{Table: share.HolderSortTabl})
 }
 
-func GetErc20Holder(ctx context.Context, db kv.Sorter, contract common.Address, page, pageSize uint64) (holders []*types.Holder, err error) {
+func GetErc20Holder(ctx context.Context, db kv.Sorter, contract common.Address, offset, limit uint64) (holders []*types.Holder, err error) {
 	var key = append(erc20HolderPrefix, contract.Bytes()...)
 	var res [][]byte
-	res, err = db.SGet(ctx, key, page, pageSize, &kv.ReadOption{Table: share.HolderSortTabl})
+	res, err = db.SGet(ctx, key, offset, limit, &kv.ReadOption{Table: share.HolderSortTabl})
 	if err != nil {
 		return nil, err
 	}
@@ -60,6 +60,15 @@ func GetErc20Holder(ctx context.Context, db kv.Sorter, contract common.Address, 
 		if err != nil {
 			return nil, err
 		}
+	}
+	return
+}
+
+func GetErc20HolderCount(ctx context.Context, db kv.Sorter, contract common.Address) (count uint64, err error) {
+	var key = append(erc20HolderPrefix, contract.Bytes()...)
+	count, err = db.SCount(ctx, key, &kv.ReadOption{Table: share.HolderSortTabl})
+	if err != nil {
+		return 0, err
 	}
 	return
 }
@@ -88,7 +97,7 @@ func ReadErc20HolderAmount(ctx context.Context, db kv.Reader, contract common.Ad
 	return
 }
 
-/// ------------------- erc721 holder ---------------------
+// / ------------------- erc721 holder ---------------------
 func DelErc721HolderAmount(ctx context.Context, db kv.Sorter, contract common.Address, holder *types.Holder) (err error) {
 	var (
 		key = append(erc721HolderPrefix, contract.Bytes()...)
@@ -96,10 +105,10 @@ func DelErc721HolderAmount(ctx context.Context, db kv.Sorter, contract common.Ad
 	return db.SDel(ctx, key, holder.ToBytes(), &kv.WriteOption{Table: share.HolderSortTabl})
 }
 
-func GetErc721Holder(ctx context.Context, db kv.Sorter, contract common.Address, page, pageSize uint64) (holders []*types.Holder, err error) {
+func GetErc721Holder(ctx context.Context, db kv.Sorter, contract common.Address, offset, limit uint64) (holders []*types.Holder, err error) {
 	var key = append(erc721HolderPrefix, contract.Bytes()...)
 	var res [][]byte
-	res, err = db.SGet(ctx, key, page, pageSize, &kv.ReadOption{Table: share.HolderSortTabl})
+	res, err = db.SGet(ctx, key, offset, limit, &kv.ReadOption{Table: share.HolderSortTabl})
 	if err != nil {
 		return nil, err
 	}
@@ -113,10 +122,19 @@ func GetErc721Holder(ctx context.Context, db kv.Sorter, contract common.Address,
 	return
 }
 
-func GetErc721Inventory(ctx context.Context, db kv.Sorter, contract common.Address, page, pageSize uint64) (inventorys []*types.Inventory, err error) {
+func GetErc721HolderCount(ctx context.Context, db kv.Sorter, contract common.Address) (count uint64, err error) {
+	var key = append(erc721HolderPrefix, contract.Bytes()...)
+	count, err = db.SCount(ctx, key, &kv.ReadOption{Table: share.HolderSortTabl})
+	if err != nil {
+		return 0, err
+	}
+	return
+}
+
+func GetErc721Inventory(ctx context.Context, db kv.Sorter, contract common.Address, offset, limit uint64) (inventorys []*types.Inventory, err error) {
 	var key = append(append(erc721HolderPrefix, contract.Bytes()...), []byte("/tokenId")...)
 	var res [][]byte
-	res, err = db.SGet(ctx, key, page, pageSize, &kv.ReadOption{Table: share.InventorySortTabl})
+	res, err = db.SGet(ctx, key, offset, limit, &kv.ReadOption{Table: share.InventorySortTabl})
 	if err != nil {
 		return nil, err
 	}
@@ -126,6 +144,15 @@ func GetErc721Inventory(ctx context.Context, db kv.Sorter, contract common.Addre
 		if err != nil {
 			return nil, err
 		}
+	}
+	return
+}
+
+func GetErc721InventoryCount(ctx context.Context, db kv.Sorter, contract common.Address) (count uint64, err error) {
+	var key = append(append(erc721HolderPrefix, contract.Bytes()...), []byte("/tokenId")...)
+	count, err = db.SCount(ctx, key, &kv.ReadOption{Table: share.HolderSortTabl})
+	if err != nil {
+		return 0, err
 	}
 	return
 }
@@ -186,7 +213,7 @@ func ReadErc721HolderTokenIdQuantity(ctx context.Context, db kv.Reader, contract
 	return
 }
 
-/// ------------------- erc1155 holder ---------------------
+// / ------------------- erc1155 holder ---------------------
 func DelErc1155HolderAmount(ctx context.Context, db kv.Sorter, contract common.Address, holder *types.Holder) (err error) {
 	var (
 		key = append(erc1155HolderPrefix, contract.Bytes()...)
@@ -194,10 +221,10 @@ func DelErc1155HolderAmount(ctx context.Context, db kv.Sorter, contract common.A
 	return db.SDel(ctx, key, holder.ToBytes(), &kv.WriteOption{Table: share.HolderSortTabl})
 }
 
-func GetErc1155Inventory(ctx context.Context, db kv.Sorter, contract common.Address, page, pageSize uint64) (inventorys []*field.BigInt, err error) {
+func GetErc1155Inventory(ctx context.Context, db kv.Sorter, contract common.Address, offset, limit uint64) (inventorys []*field.BigInt, err error) {
 	var key = append(append(erc1155HolderPrefix, contract.Bytes()...), []byte("/tokenId")...)
 	var res [][]byte
-	res, err = db.SGet(ctx, key, page, pageSize, &kv.ReadOption{Table: share.InventorySortTabl})
+	res, err = db.SGet(ctx, key, offset, limit, &kv.ReadOption{Table: share.InventorySortTabl})
 	if err != nil {
 		return nil, err
 	}
@@ -210,10 +237,19 @@ func GetErc1155Inventory(ctx context.Context, db kv.Sorter, contract common.Addr
 	return
 }
 
-func GetErc1155Holder(ctx context.Context, db kv.Sorter, contract common.Address, page, pageSize uint64) (holders []*types.Holder, err error) {
-	var key = append(erc721HolderPrefix, contract.Bytes()...)
+func GetErc1155InventoryCount(ctx context.Context, db kv.Sorter, contract common.Address) (count uint64, err error) {
+	var key = append(append(erc1155HolderPrefix, contract.Bytes()...), []byte("/tokenId")...)
+	count, err = db.SCount(ctx, key, &kv.ReadOption{Table: share.HolderSortTabl})
+	if err != nil {
+		return 0, err
+	}
+	return
+}
+
+func GetErc1155Holder(ctx context.Context, db kv.Sorter, contract common.Address, offset, limit uint64) (holders []*types.Holder, err error) {
+	var key = append(erc1155HolderPrefix, contract.Bytes()...)
 	var res [][]byte
-	res, err = db.SGet(ctx, key, page, pageSize, &kv.ReadOption{Table: share.HolderSortTabl})
+	res, err = db.SGet(ctx, key, offset, limit, &kv.ReadOption{Table: share.HolderSortTabl})
 	if err != nil {
 		return nil, err
 	}
@@ -223,6 +259,15 @@ func GetErc1155Holder(ctx context.Context, db kv.Sorter, contract common.Address
 		if err != nil {
 			return nil, err
 		}
+	}
+	return
+}
+
+func GetErc1155HolderCount(ctx context.Context, db kv.Sorter, contract common.Address) (count uint64, err error) {
+	var key = append(erc1155HolderPrefix, contract.Bytes()...)
+	count, err = db.SCount(ctx, key, &kv.ReadOption{Table: share.HolderSortTabl})
+	if err != nil {
+		return 0, err
 	}
 	return
 }
@@ -285,6 +330,7 @@ func getErc20HolderKey(contract common.Address, addr common.Address) []byte {
 	key = append(key, addr.Bytes()...)
 	return key
 }
+
 func getErc721HolderKey(contract common.Address, addr common.Address) []byte {
 	key := make([]byte, 0, len(erc721HolderPrefix)+common.AddressLength*2+1)
 	key = append(key, contract.Bytes()...)
@@ -300,6 +346,7 @@ func getErc1155HolderKey(contract common.Address, addr common.Address) []byte {
 	key = append(key, addr.Bytes()...)
 	return key
 }
+
 func getErc721TokenIdHolderKey(contract common.Address, addr common.Address, tokenId *field.BigInt) []byte {
 	key := make([]byte, 0, len(erc721HolderPrefix)+common.AddressLength*2+2+len(tokenId.Bytes()))
 	key = append(key, contract.Bytes()...)
@@ -309,6 +356,7 @@ func getErc721TokenIdHolderKey(contract common.Address, addr common.Address, tok
 	key = append(key, tokenId.Bytes()...)
 	return key
 }
+
 func getErc1155TokenIdHolderKey(contract common.Address, addr common.Address, tokenId *field.BigInt) []byte {
 	key := make([]byte, 0, len(erc1155HolderPrefix)+common.AddressLength*2+2+len(tokenId.Bytes()))
 	key = append(key, contract.Bytes()...)
