@@ -6,6 +6,9 @@ import (
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gofiber/fiber/v2"
+	"github.com/mitchellh/mapstructure"
+	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 )
 
@@ -49,9 +52,10 @@ func SetupRouter(g fiber.Router) {
 	g.Get("/tokens/:address/holders", listTokenHolders)
 	g.Get("/tokens/:address/inventory", listInventory)
 	//g.Get("/nfts/:address/:tokenID", getNft)
-	//g.Get("/contracts/:address/verify", validateContract)
-	//g.Get("/contracts-verify/:id/status", getValidateContractStatus)
-	//g.Get("/contracts/metadata", getValidateContractMetadata)
+	g.Get("/contracts/:address/verify", validateContract)
+	g.Get("/contracts-verify/:id/status", getValidateContractStatus)
+	g.Get("/contracts/metadata", ReadValidateContractMetadata)
+	g.Post("/contracts/metadata", WriteValidateContractMetadata)
 	//g.Get("/contracts/:address/content", getValidateContract)
 }
 
@@ -404,4 +408,77 @@ func listInventory(c *fiber.Ctx) error {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}
 	return c.Status(http.StatusOK).JSON(response.Ok(resp))
+}
+
+func WriteValidateContractMetadata(c *fiber.Ctx) error {
+	req := &types.ValidateContractMetadata{}
+	err := c.BodyParser(req)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
+	}
+	err = service.WriteValidateContractMetadata(req)
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
+	}
+	return c.Status(http.StatusOK).JSON(response.Ok(nil))
+}
+func ReadValidateContractMetadata(c *fiber.Ctx) error {
+	req := &types.ValidateContractMetadata{}
+	err := c.BodyParser(req)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
+	}
+	resp, err := service.ReadValidateContractMetadata()
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
+	}
+	return c.Status(http.StatusOK).JSON(response.Ok(resp))
+}
+
+func validateContract(c *fiber.Ctx) error {
+	value, err := c.MultipartForm()
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
+	}
+	req := &types.ValidateContractTmpReq{}
+	if err := mapstructure.Decode(value, &req); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
+	}
+	param := req.ToValidateContractReq()
+	if param.CompilerType == types.SolidityStandardJsonInput {
+		f, err := getFile(value.File)
+		if err != nil {
+			return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
+		}
+		param.SourceCode = string(f)
+	}
+	resp, err := service.ValidateContract(param)
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
+	}
+	return c.Status(http.StatusOK).JSON(response.Ok(resp))
+}
+
+func getFile(files map[string][]*multipart.FileHeader) ([]byte, error) {
+	var uploadFile *multipart.FileHeader
+	for _, fileHeaders := range files {
+		uploadFile = fileHeaders[0]
+	}
+	file, err := uploadFile.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = file.Close()
+	}()
+
+	bytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+	return bytes, nil
+}
+
+func getValidateContractStatus(c *fiber.Ctx) error {
+	return nil
 }

@@ -44,6 +44,7 @@ var schemas = []string{
 	share.TraceLogTbl,
 	share.TransferTbl,
 	share.HolderTbl,
+	share.ValidateContractTbl,
 }
 
 var schemasSort = []string{
