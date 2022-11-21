@@ -59,6 +59,25 @@ func SetupRouter(g fiber.Router) {
 	//g.Get("/contracts/:address/content", getValidateContract)
 }
 
+func Cros() {
+	//return func(c *fiber.Ctx) {
+	//	c.He
+	//
+	//	c.Writer.Header().Add("Access-Control-Allow-Origin", "*")
+	//	c.Writer.Header().Set("Access-Control-Max-Age", "86400")
+	//	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, UPDATE, PATCH")
+	//	c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Apitoken, Authorization, Token")
+	//	c.Writer.Header().Set("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Headers")
+	//	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+	//
+	//	if c.Request.Method == "OPTIONS" {
+	//		c.AbortWithStatus(200)
+	//	} else {
+	//		c.Next()
+	//	}
+	//}
+}
+
 func search(c *fiber.Ctx) error {
 	f := &types.SearchFilter{}
 	if err := c.QueryParser(f); err != nil {
