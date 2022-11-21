@@ -51,12 +51,12 @@ func (n *blockHandle) writeErc20Transfer(ctx context.Context, data *types.Erc20T
 
 	if data.From != (common.Address{}) {
 		if err = n.writeAccountErc20TransferIndex(ctx, data.From, erc20TrasferTotal); err != nil {
-			log.Errorf("write account(to: %v) erc20 transfer index:%v", data.From.Hex(), err)
+			log.Errorf("write account(From: %v) erc20 transfer index:%v", data.From.Hex(), err)
 			return err
 		}
 
 		if err = n.writeErc20HolderAmount(ctx, data.Contract, data.From, &data.Amount, decrease); err != nil {
-			log.Errorf("decreate account(to: %v) erc20:%v", data.From.Hex(), err)
+			log.Errorf("decrease account(From: %v) erc20:%v", data.From.Hex(), err)
 			return err
 		}
 	} else {
@@ -74,7 +74,7 @@ func (n *blockHandle) writeErc20Transfer(ctx context.Context, data *types.Erc20T
 			return err
 		}
 		if err = n.writeErc20HolderAmount(ctx, data.Contract, data.To, &data.Amount, increase); err != nil {
-			log.Errorf("increate account(to: %v) erc20:%v", data.From.Hex(), err)
+			log.Errorf("increase account(to: %v) erc20:%v", data.From.Hex(), err)
 			return err
 		}
 	} else {
@@ -174,10 +174,11 @@ func (n *blockHandle) writeErc20HolderAmount(ctx context.Context, contract commo
 		} else {
 			return err
 		}
-	}
-	err = rawdb.DelErc20HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
-	if err != nil {
-		return err
+	} else {
+		err = rawdb.DelErc20HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
+		if err != nil {
+			return err
+		}
 	}
 	if inde == increase {
 		oriAmount.Add(amount)
@@ -212,11 +213,11 @@ func (n *blockHandle) writeErc721Transfer(ctx context.Context, data *types.Erc72
 
 	if data.From != (common.Address{}) {
 		if err = n.writeAccountErc721TransferIndex(ctx, data.From, erc721TrasferTotal); err != nil {
-			log.Errorf("write account(to: %v) erc721 transfer index:%v", data.From.Hex(), err)
+			log.Errorf("write account(From: %v) erc721 transfer index:%v", data.From.Hex(), err)
 			return err
 		}
 		if err = n.writeErc721HolderAmount(ctx, data.Contract, data.From, &data.TokenId, decrease); err != nil {
-			log.Errorf("decrease account(to: %v) erc721 tokenId:%v", data.From.Hex(), err)
+			log.Errorf("decrease account(From: %v) erc721 tokenId:%v", data.From.Hex(), err)
 			return err
 		}
 	} else {
@@ -234,7 +235,7 @@ func (n *blockHandle) writeErc721Transfer(ctx context.Context, data *types.Erc72
 			return err
 		}
 		if err = n.writeErc721HolderAmount(ctx, data.Contract, data.To, &data.TokenId, increase); err != nil {
-			log.Errorf("increate account(to: %v) erc721 tokenId:%v", data.To.Hex(), err)
+			log.Errorf("increase account(to: %v) erc721 tokenId:%v", data.To.Hex(), err)
 			return err
 		}
 	} else {
@@ -326,10 +327,11 @@ func (n *blockHandle) writeErc721HolderAmount(ctx context.Context, contract comm
 			return err
 		}
 		oriAmount = field.NewInt(0)
-	}
-	err = rawdb.DelErc721HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
-	if err != nil {
-		return err
+	} else {
+		err = rawdb.DelErc721HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
+		if err != nil {
+			return err
+		}
 	}
 	if inde == increase {
 		err = rawdb.WriteErc721HolderTokenIdQuantity(ctx, n.db, contract, addr, tokenId, field.NewInt(1))
@@ -372,16 +374,16 @@ func (n *blockHandle) writeErc1155Transfer(ctx context.Context, data *types.Erc1
 
 	if data.From != (common.Address{}) {
 		if err = n.writeAccountErc1155TransferIndex(ctx, data.From, erc1155TrasferTotal); err != nil {
-			log.Errorf("write account(to: %v) erc1155 transfer index:%v", data.From.Hex(), err)
+			log.Errorf("write account(From: %v) erc1155 transfer index:%v", data.From.Hex(), err)
 			return err
 		}
 		if err = n.writeErc1155HolderAmount(ctx, data.Contract, data.From, &data.TokenID, &data.Quantity, decrease); err != nil {
-			log.Errorf("decreate account(to: %v) erc1155 tokenId:%v", data.From.Hex(), err)
+			log.Errorf("decrease account(From: %v) erc1155 tokenId:%v", data.From.Hex(), err)
 			return err
 		}
 	} else {
 		if err = n.updateErc1155Account(ctx, data.Contract, &data.Quantity, decrease); err != nil {
-			log.Errorf("decreate erc1155 account(%s): %v", data.Contract.Hex(), err)
+			log.Errorf("decrease erc1155 account(%s): %v", data.Contract.Hex(), err)
 			return err
 		}
 	}
@@ -392,12 +394,12 @@ func (n *blockHandle) writeErc1155Transfer(ctx context.Context, data *types.Erc1
 			return err
 		}
 		if err = n.writeErc1155HolderAmount(ctx, data.Contract, data.To, &data.TokenID, &data.Quantity, increase); err != nil {
-			log.Errorf("increate account(to: %v) erc1155 tokenId:%v", data.From.Hex(), err)
+			log.Errorf("increase account(to: %v) erc1155 tokenId:%v", data.From.Hex(), err)
 			return err
 		}
 	} else {
 		if err = n.updateErc1155Account(ctx, data.Contract, &data.Quantity, increase); err != nil {
-			log.Errorf("increate erc1155 account(%s): %v", data.Contract.Hex(), err)
+			log.Errorf("increase erc1155 account(%s): %v", data.Contract.Hex(), err)
 			return err
 		}
 	}
@@ -482,10 +484,11 @@ func (n *blockHandle) writeErc1155HolderAmount(ctx context.Context, contract com
 			return err
 		}
 		oriAmount = field.NewInt(0)
-	}
-	err = rawdb.DelErc721HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
-	if err != nil {
-		return err
+	} else {
+		err = rawdb.DelErc721HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
+		if err != nil {
+			return err
+		}
 	}
 
 	var oriQuantity *field.BigInt

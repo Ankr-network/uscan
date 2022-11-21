@@ -84,7 +84,7 @@ func (n *blockHandle) writeAccountItx(ctx context.Context, addr common.Address, 
 
 	err = rawdb.WriteAccountITxTotal(ctx, n.db, addr, total)
 	if err == nil {
-		accountItxTotalMap.Add(addr.Bytes(), total.Bytes())
+		accountItxTotalMap.Add(addr, total.Bytes())
 	}
 	return
 }

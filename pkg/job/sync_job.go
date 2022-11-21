@@ -19,11 +19,11 @@ type SyncJob struct {
 	BlockData            *types.Block
 	TransactionDatas     []*types.Tx
 	ReceiptDatas         []*types.Rt
-	CallFrames           map[common.Hash]*types.CallFrame
-	InternalTxs          map[common.Hash][]*types.InternalTx
-	ContractOrMemberData map[common.Address]*types.Account
-	ContractInfoMap      map[common.Address]*types.Contract
-	ProxyContracts       map[common.Address]common.Address
+	CallFrames           map[common.Hash]*types.CallFrame    // trace log
+	InternalTxs          map[common.Hash][]*types.InternalTx // changed money internal tx
+	ContractOrMemberData map[common.Address]*types.Account   // miner , from , to, new contract(changed money)
+	ContractInfoMap      map[common.Address]*types.Contract  // new contract
+	ProxyContracts       map[common.Address]common.Address   // proxy contract => logic contract
 }
 
 func NewSyncJob(block uint64, client rpcclient.RpcClient) *SyncJob {
