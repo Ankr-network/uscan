@@ -61,7 +61,7 @@ func SetupRouter(g fiber.Router) {
 
 func search(c *fiber.Ctx) error {
 	f := &types.SearchFilter{}
-	if err := c.QueryParser(&f); err != nil {
+	if err := c.QueryParser(f); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
 	}
 	resp, err := service.Search(f)
