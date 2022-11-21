@@ -174,10 +174,11 @@ func (n *blockHandle) writeErc20HolderAmount(ctx context.Context, contract commo
 		} else {
 			return err
 		}
-	}
-	err = rawdb.DelErc20HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
-	if err != nil {
-		return err
+	} else {
+		err = rawdb.DelErc20HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
+		if err != nil {
+			return err
+		}
 	}
 	if inde == increase {
 		oriAmount.Add(amount)
@@ -326,10 +327,11 @@ func (n *blockHandle) writeErc721HolderAmount(ctx context.Context, contract comm
 			return err
 		}
 		oriAmount = field.NewInt(0)
-	}
-	err = rawdb.DelErc721HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
-	if err != nil {
-		return err
+	} else {
+		err = rawdb.DelErc721HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
+		if err != nil {
+			return err
+		}
 	}
 	if inde == increase {
 		err = rawdb.WriteErc721HolderTokenIdQuantity(ctx, n.db, contract, addr, tokenId, field.NewInt(1))
@@ -482,10 +484,11 @@ func (n *blockHandle) writeErc1155HolderAmount(ctx context.Context, contract com
 			return err
 		}
 		oriAmount = field.NewInt(0)
-	}
-	err = rawdb.DelErc721HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
-	if err != nil {
-		return err
+	} else {
+		err = rawdb.DelErc721HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
+		if err != nil {
+			return err
+		}
 	}
 
 	var oriQuantity *field.BigInt

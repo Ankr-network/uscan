@@ -135,15 +135,23 @@ func (d *MdbxDB) Put(ctx context.Context, key []byte, val []byte, opts *kv.Write
 	}
 }
 
-func (d *MdbxDB) Del(ctx context.Context, key []byte, opts *kv.WriteOption) error {
+func (d *MdbxDB) Del(ctx context.Context, key []byte, opts *kv.WriteOption) (err error) {
 	out, ok := ctx.Value(txKey{}).(*mdbx.Txn)
 	if ok {
-		return out.Del(d.tables[opts.Table], key, nil)
+		err = out.Del(d.tables[opts.Table], key, nil)
+		if err != nil && mdbx.IsNotFound(err) {
+			err = nil
+		}
 	} else {
 		return d.env.Update(func(txn *mdbx.Txn) error {
-			return txn.Del(d.tables[opts.Table], key, nil)
+			err = txn.Del(d.tables[opts.Table], key, nil)
+			if err != nil && mdbx.IsNotFound(err) {
+				err = nil
+			}
+			return err
 		})
 	}
+	return
 }
 
 func (d *MdbxDB) Get(ctx context.Context, key []byte, opts *kv.ReadOption) (rs []byte, err error) {
