@@ -90,6 +90,7 @@ func (n *Sync) storeEvent() {
 					job.ReceiptDatas,
 					job.ContractOrMemberData,
 					job.ContractInfoMap,
+					job.ProxyContracts,
 					job.InternalTxs,
 					job.CallFrames,
 					n.contractClient,

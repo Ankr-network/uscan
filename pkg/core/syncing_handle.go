@@ -19,6 +19,7 @@ type blockHandle struct {
 	receiptData          []*types.Rt
 	contractOrMemberData map[common.Address]*types.Account
 	contractInfoMap      map[common.Address]*types.Contract
+	proxyContracts       map[common.Address]common.Address
 	internalTxs          map[common.Hash][]*types.InternalTx
 	callFrames           map[common.Hash]*types.CallFrame
 	contractClient       contract.Contractor
@@ -36,6 +37,7 @@ func newBlockHandle(
 	receiptData []*types.Rt,
 	contractOrMemberData map[common.Address]*types.Account,
 	contractInfoMap map[common.Address]*types.Contract,
+	proxyContracts map[common.Address]common.Address,
 	internalTxs map[common.Hash][]*types.InternalTx,
 	callFrames map[common.Hash]*types.CallFrame,
 	contractClient contract.Contractor,
@@ -47,6 +49,7 @@ func newBlockHandle(
 		receiptData:          receiptData,
 		contractOrMemberData: contractOrMemberData,
 		contractInfoMap:      contractInfoMap,
+		proxyContracts:       proxyContracts,
 		internalTxs:          internalTxs,
 		callFrames:           callFrames,
 		contractClient:       contractClient,
@@ -93,6 +96,12 @@ func (n *blockHandle) handle() error {
 			return err
 		}
 	}
+	if len(n.proxyContracts) > 0 {
+		if err = n.writeProxyContract(ctx, n.proxyContracts); err != nil {
+			log.Errorf("write proxy contract: %v", err)
+			return err
+		}
+	}
 
 	if len(n.transactionData) > 0 {
 		if err = n.writeTxAndRtLog(ctx, n.transactionData, n.receiptData); err != nil {
@@ -120,16 +129,6 @@ func (n *blockHandle) handle() error {
 	if err = n.updateHome(ctx); err != nil {
 		log.Errorf("write home : %v", err)
 		return err
-	}
-	return nil
-}
-
-func (n *blockHandle) writeContract(ctx context.Context, data map[common.Address]*types.Contract) (err error) {
-	for k, v := range data {
-		if err = rawdb.WriteContract(ctx, n.db, k, v); err != nil {
-			log.Errorf("write contract(%s): %v ", k, err)
-			return err
-		}
 	}
 	return nil
 }

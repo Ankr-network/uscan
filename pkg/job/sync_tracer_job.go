@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 type SyncTracerJob struct {
@@ -28,6 +29,7 @@ type SyncTracerJob struct {
 	// address => map
 	ContractOrMemberData map[common.Address]*types.Account
 	ContractInfoMap      map[common.Address]*types.Contract
+	ProxyContract        map[common.Address]common.Address // proxy => logic
 }
 
 func NewSyncTracerJob(block uint64,
@@ -41,6 +43,7 @@ func NewSyncTracerJob(block uint64,
 		InternalTxs:          make([]*types.InternalTx, 0, 1),
 		ContractOrMemberData: make(map[common.Address]*types.Account),
 		ContractInfoMap:      make(map[common.Address]*types.Contract),
+		ProxyContract:        make(map[common.Address]common.Address),
 	}
 }
 
@@ -90,10 +93,15 @@ func (e *SyncTracerJob) handleCall(prefix string, data *types.CallFrame) {
 			TxHash:      e.tx,
 		}
 		e.ContractInfoMap[data.To] = &types.Contract{
+			ByteCodeHash:          crypto.Keccak256Hash(in),
 			ByteCode:              in,
 			ConstructorArguements: arg,
 			DeployedCode:          data.Output,
 		}
+	}
+
+	if data.Type == "DELEGATECALL" {
+		e.ProxyContract[data.From] = data.To
 	}
 
 	if data.Value.String() != "0x0" {

@@ -27,14 +27,12 @@ import (
 )
 
 var (
-	addressKeyPrefix  = []byte("/info/")
-	contractKeyPrefix = []byte("/contract/")
+	addressKeyPrefix = []byte("/info/")
 )
 
 /*
 table: accounts
 
-/contract/<address> => contract info
 /info/<address> => account info
 
 /<address>/tx/total => num
@@ -52,30 +50,6 @@ table: accounts
 /<address>/erc1155/total => num
 /<address>/erc1155/<index> => <index>(erc1155 transfer index)
 */
-
-// ----------------- contract info -----------------
-func ReadContract(ctx context.Context, db kv.Reader, addr common.Address) (acc *types.Contract, err error) {
-	var bytesRes []byte
-
-	bytesRes, err = db.Get(ctx, append(contractKeyPrefix, addr.Bytes()...), &kv.ReadOption{Table: share.AccountsTbl})
-	if err != nil {
-		return nil, err
-	}
-	acc = &types.Contract{}
-	err = acc.Unmarshal(bytesRes)
-	if err == nil {
-		acc.Owner = addr
-	}
-	return
-}
-
-func WriteContract(ctx context.Context, db kv.Database, addr common.Address, data *types.Contract) error {
-	bytesRes, err := data.Marshal()
-	if err != nil {
-		return err
-	}
-	return db.Put(ctx, append(contractKeyPrefix, addr.Bytes()...), bytesRes, &kv.WriteOption{Table: share.AccountsTbl})
-}
 
 // ----------------- account info -----------------
 func ReadAccount(ctx context.Context, db kv.Reader, addr common.Address) (acc *types.Account, err error) {

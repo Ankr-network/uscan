@@ -23,6 +23,7 @@ type SyncJob struct {
 	InternalTxs          map[common.Hash][]*types.InternalTx
 	ContractOrMemberData map[common.Address]*types.Account
 	ContractInfoMap      map[common.Address]*types.Contract
+	ProxyContracts       map[common.Address]common.Address
 }
 
 func NewSyncJob(block uint64, client rpcclient.RpcClient) *SyncJob {
@@ -31,6 +32,7 @@ func NewSyncJob(block uint64, client rpcclient.RpcClient) *SyncJob {
 		client:               client,
 		ContractOrMemberData: make(map[common.Address]*types.Account),
 		ContractInfoMap:      make(map[common.Address]*types.Contract),
+		ProxyContracts:       make(map[common.Address]common.Address),
 	}
 }
 
@@ -89,9 +91,10 @@ func (e *SyncJob) Execute() {
 					e.ReceiptDatas = append(e.ReceiptDatas, v.rtJob.ReceiptData)
 					e.CallFrames[v.tracerJob.tx] = v.tracerJob.CallFrame
 					e.InternalTxs[v.tracerJob.tx] = v.tracerJob.InternalTxs
-					e.ContractOrMemberData = e.mergeContractOrMember(e.ContractOrMemberData, v.tracerJob.ContractOrMemberData)
-					e.ContractOrMemberData = e.mergeContractOrMember(e.ContractOrMemberData, v.txJob.ContractOrMemberData)
-					e.ContractInfoMap = e.mergeContract(e.ContractInfoMap, v.tracerJob.ContractInfoMap)
+					e.mergeContractOrMember(v.tracerJob.ContractOrMemberData)
+					e.mergeContractOrMember(v.txJob.ContractOrMemberData)
+					e.mergeContract(v.tracerJob.ContractInfoMap)
+					e.mergeProxyContract(v.tracerJob.ProxyContract)
 					break
 				} else {
 					time.Sleep(time.Millisecond * 500)
@@ -122,29 +125,33 @@ func (e *SyncJob) Execute() {
 	e.Completed = true
 }
 
-func (e *SyncJob) mergeContractOrMember(data map[common.Address]*types.Account, data2 map[common.Address]*types.Account) map[common.Address]*types.Account {
-	for k, v := range data2 {
-		if _, ok := data[k]; ok {
+func (e *SyncJob) mergeContractOrMember(data map[common.Address]*types.Account) {
+	for k, v := range data {
+		if _, ok := e.ContractOrMemberData[k]; ok {
 			if v.Creator != (common.Address{}) {
-				data[k].Creator = v.Creator
+				e.ContractOrMemberData[k].Creator = v.Creator
 			}
 			if v.TxHash != (common.Hash{}) {
-				data[k].TxHash = v.TxHash
+				e.ContractOrMemberData[k].TxHash = v.TxHash
 			}
 		} else {
-			data[k] = v
+			e.ContractOrMemberData[k] = v
 		}
 	}
-	return data
 }
 
-func (e *SyncJob) mergeContract(data map[common.Address]*types.Contract, data2 map[common.Address]*types.Contract) map[common.Address]*types.Contract {
-	for k, v := range data2 {
-		if _, ok := data[k]; !ok {
-			data[k] = v
+func (e *SyncJob) mergeContract(data map[common.Address]*types.Contract) {
+	for k, v := range data {
+		if _, ok := e.ContractInfoMap[k]; !ok {
+			e.ContractInfoMap[k] = v
 		}
 	}
-	return data
+}
+
+func (e *SyncJob) mergeProxyContract(data map[common.Address]common.Address) {
+	for k, v := range data {
+		e.ProxyContracts[k] = v
+	}
 }
 
 type Jobs struct {
