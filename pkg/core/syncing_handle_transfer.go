@@ -212,11 +212,11 @@ func (n *blockHandle) writeErc721Transfer(ctx context.Context, data *types.Erc72
 
 	if data.From != (common.Address{}) {
 		if err = n.writeAccountErc721TransferIndex(ctx, data.From, erc721TrasferTotal); err != nil {
-			log.Errorf("write account(to: %v) erc721 transfer index:%v", data.From.Hex(), err)
+			log.Errorf("write account(From: %v) erc721 transfer index:%v", data.From.Hex(), err)
 			return err
 		}
 		if err = n.writeErc721HolderAmount(ctx, data.Contract, data.From, &data.TokenId, decrease); err != nil {
-			log.Errorf("decrease account(to: %v) erc721 tokenId:%v", data.From.Hex(), err)
+			log.Errorf("decrease account(From: %v) erc721 tokenId:%v", data.From.Hex(), err)
 			return err
 		}
 	} else {
