@@ -11,8 +11,8 @@ func TestWriteValidateContractMetadata(t *testing.T) {
 	db := mdbx.NewMdbx("/Users/johnson/goWork/Ankr-network/uscan/uscandb")
 	data := &types.ValidateContractMetadata{
 		CompilerVersions: []*types.CompilerVersion{{Name: "v0.4.11+commit.68ef5810", FileName: "solc-static-linux-v0.4.11"}},
-		LicenseTypes:     []string{"solidity-single-file"},
-		CompilerTypes:    []string{"1) No License (None)"},
+		LicenseTypes:     []*types.LicenseType{},
+		CompilerTypes:    []string{},
 	}
 	if err := WriteValidateContractMetadata(context.Background(), db, data); err != nil {
 		t.Errorf("err: %s", err)
