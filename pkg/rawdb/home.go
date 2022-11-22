@@ -29,9 +29,6 @@ func ReadHome(ctx context.Context, db kv.Reader) (home *types.Home, err error) {
 	}
 	home = &types.Home{}
 	err = home.Unmarshal(bytesRes)
-	if err == nil {
-		home.DateTxs = make(map[string]*field.BigInt)
-	}
 	return
 }
 

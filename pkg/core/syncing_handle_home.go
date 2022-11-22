@@ -33,6 +33,8 @@ func (n *blockHandle) updateHome(ctx context.Context) (err error) {
 			} else {
 				return err
 			}
+		} else {
+			homeCache = home
 		}
 	} else {
 		home = homeCache
