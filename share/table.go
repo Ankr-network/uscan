@@ -28,6 +28,7 @@ const (
 	InventorySortTabl   = "inventorysSort"
 	ValidateContractTbl = "validateContract"
 
+	ForkHomeTbl     = "fork_home"
 	ForkAccountsTbl = "fork_accounts"
 	ForkTxTbl       = "fork_transactions"
 	ForkBlockTbl    = "fork_blocks"

@@ -29,9 +29,11 @@ type manage struct {
 	clients           []*rpcGroup
 	latestBlockNumber uint64
 	latestChan        chan uint64
+	forkChan          chan uint64
+	forkNumber        uint64
 }
 
-func NewRpcClient(ws []string) *manage {
+func NewRpcClient(ws []string, forkNum uint64) *manage {
 	clients := make([]*rpcGroup, len(ws))
 	for i, v := range ws {
 		rpcClient, err := rpc.Dial(v)
@@ -80,6 +82,8 @@ func NewRpcClient(ws []string) *manage {
 		clients:           clients,
 		latestBlockNumber: lastNumber,
 		latestChan:        make(chan uint64, share.MaxChanSize),
+		forkChan:          make(chan uint64, share.MaxChanSize),
+		forkNumber:        forkNum,
 	}
 
 	go r.syncerBlock(context.Background())
@@ -115,6 +119,12 @@ func (m *manage) syncerBlock(ctx context.Context) {
 					m.latestChan <- m.latestBlockNumber
 					m.index = index
 				}
+
+				if m.index == index {
+					if m.latestBlockNumber-head.Number.Uint64() < m.forkNumber {
+						m.forkChan <- head.Number.Uint64()
+					}
+				}
 			}
 		}(v, i)
 	}
@@ -126,6 +136,10 @@ func (r *manage) ChainID(ctx context.Context) uint64 {
 
 func (r *manage) GetLatestBlockNumber(ctx context.Context) <-chan uint64 {
 	return r.latestChan
+}
+
+func (r *manage) GetForkBlockNumber(ctx context.Context) <-chan uint64 {
+	return r.forkChan
 }
 
 func (r *manage) GetBlockByNumber(ctx context.Context, blockNumber string) (*types.Block, error) {
