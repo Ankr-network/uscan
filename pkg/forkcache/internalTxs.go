@@ -30,7 +30,7 @@ func WriteITx(ctx context.Context, db kv.Writer, hash common.Hash, index *field.
 	if err != nil {
 		return
 	}
-	return db.Put(ctx, key, bytesRes, &kv.WriteOption{Table: share.TxTbl})
+	return db.Put(ctx, key, bytesRes, &kv.WriteOption{Table: share.ForkTxTbl})
 }
 
 func ReadITx(ctx context.Context, db kv.Reader, hash common.Hash, index *field.BigInt) (data *types.InternalTx, err error) {
@@ -38,7 +38,7 @@ func ReadITx(ctx context.Context, db kv.Reader, hash common.Hash, index *field.B
 		key      = GetITxKey(hash, index)
 		bytesRes []byte
 	)
-	bytesRes, err = db.Get(ctx, key, &kv.ReadOption{Table: share.TxTbl})
+	bytesRes, err = db.Get(ctx, key, &kv.ReadOption{Table: share.ForkTxTbl})
 	if err != nil {
 		return
 	}
@@ -52,16 +52,16 @@ func ReadITx(ctx context.Context, db kv.Reader, hash common.Hash, index *field.B
 
 func DeleteITx(ctx context.Context, db kv.Writer, hash common.Hash, index *field.BigInt) (err error) {
 	var key = GetITxKey(hash, index)
-	return db.Del(ctx, key, &kv.WriteOption{Table: share.TxTbl})
+	return db.Del(ctx, key, &kv.WriteOption{Table: share.ForkTxTbl})
 }
 
 func WriteItxTotal(ctx context.Context, db kv.Writer, hash common.Hash, total *field.BigInt) (err error) {
-	return db.Put(ctx, GetITxTotalKey(hash), total.Bytes(), &kv.WriteOption{Table: share.TxTbl})
+	return db.Put(ctx, GetITxTotalKey(hash), total.Bytes(), &kv.WriteOption{Table: share.ForkTxTbl})
 }
 
 func ReadITxTotal(ctx context.Context, db kv.Reader, hash common.Hash) (total *field.BigInt, err error) {
 	var bytesRes []byte
-	bytesRes, err = db.Get(ctx, GetITxTotalKey(hash), &kv.ReadOption{Table: share.TxTbl})
+	bytesRes, err = db.Get(ctx, GetITxTotalKey(hash), &kv.ReadOption{Table: share.ForkTxTbl})
 	if err != nil {
 		return
 	}
@@ -72,7 +72,7 @@ func ReadITxTotal(ctx context.Context, db kv.Reader, hash common.Hash) (total *f
 }
 
 func DeleteItxTotal(ctx context.Context, db kv.Writer, hash common.Hash) (err error) {
-	return db.Del(ctx, GetITxTotalKey(hash), &kv.WriteOption{Table: share.TxTbl})
+	return db.Del(ctx, GetITxTotalKey(hash), &kv.WriteOption{Table: share.ForkTxTbl})
 }
 
 func GetITxKey(hash common.Hash, index *field.BigInt) []byte {

@@ -30,12 +30,12 @@ func WriteTraceTx(ctx context.Context, db kv.Writer, hash common.Hash, data *typ
 	if err != nil {
 		return
 	}
-	return db.Put(ctx, key, bytesRes, &kv.WriteOption{Table: share.TraceLogTbl})
+	return db.Put(ctx, key, bytesRes, &kv.WriteOption{Table: share.ForkTraceLogTbl})
 }
 
 func ReadTraceTx(ctx context.Context, db kv.Reader, hash common.Hash) (res *types.TraceTx, err error) {
 	var bytesRes []byte
-	bytesRes, err = db.Get(ctx, append(traceTxPrefix, hash.Bytes()...), &kv.ReadOption{Table: share.TraceLogTbl})
+	bytesRes, err = db.Get(ctx, append(traceTxPrefix, hash.Bytes()...), &kv.ReadOption{Table: share.ForkTraceLogTbl})
 	if err != nil {
 		return
 	}
@@ -46,7 +46,7 @@ func ReadTraceTx(ctx context.Context, db kv.Reader, hash common.Hash) (res *type
 
 func DeleteTraceTx(ctx context.Context, db kv.Writer, hash common.Hash) (err error) {
 	var key = append(traceTxPrefix, hash.Bytes()...)
-	return db.Del(ctx, key, &kv.WriteOption{Table: share.TraceLogTbl})
+	return db.Del(ctx, key, &kv.WriteOption{Table: share.ForkTraceLogTbl})
 }
 
 func WriteTraceTx2(ctx context.Context, db kv.Writer, hash common.Hash, data *types.TraceTx2) (err error) {
@@ -58,12 +58,12 @@ func WriteTraceTx2(ctx context.Context, db kv.Writer, hash common.Hash, data *ty
 	if err != nil {
 		return
 	}
-	return db.Put(ctx, key, bytesRes, &kv.WriteOption{Table: share.TraceLogTbl})
+	return db.Put(ctx, key, bytesRes, &kv.WriteOption{Table: share.ForkTraceLogTbl})
 }
 
 func ReadTraceTx2(ctx context.Context, db kv.Reader, hash common.Hash) (res *types.TraceTx2, err error) {
 	var bytesRes []byte
-	bytesRes, err = db.Get(ctx, append(traceTx2Prefix, hash.Bytes()...), &kv.ReadOption{Table: share.TraceLogTbl})
+	bytesRes, err = db.Get(ctx, append(traceTx2Prefix, hash.Bytes()...), &kv.ReadOption{Table: share.ForkTraceLogTbl})
 	if err != nil {
 		return
 	}
@@ -74,5 +74,5 @@ func ReadTraceTx2(ctx context.Context, db kv.Reader, hash common.Hash) (res *typ
 
 func DeleteTraceTx2(ctx context.Context, db kv.Writer, hash common.Hash) (err error) {
 	var key = append(traceTx2Prefix, hash.Bytes()...)
-	return db.Del(ctx, key, &kv.WriteOption{Table: share.TraceLogTbl})
+	return db.Del(ctx, key, &kv.WriteOption{Table: share.ForkTraceLogTbl})
 }

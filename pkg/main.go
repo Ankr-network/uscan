@@ -34,7 +34,7 @@ import (
 func MainRun(cmd *cobra.Command, args []string) {
 	mdbx.NewDB(viper.GetString(share.MdbxPath))
 	rpcMgr := rpcclient.NewRpcClient(viper.GetStringSlice(share.RpcUrls))
-	sync := core.NewSync(rpcMgr, contract.NewClient(rpcMgr), mdbx.DB, viper.GetUint64(share.WorkChan))
+	sync := core.NewSync(rpcMgr, contract.NewClient(rpcMgr), mdbx.DB, viper.GetUint64(share.WorkChan), viper.GetUint64(share.ForkBlockNum))
 	go sync.Execute(context.Background())
 
 	_, svc := grace.New(context.Background())

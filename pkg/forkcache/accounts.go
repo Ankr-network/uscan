@@ -40,7 +40,7 @@ table: accounts
 func ReadAccount(ctx context.Context, db kv.Reader, addr common.Address) (acc *types.Account, err error) {
 	var bytesRes []byte
 
-	bytesRes, err = db.Get(ctx, append(addressKeyPrefix, addr.Bytes()...), &kv.ReadOption{Table: share.AccountsTbl})
+	bytesRes, err = db.Get(ctx, append(addressKeyPrefix, addr.Bytes()...), &kv.ReadOption{Table: share.ForkAccountsTbl})
 	if err != nil {
 		return nil, err
 	}
@@ -57,22 +57,22 @@ func WriteAccount(ctx context.Context, db kv.Database, addr common.Address, acc 
 	if err != nil {
 		return err
 	}
-	return db.Put(ctx, append(addressKeyPrefix, addr.Bytes()...), bytesRes, &kv.WriteOption{Table: share.AccountsTbl})
+	return db.Put(ctx, append(addressKeyPrefix, addr.Bytes()...), bytesRes, &kv.WriteOption{Table: share.ForkAccountsTbl})
 }
 
 func DeleteAccount(ctx context.Context, db kv.Database, addr common.Address) error {
-	return db.Del(ctx, append(addressKeyPrefix, addr.Bytes()...), &kv.WriteOption{Table: share.AccountsTbl})
+	return db.Del(ctx, append(addressKeyPrefix, addr.Bytes()...), &kv.WriteOption{Table: share.ForkAccountsTbl})
 }
 
 // ----------------- tx ----------------
 
 func WriteAccountTxTotal(ctx context.Context, db kv.Writer, addr common.Address, total *field.BigInt) (err error) {
-	return db.Put(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/tx/total")...), total.Bytes(), &kv.WriteOption{Table: share.AccountsTbl})
+	return db.Put(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/tx/total")...), total.Bytes(), &kv.WriteOption{Table: share.ForkAccountsTbl})
 }
 
 func ReadAccountTxTotal(ctx context.Context, db kv.Reader, addr common.Address) (total *field.BigInt, err error) {
 	var bytesRes []byte
-	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/tx/total")...), &kv.ReadOption{Table: share.AccountsTbl})
+	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/tx/total")...), &kv.ReadOption{Table: share.ForkAccountsTbl})
 	if err != nil {
 		return
 	}
@@ -82,16 +82,16 @@ func ReadAccountTxTotal(ctx context.Context, db kv.Reader, addr common.Address) 
 }
 
 func DeleteAccountTxTotal(ctx context.Context, db kv.Writer, addr common.Address) (err error) {
-	return db.Del(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/tx/total")...), &kv.WriteOption{Table: share.AccountsTbl})
+	return db.Del(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/tx/total")...), &kv.WriteOption{Table: share.ForkAccountsTbl})
 }
 
 func WriteAccountTxIndex(ctx context.Context, db kv.Writer, addr common.Address, index *field.BigInt, hash common.Hash) error {
-	return db.Put(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/tx/"), index.Bytes()...)...), hash.Bytes(), &kv.WriteOption{Table: share.AccountsTbl})
+	return db.Put(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/tx/"), index.Bytes()...)...), hash.Bytes(), &kv.WriteOption{Table: share.ForkAccountsTbl})
 }
 
 func ReadAccountTxIndex(ctx context.Context, db kv.Reader, addr common.Address, index *field.BigInt) (hash common.Hash, err error) {
 	var bytesRes []byte
-	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/tx/"), index.Bytes()...)...), &kv.ReadOption{Table: share.AccountsTbl})
+	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/tx/"), index.Bytes()...)...), &kv.ReadOption{Table: share.ForkAccountsTbl})
 	if err != nil {
 		return
 	}
@@ -101,12 +101,12 @@ func ReadAccountTxIndex(ctx context.Context, db kv.Reader, addr common.Address, 
 }
 
 func DeleteAccountTxIndex(ctx context.Context, db kv.Writer, addr common.Address, index *field.BigInt) error {
-	return db.Del(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/tx/"), index.Bytes()...)...), &kv.WriteOption{Table: share.AccountsTbl})
+	return db.Del(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/tx/"), index.Bytes()...)...), &kv.WriteOption{Table: share.ForkAccountsTbl})
 }
 
 func ReadAccountTxByIndex(ctx context.Context, db kv.Reader, addr common.Address, index *field.BigInt) (tx *types.Tx, err error) {
 	var hashByte []byte
-	hashByte, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/tx/"), index.Bytes()...)...), &kv.ReadOption{Table: share.AccountsTbl})
+	hashByte, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/tx/"), index.Bytes()...)...), &kv.ReadOption{Table: share.ForkAccountsTbl})
 	if err != nil {
 		return
 	}
@@ -117,12 +117,12 @@ func ReadAccountTxByIndex(ctx context.Context, db kv.Reader, addr common.Address
 // ------------ internal tx -------------
 
 func WriteAccountITxTotal(ctx context.Context, db kv.Writer, addr common.Address, total *field.BigInt) (err error) {
-	return db.Put(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/itx/total")...), total.Bytes(), &kv.WriteOption{Table: share.AccountsTbl})
+	return db.Put(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/itx/total")...), total.Bytes(), &kv.WriteOption{Table: share.ForkAccountsTbl})
 }
 
 func ReadAccountITxTotal(ctx context.Context, db kv.Reader, addr common.Address) (total *field.BigInt, err error) {
 	var bytesRes []byte
-	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/itx/total")...), &kv.ReadOption{Table: share.AccountsTbl})
+	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/itx/total")...), &kv.ReadOption{Table: share.ForkAccountsTbl})
 	if err != nil {
 		return
 	}
@@ -132,7 +132,7 @@ func ReadAccountITxTotal(ctx context.Context, db kv.Reader, addr common.Address)
 }
 
 func DeleteAccountITxTotal(ctx context.Context, db kv.Writer, addr common.Address) (err error) {
-	return db.Del(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/itx/total")...), &kv.WriteOption{Table: share.AccountsTbl})
+	return db.Del(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/itx/total")...), &kv.WriteOption{Table: share.ForkAccountsTbl})
 }
 
 func WriteAccountITxIndex(ctx context.Context, db kv.Writer, addr common.Address, index *field.BigInt, data *types.InternalTxKey) (err error) {
@@ -141,12 +141,12 @@ func WriteAccountITxIndex(ctx context.Context, db kv.Writer, addr common.Address
 	if err != nil {
 		return
 	}
-	return db.Put(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/itx/"), index.Bytes()...)...), bytesRes, &kv.WriteOption{Table: share.AccountsTbl})
+	return db.Put(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/itx/"), index.Bytes()...)...), bytesRes, &kv.WriteOption{Table: share.ForkAccountsTbl})
 }
 
 func ReadAccountITxIndex(ctx context.Context, db kv.Reader, addr common.Address, index *field.BigInt) (data *types.InternalTxKey, err error) {
 	var bytesRes []byte
-	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/itx/"), index.Bytes()...)...), &kv.ReadOption{Table: share.AccountsTbl})
+	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/itx/"), index.Bytes()...)...), &kv.ReadOption{Table: share.ForkAccountsTbl})
 	if err != nil {
 		return
 	}
@@ -156,12 +156,12 @@ func ReadAccountITxIndex(ctx context.Context, db kv.Reader, addr common.Address,
 }
 
 func DeleteAccountITxIndex(ctx context.Context, db kv.Writer, addr common.Address, index *field.BigInt) (err error) {
-	return db.Del(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/itx/"), index.Bytes()...)...), &kv.WriteOption{Table: share.AccountsTbl})
+	return db.Del(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/itx/"), index.Bytes()...)...), &kv.WriteOption{Table: share.ForkAccountsTbl})
 }
 
 func ReadAccountITxByIndex(ctx context.Context, db kv.Reader, addr common.Address, index *field.BigInt) (itx *types.InternalTx, err error) {
 	var bytesRes []byte
-	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/itx/"), index.Bytes()...)...), &kv.ReadOption{Table: share.AccountsTbl})
+	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/itx/"), index.Bytes()...)...), &kv.ReadOption{Table: share.ForkAccountsTbl})
 	if err != nil {
 		return
 	}
@@ -173,12 +173,12 @@ func ReadAccountITxByIndex(ctx context.Context, db kv.Reader, addr common.Addres
 //  ---------------- erc20 transfer ---------------
 
 func WriteAccountErc20Total(ctx context.Context, db kv.Writer, addr common.Address, total *field.BigInt) (err error) {
-	return db.Put(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/erc20/total")...), total.Bytes(), &kv.WriteOption{Table: share.AccountsTbl})
+	return db.Put(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/erc20/total")...), total.Bytes(), &kv.WriteOption{Table: share.ForkAccountsTbl})
 }
 
 func ReadAccountErc20Total(ctx context.Context, db kv.Reader, addr common.Address) (total *field.BigInt, err error) {
 	var bytesRes []byte
-	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/erc20/total")...), &kv.ReadOption{Table: share.AccountsTbl})
+	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/erc20/total")...), &kv.ReadOption{Table: share.ForkAccountsTbl})
 	if err != nil {
 		return
 	}
@@ -188,16 +188,16 @@ func ReadAccountErc20Total(ctx context.Context, db kv.Reader, addr common.Addres
 }
 
 func DeleteAccountErc20Total(ctx context.Context, db kv.Writer, addr common.Address, total *field.BigInt) (err error) {
-	return db.Del(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/erc20/total")...), &kv.WriteOption{Table: share.AccountsTbl})
+	return db.Del(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/erc20/total")...), &kv.WriteOption{Table: share.ForkAccountsTbl})
 }
 
 func WriteAccountErc20Index(ctx context.Context, db kv.Writer, addr common.Address, index *field.BigInt, erc20TransferIndex *field.BigInt) (err error) {
-	return db.Put(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/erc20/"), index.Bytes()...)...), erc20TransferIndex.Bytes(), &kv.WriteOption{Table: share.AccountsTbl})
+	return db.Put(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/erc20/"), index.Bytes()...)...), erc20TransferIndex.Bytes(), &kv.WriteOption{Table: share.ForkAccountsTbl})
 }
 
 func ReadAccountErc20Index(ctx context.Context, db kv.Reader, addr common.Address, index *field.BigInt) (erc20TransferIndex *field.BigInt, err error) {
 	var bytesRes []byte
-	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/erc20/"), index.Bytes()...)...), &kv.ReadOption{Table: share.AccountsTbl})
+	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/erc20/"), index.Bytes()...)...), &kv.ReadOption{Table: share.ForkAccountsTbl})
 	if err != nil {
 		return
 	}
@@ -208,12 +208,12 @@ func ReadAccountErc20Index(ctx context.Context, db kv.Reader, addr common.Addres
 }
 
 func DeleteAccountErc20Index(ctx context.Context, db kv.Writer, addr common.Address, index *field.BigInt) (err error) {
-	return db.Del(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/erc20/"), index.Bytes()...)...), &kv.WriteOption{Table: share.AccountsTbl})
+	return db.Del(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/erc20/"), index.Bytes()...)...), &kv.WriteOption{Table: share.ForkAccountsTbl})
 }
 
 func ReadAccountErc20ByIndex(ctx context.Context, db kv.Reader, addr common.Address, index *field.BigInt) (data *types.Erc20Transfer, err error) {
 	var bytesRes []byte
-	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/erc20/"), index.Bytes()...)...), &kv.ReadOption{Table: share.AccountsTbl})
+	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/erc20/"), index.Bytes()...)...), &kv.ReadOption{Table: share.ForkAccountsTbl})
 	if err != nil {
 		return
 	}
@@ -227,12 +227,12 @@ func ReadAccountErc20ByIndex(ctx context.Context, db kv.Reader, addr common.Addr
 //  ---------------- erc721 transfer ---------------
 
 func WriteAccountErc721Total(ctx context.Context, db kv.Writer, addr common.Address, total *field.BigInt) (err error) {
-	return db.Put(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/erc721/total")...), total.Bytes(), &kv.WriteOption{Table: share.AccountsTbl})
+	return db.Put(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/erc721/total")...), total.Bytes(), &kv.WriteOption{Table: share.ForkAccountsTbl})
 }
 
 func ReadAccountErc721Total(ctx context.Context, db kv.Reader, addr common.Address) (total *field.BigInt, err error) {
 	var bytesRes []byte
-	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/erc721/total")...), &kv.ReadOption{Table: share.AccountsTbl})
+	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/erc721/total")...), &kv.ReadOption{Table: share.ForkAccountsTbl})
 	if err != nil {
 		return
 	}
@@ -243,16 +243,16 @@ func ReadAccountErc721Total(ctx context.Context, db kv.Reader, addr common.Addre
 }
 
 func DeleteAccountErc721Total(ctx context.Context, db kv.Writer, addr common.Address) (err error) {
-	return db.Del(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/erc721/total")...), &kv.WriteOption{Table: share.AccountsTbl})
+	return db.Del(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/erc721/total")...), &kv.WriteOption{Table: share.ForkAccountsTbl})
 }
 
 func WriteAccountErc721Index(ctx context.Context, db kv.Writer, addr common.Address, index *field.BigInt, erc721TransferIndex *field.BigInt) (err error) {
-	return db.Put(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/erc721/"), index.Bytes()...)...), erc721TransferIndex.Bytes(), &kv.WriteOption{Table: share.AccountsTbl})
+	return db.Put(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/erc721/"), index.Bytes()...)...), erc721TransferIndex.Bytes(), &kv.WriteOption{Table: share.ForkAccountsTbl})
 }
 
 func ReadAccountErc721Index(ctx context.Context, db kv.Reader, addr common.Address, index *field.BigInt) (erc721TransferIndex *field.BigInt, err error) {
 	var bytesRes []byte
-	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/erc721/"), index.Bytes()...)...), &kv.ReadOption{Table: share.AccountsTbl})
+	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/erc721/"), index.Bytes()...)...), &kv.ReadOption{Table: share.ForkAccountsTbl})
 	if err != nil {
 		return
 	}
@@ -263,12 +263,12 @@ func ReadAccountErc721Index(ctx context.Context, db kv.Reader, addr common.Addre
 }
 
 func DeleteAccountErc721Index(ctx context.Context, db kv.Writer, addr common.Address, index *field.BigInt) (err error) {
-	return db.Del(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/erc721/"), index.Bytes()...)...), &kv.WriteOption{Table: share.AccountsTbl})
+	return db.Del(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/erc721/"), index.Bytes()...)...), &kv.WriteOption{Table: share.ForkAccountsTbl})
 }
 
 func ReadAccountErc721ByIndex(ctx context.Context, db kv.Reader, addr common.Address, index *field.BigInt) (data *types.Erc721Transfer, err error) {
 	var bytesRes []byte
-	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/erc721/"), index.Bytes()...)...), &kv.ReadOption{Table: share.AccountsTbl})
+	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/erc721/"), index.Bytes()...)...), &kv.ReadOption{Table: share.ForkAccountsTbl})
 	if err != nil {
 		return
 	}
@@ -282,12 +282,12 @@ func ReadAccountErc721ByIndex(ctx context.Context, db kv.Reader, addr common.Add
 //  ---------------- erc115 transfer ---------------
 
 func WriteAccountErc1155Total(ctx context.Context, db kv.Writer, addr common.Address, total *field.BigInt) (err error) {
-	return db.Put(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/erc1155/total")...), total.Bytes(), &kv.WriteOption{Table: share.AccountsTbl})
+	return db.Put(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/erc1155/total")...), total.Bytes(), &kv.WriteOption{Table: share.ForkAccountsTbl})
 }
 
 func ReadAccountErc1155Total(ctx context.Context, db kv.Reader, addr common.Address) (total *field.BigInt, err error) {
 	var bytesRes []byte
-	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/erc1155/total")...), &kv.ReadOption{Table: share.AccountsTbl})
+	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/erc1155/total")...), &kv.ReadOption{Table: share.ForkAccountsTbl})
 	if err != nil {
 		return
 	}
@@ -298,16 +298,16 @@ func ReadAccountErc1155Total(ctx context.Context, db kv.Reader, addr common.Addr
 }
 
 func DeleteAccountErc1155Total(ctx context.Context, db kv.Writer, addr common.Address) (err error) {
-	return db.Del(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/erc1155/total")...), &kv.WriteOption{Table: share.AccountsTbl})
+	return db.Del(ctx, append(append([]byte("/fork/"), addr.Bytes()...), []byte("/erc1155/total")...), &kv.WriteOption{Table: share.ForkAccountsTbl})
 }
 
 func WriteAccountErc1155Index(ctx context.Context, db kv.Writer, addr common.Address, index *field.BigInt, erc1155TransferIndex *field.BigInt) (err error) {
-	return db.Put(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/erc1155/"), index.Bytes()...)...), erc1155TransferIndex.Bytes(), &kv.WriteOption{Table: share.AccountsTbl})
+	return db.Put(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/erc1155/"), index.Bytes()...)...), erc1155TransferIndex.Bytes(), &kv.WriteOption{Table: share.ForkAccountsTbl})
 }
 
 func ReadAccountErc1155Index(ctx context.Context, db kv.Reader, addr common.Address, index *field.BigInt) (erc1155TransferIndex *field.BigInt, err error) {
 	var bytesRes []byte
-	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/erc1155/"), index.Bytes()...)...), &kv.ReadOption{Table: share.AccountsTbl})
+	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/erc1155/"), index.Bytes()...)...), &kv.ReadOption{Table: share.ForkAccountsTbl})
 	if err != nil {
 		return
 	}
@@ -318,12 +318,12 @@ func ReadAccountErc1155Index(ctx context.Context, db kv.Reader, addr common.Addr
 }
 
 func DeleteAccountErc1155Index(ctx context.Context, db kv.Writer, addr common.Address, index *field.BigInt) (err error) {
-	return db.Del(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/erc1155/"), index.Bytes()...)...), &kv.WriteOption{Table: share.AccountsTbl})
+	return db.Del(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/erc1155/"), index.Bytes()...)...), &kv.WriteOption{Table: share.ForkAccountsTbl})
 }
 
 func ReadAccountErc1155ByIndex(ctx context.Context, db kv.Reader, addr common.Address, index *field.BigInt) (data *types.Erc1155Transfer, err error) {
 	var bytesRes []byte
-	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/erc1155/"), index.Bytes()...)...), &kv.ReadOption{Table: share.AccountsTbl})
+	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/erc1155/"), index.Bytes()...)...), &kv.ReadOption{Table: share.ForkAccountsTbl})
 	if err != nil {
 		return
 	}

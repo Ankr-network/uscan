@@ -29,6 +29,7 @@ func NewSync(
 	contractClient contract.Contractor,
 	db kv.Database,
 	chanSize uint64,
+	forkBlockNum uint64,
 ) *Sync {
 	s := &Sync{
 		client:         client,
@@ -37,7 +38,7 @@ func NewSync(
 		jobChan:        workpool.NewDispathcher(int(chanSize)),
 		storeChan:      make(chan *job.SyncJob, chanSize*2),
 	}
-	go s.storeEvent()
+	go s.storeEvent(forkBlockNum)
 	job.GlobalInit(int(chanSize))
 	return s
 }
@@ -50,7 +51,7 @@ func (n *Sync) Execute(ctx context.Context) {
 	begin = n.getBeginBlock()
 	for lastBlock = range n.client.GetLatestBlockNumber(ctx) {
 		log.Infof("receive block: %d", lastBlock)
-		end = lastBlock - 1
+		end = lastBlock
 		if begin > end {
 			continue
 		}
@@ -78,7 +79,7 @@ func (n *Sync) getBeginBlock() uint64 {
 	return syncingBlock.ToUint64() + 1
 }
 
-func (n *Sync) storeEvent() {
+func (n *Sync) storeEvent(forkBlockNum uint64) {
 	var blockNum uint64
 	for job := range n.storeChan {
 		for {
