@@ -25,7 +25,7 @@ func ReadBlock(ctx context.Context, db kv.Reader, blockNum *field.BigInt) (bk *t
 		bytesRes []byte
 	)
 
-	bytesRes, err = db.Get(ctx, key, &kv.ReadOption{Table: share.BlockTbl})
+	bytesRes, err = db.Get(ctx, key, &kv.ReadOption{Table: share.ForkBlockTbl})
 	if err != nil {
 		return
 	}
@@ -49,10 +49,10 @@ func WriteBlock(ctx context.Context, db kv.Writer, blockNum *field.BigInt, bk *t
 		return
 	}
 
-	return db.Put(ctx, key, bytesRes, &kv.WriteOption{Table: share.BlockTbl})
+	return db.Put(ctx, key, bytesRes, &kv.WriteOption{Table: share.ForkBlockTbl})
 }
 
 func DeleteBlock(ctx context.Context, db kv.Writer, blockNum *field.BigInt) (err error) {
 	var key = append(blockKey, blockNum.Bytes()...)
-	return db.Del(ctx, key, &kv.WriteOption{Table: share.BlockTbl})
+	return db.Del(ctx, key, &kv.WriteOption{Table: share.ForkBlockTbl})
 }

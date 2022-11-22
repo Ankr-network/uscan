@@ -26,4 +26,6 @@ const (
 	WorkChan = "work_chan"
 
 	MdbxPath = "db_path"
+
+	ForkBlockNum = "fork_block_number"
 )
