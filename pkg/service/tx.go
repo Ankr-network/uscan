@@ -121,26 +121,23 @@ func GetTx(tx string) (*types.TxResp, error) {
 	}
 
 	resp := &types.TxResp{
-		Hash:        txData.Hash.String(),
-		Method:      txData.Method.String(),
-		BlockHash:   txData.BlockNum.String(),
-		BlockNumber: DecodeBig(txData.BlockNum.String()).String(),
-		From:        txData.From.Hex(),
-		To:          txData.To.Hex(),
-		Gas:         txData.Gas.String(),
-		GasPrice:    txData.GasPrice.String(),
-		Value:       txData.Value.String(),
-		//MaxFeePerGas:         nil,
-		//MaxPriorityFeePerGas: nil,
-		Input: txData.Data.String(),
-		Nonce: txData.Nonce.String(),
-		//TransactionIndex:  nil,
-		//Type:              nil,
-		//ChainID:           nil,
-		V:          txData.V.String(),
-		R:          txData.R.String(),
-		S:          txData.S.String(),
-		MethodName: "",
+		Hash:                 txData.Hash.String(),
+		Method:               txData.Method.String(),
+		BlockHash:            txData.BlockNum.String(),
+		BlockNumber:          DecodeBig(txData.BlockNum.String()).String(),
+		From:                 txData.From.Hex(),
+		To:                   txData.To.Hex(),
+		Gas:                  txData.Gas.String(),
+		GasPrice:             txData.GasPrice.String(),
+		Value:                txData.Value.String(),
+		MaxFeePerGas:         txData.GasFeeCap.StringPointer(),
+		MaxPriorityFeePerGas: txData.GasTipCap.StringPointer(),
+		Input:                txData.Data.String(),
+		Nonce:                txData.Nonce.String(),
+		V:                    txData.V.String(),
+		R:                    txData.R.String(),
+		S:                    txData.S.String(),
+		MethodName:           "", // TODO
 	}
 
 	resp.Status = 3

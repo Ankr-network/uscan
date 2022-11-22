@@ -72,9 +72,6 @@ type TxResp struct {
 	MaxPriorityFeePerGas *string              `json:"maxPriorityFeePerGas"`
 	Input                string               `json:"input"`
 	Nonce                string               `json:"nonce"` // change string
-	TransactionIndex     *string              `json:"transactionIndex"`
-	Type                 *string              `json:"type"`
-	ChainID              *string              `json:"chainID"`
 	V                    string               `json:"v"`
 	R                    string               `json:"r"`
 	S                    string               `json:"s"`
