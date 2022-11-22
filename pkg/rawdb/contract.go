@@ -11,7 +11,7 @@ import (
 
 var (
 	contractMetadataPrefix  = []byte("metadata")
-	ContractVerityPrefix    = []byte("contract/")
+	ContractVerityPrefix    = []byte("contract/info/")
 	ContractVerityTmpPrefix = []byte("contract/tmp/")
 	ContractMethodPrefix    = []byte("method/")
 )
@@ -19,7 +19,7 @@ var (
 /*
 metadata => types.ValidateContractMetadata
 contract/tmp/<address>  ->  status
-contract/<address> -> info
+contract/info/<address> -> info
 
 method/<MethodID> -> method name
 */
@@ -52,8 +52,8 @@ func ReadValidateContractStatus(ctx context.Context, db kv.Reader, address commo
 	if err != nil {
 		return nil, err
 	}
-	b := &big.Int{}
-	b.SetBytes(rs)
+	status = &big.Int{}
+	status.SetBytes(rs)
 	return
 }
 

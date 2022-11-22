@@ -53,18 +53,18 @@ func (r *ValidateContractTmpReq) ToValidateContractReq() *ValidateContractReq {
 		resp.CompilerFileName = r.CompilerFileName[0]
 	}
 	if r.LicenseType != nil && len(r.LicenseType) > 0 {
-		licenseType, _ := strconv.Atoi(r.LicenseType[0])
+		licenseType, _ := strconv.ParseUint(r.LicenseType[0], 10, 64)
 		resp.LicenseType = licenseType
 	}
 	if r.SourceCode != nil && len(r.SourceCode) > 0 {
 		resp.SourceCode = r.SourceCode[0]
 	}
 	if r.Optimization != nil && len(r.Optimization) > 0 {
-		optimization, _ := strconv.Atoi(r.Optimization[0])
+		optimization, _ := strconv.ParseUint(r.Optimization[0], 10, 64)
 		resp.Optimization = optimization
 	}
 	if r.Runs != nil && len(r.Runs) > 0 {
-		runs, _ := strconv.Atoi(r.Runs[0])
+		runs, _ := strconv.ParseUint(r.Runs[0], 10, 64)
 		resp.Runs = runs
 	}
 	if r.EVMVersion != nil && len(r.EVMVersion) > 0 {
@@ -79,10 +79,10 @@ type ValidateContractReq struct {
 	CompilerType     string `json:"compilerType"` // solidity-single-file / solidity-standard-json-input
 	CompilerVersion  string `json:"compilerVersion"`
 	CompilerFileName string `json:"compilerFileName"`
-	LicenseType      int    `json:"licenseType"` // int
+	LicenseType      uint64 `json:"licenseType"` // int
 	SourceCode       string `json:"sourceCode"`
-	Optimization     int    `json:"optimization"` // bool
-	Runs             int    `json:"runs"`         // int
+	Optimization     uint64 `json:"optimization"` // bool
+	Runs             uint64 `json:"runs"`         // int
 	EVMVersion       string `json:"evmVersion"`   // 默认：default
 }
 

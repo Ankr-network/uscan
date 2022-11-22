@@ -18,6 +18,7 @@ package pkg
 
 import (
 	"context"
+	"github.com/Ankr-network/uscan/pkg/service"
 
 	"github.com/Ankr-network/uscan/pkg/contract"
 	"github.com/Ankr-network/uscan/pkg/core"
@@ -37,6 +38,7 @@ func MainRun(cmd *cobra.Command, args []string) {
 	sync := core.NewSync(rpcMgr, contract.NewClient(rpcMgr), mdbx.DB, viper.GetUint64(share.WorkChan), viper.GetUint64(share.ForkBlockNum))
 	go sync.Execute(context.Background())
 
+	service.StartHandleContractVerity()
 	_, svc := grace.New(context.Background())
 	svc.RegisterService("web service", apis.Apis)
 	svc.Wait()

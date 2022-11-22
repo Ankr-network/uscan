@@ -246,3 +246,21 @@ type InventoryResp struct {
 	Address string
 	TokenID uint64
 }
+
+type ContractVerityInfo struct {
+	ContractName    string            `json:"contractName"`
+	CompilerVersion string            `json:"compilerVersion"`
+	Optimization    uint64            `json:"optimization"`
+	Runs            uint64            `json:"runs"`
+	EVMVersion      string            `json:"evmVersion"`
+	LicenseType     uint64            `json:"licenseType"`
+	ABI             string            `json:"abi"`
+	Metadata        map[string]string `json:"metadata"`
+	Object          string            `json:"object"`
+}
+
+type ContractVerityInfoResp struct {
+	Contract             *ContractVerityInfo `json:"contract"`
+	ProxyContractAddress string              `json:"proxyContractAddress"`
+	ProxyContract        *ContractVerityInfo `json:"proContract"`
+}

@@ -56,26 +56,7 @@ func SetupRouter(g fiber.Router) {
 	g.Get("/contracts-verify/:id/status", getValidateContractStatus)
 	g.Get("/contracts/metadata", ReadValidateContractMetadata)
 	g.Post("/contracts/metadata", WriteValidateContractMetadata)
-	//g.Get("/contracts/:address/content", getValidateContract)
-}
-
-func Cros() {
-	//return func(c *fiber.Ctx) {
-	//	c.He
-	//
-	//	c.Writer.Header().Add("Access-Control-Allow-Origin", "*")
-	//	c.Writer.Header().Set("Access-Control-Max-Age", "86400")
-	//	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, UPDATE, PATCH")
-	//	c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Apitoken, Authorization, Token")
-	//	c.Writer.Header().Set("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Headers")
-	//	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-	//
-	//	if c.Request.Method == "OPTIONS" {
-	//		c.AbortWithStatus(200)
-	//	} else {
-	//		c.Next()
-	//	}
-	//}
+	g.Get("/contracts/:address/content", getValidateContract)
 }
 
 func search(c *fiber.Ctx) error {
@@ -441,12 +422,8 @@ func WriteValidateContractMetadata(c *fiber.Ctx) error {
 	}
 	return c.Status(http.StatusOK).JSON(response.Ok(nil))
 }
+
 func ReadValidateContractMetadata(c *fiber.Ctx) error {
-	req := &types.ValidateContractMetadata{}
-	err := c.BodyParser(req)
-	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
-	}
 	resp, err := service.ReadValidateContractMetadata()
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
@@ -460,7 +437,7 @@ func validateContract(c *fiber.Ctx) error {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
 	}
 	req := &types.ValidateContractTmpReq{}
-	if err := mapstructure.Decode(value, &req); err != nil {
+	if err := mapstructure.Decode(value.Value, &req); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
 	}
 	param := req.ToValidateContractReq()
@@ -499,5 +476,26 @@ func getFile(files map[string][]*multipart.FileHeader) ([]byte, error) {
 }
 
 func getValidateContractStatus(c *fiber.Ctx) error {
-	return nil
+	id := c.Params("id")
+	if id == "" {
+		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
+	}
+	resp, err := service.GetValidateContractStatus(id)
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
+	}
+	return c.Status(http.StatusOK).JSON(response.Ok(resp))
+}
+
+func getValidateContract(c *fiber.Ctx) error {
+	address := c.Params("address")
+	if address == "" {
+		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
+	}
+	resp, err := service.GetValidateContract(common.HexToAddress(address))
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
+	}
+	return c.Status(http.StatusOK).JSON(response.Ok(resp))
+
 }

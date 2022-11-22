@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -121,7 +122,7 @@ func validateContract(param *types.ContractVerityTmp) error {
 		}
 		optimizer := solc.Optimizer{
 			Enabled: enabled,
-			Runs:    param.Runs,
+			Runs:    int(param.Runs),
 		}
 		settings := solc.Settings{
 			Optimizer:  optimizer,
@@ -181,7 +182,23 @@ func validateContract(param *types.ContractVerityTmp) error {
 	}
 
 	abi = v.ABI
-	object = v.EVM.DeployedBytecode.Object
+	object = v.EVM.Bytecode.Object
+
+	bytecodeObject, err := hexutil.Decode("0x" + v.EVM.Bytecode.Object)
+	if err != nil {
+		return err
+	}
+	deployedBytecodeObject, err := hexutil.Decode("0x" + v.EVM.DeployedBytecode.Object)
+	if err != nil {
+		return err
+	}
+
+	splitOp := deployedBytecodeObject[len(deployedBytecodeObject)-32:]
+	var objectByte []byte
+	res := bytes.Split(bytecodeObject, splitOp)
+	if len(res) == 2 {
+		objectByte = append(res[0], splitOp...)
+	}
 
 	switch param.CompilerType {
 	case types.SoliditySingleFile:
@@ -214,46 +231,19 @@ func validateContract(param *types.ContractVerityTmp) error {
 	if err != nil {
 		return err
 	}
+
 	codeHash := ""
-	xObject := "0x" + object
-	switch param.CompilerType {
-	case types.SoliditySingleFile:
-		if len(xObject) <= 86 {
-			return fmt.Errorf("len(xObject) <= 86")
-		}
-
-		decodeObject, err := hexutil.Decode(account.ByteCodeHash.Hex()[:len(account.ByteCodeHash.Hex())-86])
-		if err != nil {
-			return err
-		}
-
-		decodeObject2, err := hexutil.Decode(xObject[:len(xObject)-86])
-		if err != nil {
-			return err
-		}
-		hashCode := crypto.Keccak256Hash(decodeObject)
-		hashCode2 := crypto.Keccak256Hash(decodeObject2)
-		if hashCode == hashCode2 {
-			codeHash = account.ByteCodeHash.Hex()
-		}
-	case types.SolidityStandardJsonInput:
-		decodeObject, err := hexutil.Decode(xObject)
-		if err != nil {
-			return err
-		}
-		hashCode := crypto.Keccak256Hash(decodeObject)
-		if hashCode.Hex() == account.ByteCodeHash.Hex() {
-			codeHash = account.ByteCodeHash.Hex()
-		}
-	}
-	for k, v := range v.EVM.MethodIdentifiers {
-		err := store.WriteMethodName(context.Background(), mdbx.DB, k, v)
-		if err != nil {
-			return err
-		}
+	if crypto.Keccak256Hash(objectByte).Hex() == account.ByteCodeHash.Hex() {
+		codeHash = hexutil.Encode(account.ByteCode)
 	}
 
 	if codeHash != "" {
+		for k, v := range v.EVM.MethodIdentifiers {
+			err := store.WriteMethodName(context.Background(), mdbx.DB, v, k)
+			if err != nil {
+				return err
+			}
+		}
 		if err := store.WriteValidateContract(context.Background(), mdbx.DB, common.HexToAddress(param.Address), &types.ContractVerity{
 			ContractName:    param.ContractName,
 			CompilerVersion: param.CompilerVersion,
@@ -303,4 +293,69 @@ func StartHandleContractVerity() {
 			}
 		}
 	}()
+}
+
+func GetValidateContractStatus(address string) (int64, error) {
+	status, err := store.ReadValidateContractStatus(context.Background(), mdbx.DB, common.HexToAddress(address))
+	if err != nil {
+		return 0, err
+	}
+	return status.Int64(), nil
+}
+
+func GetValidateContract(address common.Address) (*types.ContractVerityInfoResp, error) {
+	resp := &types.ContractVerityInfoResp{}
+	contract, err := store.ReadValidateContract(context.Background(), mdbx.DB, address)
+	if err != nil && err != kv.NotFound {
+		return nil, err
+	}
+	if contract != nil {
+		metadata := make(map[string]string)
+		err := json.Unmarshal([]byte(contract.Metadata), &metadata)
+		if err != nil {
+			return nil, err
+		}
+		resp.Contract = &types.ContractVerityInfo{
+			ContractName:    contract.ContractName,
+			CompilerVersion: contract.CompilerVersion,
+			Optimization:    contract.Optimization,
+			Runs:            contract.Runs,
+			EVMVersion:      contract.EVMVersion,
+			LicenseType:     contract.LicenseType,
+			ABI:             contract.ABI,
+			Metadata:        metadata,
+			Object:          contract.Object,
+		}
+	}
+	proxyContractAddress, err := store.ReadProxyContract(context.Background(), mdbx.DB, address)
+	if err != nil && err != kv.NotFound {
+		return nil, err
+	}
+	nullAddress := common.Address{}
+	if proxyContractAddress.String() != nullAddress.String() {
+		resp.ProxyContractAddress = proxyContractAddress.String()
+	}
+	proxyContract, err := store.ReadValidateContract(context.Background(), mdbx.DB, proxyContractAddress)
+	if err != nil && err != kv.NotFound {
+		return nil, err
+	}
+	if proxyContract != nil {
+		metadata := make(map[string]string)
+		err := json.Unmarshal([]byte(contract.Metadata), &metadata)
+		if err != nil {
+			return nil, err
+		}
+		resp.ProxyContract = &types.ContractVerityInfo{
+			ContractName:    contract.ContractName,
+			CompilerVersion: contract.CompilerVersion,
+			Optimization:    contract.Optimization,
+			Runs:            contract.Runs,
+			EVMVersion:      contract.EVMVersion,
+			LicenseType:     contract.LicenseType,
+			ABI:             contract.ABI,
+			Metadata:        metadata,
+			Object:          contract.Object,
+		}
+	}
+	return resp, nil
 }

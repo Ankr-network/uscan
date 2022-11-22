@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/Ankr-network/uscan/pkg/log"
-	"github.com/Ankr-network/uscan/pkg/service"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 
@@ -54,6 +53,6 @@ func Apis(ctx context.Context) error {
 	if err := svc.Listen(addr); err != nil {
 		log.Fatalf("service boot with error: %s", err)
 	}
-	service.StartHandleContractVerity()
+
 	return nil
 }

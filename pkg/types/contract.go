@@ -52,10 +52,10 @@ type ContractVerityTmp struct {
 	CompilerType     string
 	CompilerVersion  string
 	CompilerFileName string
-	LicenseType      int
+	LicenseType      uint64
 	SourceCode       string
-	Optimization     int
-	Runs             int
+	Optimization     uint64
+	Runs             uint64
 	EVMVersion       string // 当前默认default
 	Status           int    // 0:handling  1 success 2 fail
 }
@@ -71,10 +71,10 @@ func (b *ContractVerityTmp) Unmarshal(bin []byte) (err error) {
 type ContractVerity struct {
 	ContractName    string `json:"contractName"`
 	CompilerVersion string `json:"compilerVersion"`
-	Optimization    int    `json:"optimization"`
-	Runs            int    `json:"runs"`
+	Optimization    uint64 `json:"optimization"`
+	Runs            uint64 `json:"runs"`
 	EVMVersion      string `gorm:"column:evm_version"`
-	LicenseType     int    `json:"licenseType"`
+	LicenseType     uint64 `json:"licenseType"`
 	ABI             string `json:"abi"`
 	Metadata        string `json:"metadata"`
 	CodeHash        string `json:"codeHash" gorm:"uniqueIndex:code_hash,priority:1;type:varchar(255)"`
