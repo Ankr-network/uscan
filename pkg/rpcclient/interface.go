@@ -12,6 +12,7 @@ import (
 type RpcClient interface {
 	ChainID(ctx context.Context) uint64
 	GetLatestBlockNumber(ctx context.Context) <-chan uint64
+	GetForkBlockNumber(ctx context.Context) <-chan uint64
 	GetClient() *ethclient.Client
 	Close()
 
