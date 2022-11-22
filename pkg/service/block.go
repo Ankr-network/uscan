@@ -35,43 +35,45 @@ func Home() (map[string]interface{}, error) {
 	dateTxs := GetDateTxs(home.DateTxs)
 
 	// Blocks
+	l := len(home.Blocks)
 	blocks := make([]*types.HomeBlock, 0)
 	var totalTxs uint64
 	var beginTime, endTime uint64
-	for i, block := range home.Blocks {
+
+	for i := l - 1; i >= 0; i-- {
 		blocks = append(blocks, &types.HomeBlock{
-			Number:            block.Number.String(),
-			Timestamp:         block.Timestamp.ToUint64(),
-			Miner:             block.Miner.String(),
-			GasUsed:           block.GasUsed.String(),
-			TransactionsTotal: block.TransactionsTotal.ToUint64(),
+			Number:            home.Blocks[i].Number.String(),
+			Timestamp:         home.Blocks[i].Timestamp.ToUint64(),
+			Miner:             home.Blocks[i].Miner.String(),
+			GasUsed:           home.Blocks[i].GasUsed.String(),
+			TransactionsTotal: home.Blocks[i].TransactionsTotal.ToUint64(),
 		})
-		totalTxs += block.TransactionsTotal.ToUint64()
+		totalTxs += home.Blocks[i].TransactionsTotal.ToUint64()
 		if i == 0 {
-			endTime = block.Timestamp.ToUint64()
+			beginTime = home.Blocks[i].Timestamp.ToUint64()
 		}
-		if i == len(blocks)-1 {
-			beginTime = block.Timestamp.ToUint64()
+		if i == l-1 {
+			endTime = home.Blocks[i].Timestamp.ToUint64()
 		}
 	}
+
 	t := endTime - beginTime
 
 	// Txs
 	txs := make([]*types.HomeTx, 0)
-	for _, tx := range home.Txs {
+	for i := len(home.Txs) - 1; i >= 0; i-- {
 		txs = append(txs, &types.HomeTx{
-			Hash:        tx.Hash.Hex(),
-			From:        tx.From.Hex(),
-			To:          tx.To.Hex(),
-			GasPrice:    tx.GasPrice.StringPointer(),
-			Gas:         tx.Gas.StringPointer(),
-			CreatedTime: tx.Timestamp.ToUint64(),
+			Hash:        home.Txs[i].Hash.Hex(),
+			From:        home.Txs[i].From.Hex(),
+			To:          home.Txs[i].To.Hex(),
+			GasPrice:    home.Txs[i].GasPrice.StringPointer(),
+			Gas:         home.Txs[i].Gas.StringPointer(),
+			CreatedTime: home.Txs[i].Timestamp.ToUint64(),
 		})
 	}
-
 	// metrics
 	resp := make(map[string]interface{})
-	resp["dateTxs"] = home.DateTxs
+	resp["dateTxs"] = dateTxs
 	resp["metrics"] = GetHomeMetrics(home, dateTxs, totalTxs, t)
 	resp["blocks"] = blocks
 	resp["txs"] = txs
