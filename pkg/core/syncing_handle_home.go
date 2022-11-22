@@ -40,7 +40,7 @@ func (n *blockHandle) updateHome(ctx context.Context) (err error) {
 		home = homeCache
 	}
 
-	home.BlockNumber = *n.blockData.Number
+	home.BlockNumber.SetBytes(n.blockData.Number.Bytes())
 
 	home.TxTotal.Add(field.NewInt(int64(len(n.transactionData))))
 	home.AddressTotal.Add(n.newAddrTotal)
@@ -74,11 +74,11 @@ func (n *blockHandle) updateHome(ctx context.Context) (err error) {
 	}
 
 	if len(home.Blocks) > 10 {
-		home.Blocks = home.Blocks[len(home.Blocks)-(len(home.Blocks)-10):]
+		home.Blocks = home.Blocks[(len(home.Blocks) - 10):]
 	}
 
 	if len(home.Txs) > 10 {
-		home.Txs = home.Txs[len(home.Txs)-(len(home.Txs)-10):]
+		home.Txs = home.Txs[(len(home.Txs) - 10):]
 	}
 
 	delete(home.DateTxs, time.Unix(int64(n.blockData.TimeStamp.ToUint64()-(3600*24*14)), 0).UTC().Format(timeLayout))

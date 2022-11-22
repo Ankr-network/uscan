@@ -82,7 +82,11 @@ func GetHomeMetrics(home *types.Home, dateTxs []map[string]string, totalTxs, t u
 	metrics := make(map[string]interface{})
 	metrics["address"] = home.AddressTotal.String()
 	metrics["tx"] = home.TxTotal.String()
-	metrics["block"] = home.BlockNumber.String()
+	blockNum, err := store.ReadSyncingBlock(context.Background(), mdbx.DB)
+	if err != nil {
+		return nil
+	}
+	metrics["block"] = blockNum.String()
 	metrics["avgBlockTime"] = 3
 	metrics["dailyTx"] = 0
 	if len(dateTxs) > 0 {
