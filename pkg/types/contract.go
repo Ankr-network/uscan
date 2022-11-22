@@ -22,6 +22,7 @@ func (b *Contract) Unmarshal(bin []byte) error {
 }
 
 type CompilerVersion struct {
+	ID       uint8  `json:"id"`
 	Name     string `json:"name"`
 	FileName string `json:"fileName"`
 }
@@ -46,7 +47,6 @@ func (b *ValidateContractMetadata) Unmarshal(bin []byte) (err error) {
 }
 
 type ContractVerityTmp struct {
-	//ID      string
 	Address          string
 	ContractName     string
 	CompilerType     string
@@ -73,11 +73,11 @@ type ContractVerity struct {
 	CompilerVersion string `json:"compilerVersion"`
 	Optimization    uint64 `json:"optimization"`
 	Runs            uint64 `json:"runs"`
-	EVMVersion      string `gorm:"column:evm_version"`
+	EVMVersion      string `json:"evmVersion"`
 	LicenseType     uint64 `json:"licenseType"`
 	ABI             string `json:"abi"`
 	Metadata        string `json:"metadata"`
-	CodeHash        string `json:"codeHash" gorm:"uniqueIndex:code_hash,priority:1;type:varchar(255)"`
+	CodeHash        string `json:"codeHash"`
 	Object          string `json:"object"`
 }
 
