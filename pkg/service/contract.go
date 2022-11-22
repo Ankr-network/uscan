@@ -326,36 +326,37 @@ func GetValidateContract(address common.Address) (*types.ContractVerityInfoResp,
 			Metadata:        metadata,
 			Object:          contract.Object,
 		}
-	}
-	proxyContractAddress, err := store.ReadProxyContract(context.Background(), mdbx.DB, address)
-	if err != nil && err != kv.NotFound {
-		return nil, err
-	}
-	nullAddress := common.Address{}
-	if proxyContractAddress.String() != nullAddress.String() {
-		resp.ProxyContractAddress = proxyContractAddress.String()
-	}
-	proxyContract, err := store.ReadValidateContract(context.Background(), mdbx.DB, proxyContractAddress)
-	if err != nil && err != kv.NotFound {
-		return nil, err
-	}
-	if proxyContract != nil {
-		metadata := make(map[string]string)
-		err := json.Unmarshal([]byte(contract.Metadata), &metadata)
-		if err != nil {
+		proxyContractAddress, err := store.ReadProxyContract(context.Background(), mdbx.DB, address)
+		if err != nil && err != kv.NotFound {
 			return nil, err
 		}
-		resp.ProxyContract = &types.ContractVerityInfo{
-			ContractName:    contract.ContractName,
-			CompilerVersion: contract.CompilerVersion,
-			Optimization:    contract.Optimization,
-			Runs:            contract.Runs,
-			EVMVersion:      contract.EVMVersion,
-			LicenseType:     contract.LicenseType,
-			ABI:             contract.ABI,
-			Metadata:        metadata,
-			Object:          contract.Object,
+		nullAddress := common.Address{}
+		if proxyContractAddress.String() != nullAddress.String() {
+			resp.ProxyContractAddress = proxyContractAddress.String()
+		}
+		proxyContract, err := store.ReadValidateContract(context.Background(), mdbx.DB, proxyContractAddress)
+		if err != nil && err != kv.NotFound {
+			return nil, err
+		}
+		if proxyContract != nil {
+			metadata := make(map[string]string)
+			err := json.Unmarshal([]byte(contract.Metadata), &metadata)
+			if err != nil {
+				return nil, err
+			}
+			resp.ProxyContract = &types.ContractVerityInfo{
+				ContractName:    contract.ContractName,
+				CompilerVersion: contract.CompilerVersion,
+				Optimization:    contract.Optimization,
+				Runs:            contract.Runs,
+				EVMVersion:      contract.EVMVersion,
+				LicenseType:     contract.LicenseType,
+				ABI:             contract.ABI,
+				Metadata:        metadata,
+				Object:          contract.Object,
+			}
 		}
 	}
+
 	return resp, nil
 }
