@@ -262,5 +262,5 @@ type ContractVerityInfo struct {
 type ContractVerityInfoResp struct {
 	Contract             *ContractVerityInfo `json:"contract"`
 	ProxyContractAddress string              `json:"proxyContractAddress"`
-	ProxyContract        *ContractVerityInfo `json:"proContract"`
+	ProxyContract        *ContractVerityInfo `json:"proxyContract"`
 }
