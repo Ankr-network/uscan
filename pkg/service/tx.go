@@ -10,10 +10,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func ListTxs(pager *types.Pager) ([]*types.ListTransactionResp, string, error) {
+func ListTxs(pager *types.Pager) ([]*types.ListTransactionResp, int64, error) {
 	num, err := store.ReadTxTotal(context.Background(), mdbx.DB)
 	if err != nil {
-		return nil, "0", err
+		return nil, 0, err
 	}
 	total := num.String()
 	begin, end := ParsePage(num, pager.Offset, pager.Limit)
@@ -22,7 +22,7 @@ func ListTxs(pager *types.Pager) ([]*types.ListTransactionResp, string, error) {
 	for {
 		tx, err := store.ReadTxByIndex(context.Background(), mdbx.DB, p)
 		if err != nil {
-			return nil, "0", err
+			return nil, 0, err
 		}
 		txs = append(txs, tx)
 		if p.String() == end.String() {
@@ -55,7 +55,7 @@ func ListTxs(pager *types.Pager) ([]*types.ListTransactionResp, string, error) {
 	}
 	accounts, err := GetAccounts(addresses)
 	if err != nil {
-		return nil, "0", err
+		return nil, 0, err
 	}
 	for _, t := range resp {
 		if from, ok := accounts[t.From]; ok {
@@ -73,7 +73,7 @@ func ListTxs(pager *types.Pager) ([]*types.ListTransactionResp, string, error) {
 			}
 		}
 	}
-	return resp, DecodeBig(total).String(), nil
+	return resp, DecodeBig(total).Int64(), nil
 }
 
 var TokenTopics = []string{
