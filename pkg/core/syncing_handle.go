@@ -85,12 +85,12 @@ func (n *blockHandle) handle() error {
 		return err
 	}
 
-	// delete cache
-	err = forkcache.DeleteBlock(ctx, n.db, n.blockData.Number)
-	if err != nil {
-		log.Errorf("delete fork block : %v, block: %s", err, n.blockData.Number.String())
-		return err
-	}
+	//// delete cache
+	//err = forkcache.DeleteBlock(ctx, n.db, n.blockData.Number)
+	//if err != nil {
+	//	log.Errorf("delete fork block : %v, block: %s", err, n.blockData.Number.String())
+	//	return err
+	//}
 
 	n.newAddrTotal, err = n.checkNewAddr(ctx)
 	if err != nil {
