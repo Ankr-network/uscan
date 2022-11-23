@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"github.com/Ankr-network/uscan/pkg/forkcache"
 
 	"github.com/Ankr-network/uscan/pkg/contract"
 	"github.com/Ankr-network/uscan/pkg/contract/eip"
@@ -81,6 +82,13 @@ func (n *blockHandle) handle() error {
 	err = rawdb.WriteBlock(ctx, n.db, n.blockData.Number, n.blockData)
 	if err != nil {
 		log.Errorf("write block : %v, block: %s", err, n.blockData.Number.String())
+		return err
+	}
+
+	// delete cache
+	err = forkcache.DeleteBlock(ctx, n.db, n.blockData.Number)
+	if err != nil {
+		log.Errorf("delete fork block : %v, block: %s", err, n.blockData.Number.String())
 		return err
 	}
 
@@ -254,6 +262,78 @@ func (n *blockHandle) writeTraceTx2(ctx context.Context, callFrames map[common.H
 			log.Errorf("write trace tx2: %v", err)
 			return err
 		}
+	}
+	return nil
+}
+
+func (n *blockHandle) handleFork() error {
+	var (
+		ctx, err = n.db.BeginTx(context.Background())
+	)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err == nil {
+			n.db.Commit(ctx)
+			log.Infof("write fork block complete: %d", n.blockData.Number.ToUint64())
+		} else {
+			n.db.RollBack(ctx)
+		}
+	}()
+
+	err = forkcache.WriteBlock(ctx, n.db, n.blockData.Number, n.blockData)
+	if err != nil {
+		log.Errorf("write fork block : %v, block: %s", err, n.blockData.Number.String())
+		return err
+	}
+
+	n.newAddrTotal, err = n.checkForkNewAddr(ctx)
+	if err != nil {
+		log.Errorf("read fork account to merge: %v", err)
+		return err
+	}
+
+	if len(n.contractInfoMap) > 0 {
+		if err = n.writeContract(ctx, n.contractInfoMap); err != nil {
+			log.Errorf("write contract: %v", err)
+			return err
+		}
+	}
+	if len(n.proxyContracts) > 0 {
+		if err = n.writeProxyContract(ctx, n.proxyContracts); err != nil {
+			log.Errorf("write proxy contract: %v", err)
+			return err
+		}
+	}
+
+	if len(n.transactionData) > 0 {
+		if err = n.writeForkTxAndRtLog(ctx, n.transactionData, n.receiptData); err != nil {
+			log.Errorf("write fork tx and rt: %v", err)
+			return err
+		}
+
+		if err = n.writeForkITx(ctx, n.internalTxs); err != nil {
+			log.Errorf("write fork itxs: %v", err)
+			return err
+		}
+
+		if err = n.writeForkTraceTx2(ctx, n.callFrames); err != nil {
+			log.Errorf("write fork callFrames: %v", err)
+			return err
+		}
+	}
+
+	// all account about block write to kv
+	if err = n.updateForkAccounts(ctx); err != nil {
+		log.Errorf("write fork account : %v", err)
+		return err
+	}
+
+	if err = n.updateForkHome(ctx); err != nil {
+		log.Errorf("write fork home : %v", err)
+		return err
 	}
 	return nil
 }
