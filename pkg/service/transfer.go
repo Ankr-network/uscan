@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/kv/mdbx"
@@ -13,14 +12,14 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
-func ListErc20Txs(pager *types.Pager) ([]*types.Erc20TxResp, string, error) {
+func ListErc20Txs(pager *types.Pager) ([]*types.Erc20TxResp, int64, error) {
 	resp := make([]*types.Erc20TxResp, 0)
 	num, err := store.ReadErc20Total(context.Background(), mdbx.DB)
 	if err != nil {
 		if err == kv.NotFound {
-			return resp, "0", nil
+			return resp, 0, nil
 		}
-		return nil, "0", err
+		return nil, 0, err
 	}
 	total := num.String()
 	begin, end := ParsePage(num, pager.Offset, pager.Limit)
@@ -29,7 +28,7 @@ func ListErc20Txs(pager *types.Pager) ([]*types.Erc20TxResp, string, error) {
 	for {
 		tx, err := store.ReadErc20Transfer(context.Background(), mdbx.DB, p)
 		if err != nil {
-			return nil, "0", err
+			return nil, 0, err
 		}
 		txs = append(txs, tx)
 		if p.String() == end.String() {
@@ -64,7 +63,7 @@ func ListErc20Txs(pager *types.Pager) ([]*types.Erc20TxResp, string, error) {
 
 	accounts, err := GetAccounts(addresses)
 	if err != nil {
-		return nil, "0", err
+		return nil, 0, err
 	}
 	for _, t := range resp {
 		if from, ok := accounts[t.From]; ok {
@@ -86,17 +85,17 @@ func ListErc20Txs(pager *types.Pager) ([]*types.Erc20TxResp, string, error) {
 			t.ContractSymbol = c.Symbol
 		}
 	}
-	return resp, DecodeBig(total).String(), nil
+	return resp, DecodeBig(total).Int64(), nil
 }
 
-func ListErc721Txs(pager *types.Pager) ([]*types.Erc721TxResp, string, error) {
+func ListErc721Txs(pager *types.Pager) ([]*types.Erc721TxResp, int64, error) {
 	resp := make([]*types.Erc721TxResp, 0)
 	num, err := store.ReadErc721Total(context.Background(), mdbx.DB)
 	if err != nil {
 		if err == kv.NotFound {
-			return resp, "0", nil
+			return resp, 0, nil
 		}
-		return nil, "0", err
+		return nil, 0, err
 	}
 	total := num.String()
 	begin, end := ParsePage(num, pager.Offset, pager.Limit)
@@ -105,7 +104,7 @@ func ListErc721Txs(pager *types.Pager) ([]*types.Erc721TxResp, string, error) {
 	for {
 		tx, err := store.ReadErc721Transfer(context.Background(), mdbx.DB, p)
 		if err != nil {
-			return nil, "0", err
+			return nil, 0, err
 		}
 		txs = append(txs, tx)
 		if p.String() == end.String() {
@@ -136,7 +135,7 @@ func ListErc721Txs(pager *types.Pager) ([]*types.Erc721TxResp, string, error) {
 
 	accounts, err := GetAccounts(addresses)
 	if err != nil {
-		return nil, "0", err
+		return nil, 0, err
 	}
 	for _, t := range resp {
 		if from, ok := accounts[t.From]; ok {
@@ -158,17 +157,17 @@ func ListErc721Txs(pager *types.Pager) ([]*types.Erc721TxResp, string, error) {
 			t.ContractSymbol = c.Symbol
 		}
 	}
-	return resp, DecodeBig(total).String(), nil
+	return resp, DecodeBig(total).Int64(), nil
 }
 
-func ListErc1155Txs(pager *types.Pager) ([]*types.Erc1155TxResp, string, error) {
+func ListErc1155Txs(pager *types.Pager) ([]*types.Erc1155TxResp, int64, error) {
 	resp := make([]*types.Erc1155TxResp, 0)
 	num, err := store.ReadErc1155Total(context.Background(), mdbx.DB)
 	if err != nil {
 		if err == kv.NotFound {
-			return resp, "0", nil
+			return resp, 0, nil
 		}
-		return nil, "0", err
+		return nil, 0, err
 	}
 	total := num.String()
 	begin, end := ParsePage(num, pager.Offset, pager.Limit)
@@ -177,7 +176,7 @@ func ListErc1155Txs(pager *types.Pager) ([]*types.Erc1155TxResp, string, error) 
 	for {
 		tx, err := store.ReadErc1155Transfer(context.Background(), mdbx.DB, p)
 		if err != nil {
-			return nil, "0", err
+			return nil, 0, err
 		}
 		txs = append(txs, tx)
 		if p.String() == end.String() {
@@ -209,7 +208,7 @@ func ListErc1155Txs(pager *types.Pager) ([]*types.Erc1155TxResp, string, error) 
 
 	accounts, err := GetAccounts(addresses)
 	if err != nil {
-		return nil, "0", err
+		return nil, 0, err
 	}
 	for _, t := range resp {
 		if from, ok := accounts[t.From]; ok {
@@ -231,7 +230,7 @@ func ListErc1155Txs(pager *types.Pager) ([]*types.Erc1155TxResp, string, error) 
 			t.ContractSymbol = c.Symbol
 		}
 	}
-	return resp, DecodeBig(total).String(), nil
+	return resp, DecodeBig(total).Int64(), nil
 }
 
 func GetTraceTx(hash common.Hash) (*types.TraceTxResp, error) {
@@ -264,24 +263,34 @@ func GetTraceTx2(hash common.Hash) (*types.TraceTx2Resp, error) {
 }
 
 func GetTokenType(address common.Address) (interface{}, error) {
+	resp := map[string]uint64{"erc20": 0, "erc721": 0, "erc1155": 0}
 	erc20Count, err := store.ReadAccountErc20Total(context.Background(), mdbx.DB, address)
-	if err != nil {
+	if err != nil && err != kv.NotFound {
 		return nil, err
+	}
+	if erc20Count != nil {
+		resp["erc20"] = erc20Count.ToUint64()
 	}
 	erc721Count, err := store.ReadAccountErc721Total(context.Background(), mdbx.DB, address)
-	if err != nil {
+	if err != nil && err != kv.NotFound {
 		return nil, err
+	}
+	if erc20Count != nil {
+		resp["erc721"] = erc721Count.ToUint64()
 	}
 	erc1155Count, err := store.ReadAccountErc20Total(context.Background(), mdbx.DB, address)
-	if err != nil {
+	if err != nil && err != kv.NotFound {
 		return nil, err
 	}
-	return map[string]string{"erc20": erc20Count.String(), "erc721": erc721Count.String(), "erc1155": erc1155Count.String()}, nil
+	if erc20Count != nil {
+		resp["erc1155"] = erc1155Count.ToUint64()
+	}
+	return resp, nil
 }
 
 func ListTokenTransfers(address common.Address, typ string, pager *types.Pager) (map[string]interface{}, error) {
 	var items interface{}
-	var total string
+	var total int64
 	var err error
 	switch typ {
 	case "erc20":
@@ -303,14 +312,14 @@ func ListTokenTransfers(address common.Address, typ string, pager *types.Pager) 
 	resp := map[string]interface{}{"items": items, "total": total}
 	return resp, nil
 }
-func ListErc20Holders(pager *types.Pager, address common.Address) ([]*types.HolderResp, string, error) {
+func ListErc20Holders(pager *types.Pager, address common.Address) ([]*types.HolderResp, int64, error) {
 	resp := make([]*types.HolderResp, 0)
 	holders, err := store.GetErc20Holder(context.Background(), mdbx.DB, address, uint64(pager.Offset), uint64(pager.Limit))
 	if err != nil {
 		if err == kv.NotFound {
-			return resp, "0", nil
+			return resp, 0, nil
 		}
-		return nil, "0", err
+		return nil, 0, err
 	}
 
 	for _, holder := range holders {
@@ -323,21 +332,21 @@ func ListErc20Holders(pager *types.Pager, address common.Address) ([]*types.Hold
 	if len(holders) > 0 {
 		count, err := store.GetErc20HolderCount(context.Background(), mdbx.DB, address)
 		if err != nil {
-			return nil, "0", err
+			return nil, 0, err
 		}
-		return resp, fmt.Sprint(count), nil
+		return resp, int64(count), nil
 	}
-	return resp, "0", nil
+	return resp, 0, nil
 }
 
-func ListErc721Holders(pager *types.Pager, address common.Address) ([]*types.HolderResp, string, error) {
+func ListErc721Holders(pager *types.Pager, address common.Address) ([]*types.HolderResp, int64, error) {
 	resp := make([]*types.HolderResp, 0)
 	holders, err := store.GetErc721Holder(context.Background(), mdbx.DB, address, uint64(pager.Offset), uint64(pager.Limit))
 	if err != nil {
 		if err == kv.NotFound {
-			return resp, "0", nil
+			return resp, 0, nil
 		}
-		return nil, "0", err
+		return nil, 0, err
 	}
 
 	for _, holder := range holders {
@@ -349,21 +358,21 @@ func ListErc721Holders(pager *types.Pager, address common.Address) ([]*types.Hol
 	if len(holders) > 0 {
 		count, err := store.GetErc721HolderCount(context.Background(), mdbx.DB, address)
 		if err != nil {
-			return nil, "0", err
+			return nil, 0, err
 		}
-		return resp, fmt.Sprint(count), nil
+		return resp, int64(count), nil
 	}
-	return resp, "0", nil
+	return resp, 0, nil
 }
 
-func ListErc1155Holders(pager *types.Pager, address common.Address) ([]*types.HolderResp, string, error) {
+func ListErc1155Holders(pager *types.Pager, address common.Address) ([]*types.HolderResp, int64, error) {
 	resp := make([]*types.HolderResp, 0)
 	holders, err := store.GetErc1155Holder(context.Background(), mdbx.DB, address, uint64(pager.Offset), uint64(pager.Limit))
 	if err != nil {
 		if err == kv.NotFound {
-			return resp, "0", nil
+			return resp, 0, nil
 		}
-		return nil, "0", err
+		return nil, 0, err
 	}
 
 	for _, holder := range holders {
@@ -375,16 +384,16 @@ func ListErc1155Holders(pager *types.Pager, address common.Address) ([]*types.Ho
 	if len(holders) > 0 {
 		count, err := store.GetErc1155HolderCount(context.Background(), mdbx.DB, address)
 		if err != nil {
-			return nil, "0", err
+			return nil, 0, err
 		}
-		return resp, fmt.Sprint(count), nil
+		return resp, int64(count), nil
 	}
-	return resp, "0", nil
+	return resp, 0, nil
 }
 
 func ListTokenHolders(typ string, pager *types.Pager, address common.Address) (map[string]interface{}, error) {
 	var items interface{}
-	var total string
+	var total int64
 	var err error
 	switch typ {
 	case "erc20":
@@ -408,7 +417,7 @@ func ListTokenHolders(typ string, pager *types.Pager, address common.Address) (m
 
 func ListInventory(typ string, pager *types.Pager, address common.Address) (map[string]interface{}, error) {
 	var items interface{}
-	var total string
+	var total int64
 	var err error
 	switch typ {
 	case "erc721":
@@ -426,14 +435,14 @@ func ListInventory(typ string, pager *types.Pager, address common.Address) (map[
 	return resp, nil
 }
 
-func ListErc721Inventory(pager *types.Pager, address common.Address) ([]*types.InventoryResp, string, error) {
+func ListErc721Inventory(pager *types.Pager, address common.Address) ([]*types.InventoryResp, int64, error) {
 	resp := make([]*types.InventoryResp, 0)
 	holders, err := store.GetErc721Inventory(context.Background(), mdbx.DB, address, uint64(pager.Offset), uint64(pager.Limit))
 	if err != nil {
 		if err == kv.NotFound {
-			return resp, "0", nil
+			return resp, 0, nil
 		}
-		return nil, "0", err
+		return nil, 0, err
 	}
 
 	for _, holder := range holders {
@@ -445,21 +454,21 @@ func ListErc721Inventory(pager *types.Pager, address common.Address) ([]*types.I
 	if len(holders) > 0 {
 		count, err := store.GetErc721InventoryCount(context.Background(), mdbx.DB, address)
 		if err != nil {
-			return nil, "0", err
+			return nil, 0, err
 		}
-		return resp, fmt.Sprint(count), nil
+		return resp, int64(count), nil
 	}
-	return resp, "0", nil
+	return resp, 0, nil
 }
 
-func ListErc1155Inventory(pager *types.Pager, address common.Address) ([]uint64, string, error) {
+func ListErc1155Inventory(pager *types.Pager, address common.Address) ([]uint64, int64, error) {
 	resp := make([]uint64, 0)
 	tokenIDs, err := store.GetErc1155Inventory(context.Background(), mdbx.DB, address, uint64(pager.Offset), uint64(pager.Limit))
 	if err != nil {
 		if err == kv.NotFound {
-			return resp, "0", nil
+			return resp, 0, nil
 		}
-		return nil, "0", err
+		return nil, 0, err
 	}
 
 	for _, tokenID := range tokenIDs {
@@ -468,9 +477,9 @@ func ListErc1155Inventory(pager *types.Pager, address common.Address) ([]uint64,
 	if len(tokenIDs) > 0 {
 		count, err := store.GetErc1155InventoryCount(context.Background(), mdbx.DB, address)
 		if err != nil {
-			return nil, "0", err
+			return nil, 0, err
 		}
-		return resp, fmt.Sprint(count), nil
+		return resp, int64(count), nil
 	}
-	return resp, "0", nil
+	return resp, 0, nil
 }

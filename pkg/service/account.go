@@ -59,15 +59,15 @@ func GetAccountTxs(pager *types.Pager, address string) (map[string]interface{}, 
 		return nil, err
 	}
 	txsResp := make([]*types.ListTransactionResp, 0)
-	otherTotal := map[string]string{
-		"internalTotal": "0",
-		"erc20Total":    "0",
-		"erc721Total":   "0",
-		"erc1155Total":  "0",
+	otherTotal := map[string]int64{
+		"internalTotal": 0,
+		"erc20Total":    0,
+		"erc721Total":   0,
+		"erc1155Total":  0,
 	}
 	resp := map[string]interface{}{
 		"items":      txsResp,
-		"total":      "0",
+		"total":      0,
 		"otherTotal": otherTotal,
 	}
 	if num == nil {
@@ -150,33 +150,33 @@ func GetAccountTxs(pager *types.Pager, address string) (map[string]interface{}, 
 	}
 
 	if itxTotal != nil {
-		otherTotal["internalTotal"] = (*big.Int)(itxTotal).String()
+		otherTotal["internalTotal"] = (*big.Int)(itxTotal).Int64()
 	}
 	if erc20Total != nil {
-		otherTotal["erc20Total"] = (*big.Int)(erc20Total).String()
+		otherTotal["erc20Total"] = (*big.Int)(erc20Total).Int64()
 	}
 	if erc721Total != nil {
-		otherTotal["erc721Total"] = (*big.Int)(erc721Total).String()
+		otherTotal["erc721Total"] = (*big.Int)(erc721Total).Int64()
 	}
 	if erc1155Total != nil {
-		otherTotal["erc1155Total"] = (*big.Int)(erc1155Total).String()
+		otherTotal["erc1155Total"] = (*big.Int)(erc1155Total).Int64()
 	}
 	resp = map[string]interface{}{
 		"items":      txsResp,
-		"total":      DecodeBig(total).String(),
+		"total":      DecodeBig(total).Int64(),
 		"otherTotal": otherTotal,
 	}
 	return resp, nil
 }
 
-func GetAccountItxs(pager *types.Pager, address string) ([]*types.InternalTxResp, string, error) {
+func GetAccountItxs(pager *types.Pager, address string) ([]*types.InternalTxResp, int64, error) {
 	num, err := store.ReadITxTotal(context.Background(), mdbx.DB, common.HexToHash(address))
 	if err != nil && err != kv.NotFound {
-		return nil, "0", err
+		return nil, 0, err
 	}
 	resp := make([]*types.InternalTxResp, 0)
 	if num == nil {
-		return resp, "0", nil
+		return resp, 0, nil
 	}
 	total := num.String()
 
@@ -186,7 +186,7 @@ func GetAccountItxs(pager *types.Pager, address string) ([]*types.InternalTxResp
 	for {
 		tx, err := store.ReadAccountITxByIndex(context.Background(), mdbx.DB, common.HexToAddress(address), p)
 		if err != nil {
-			return nil, "0", err
+			return nil, 0, err
 		}
 		txs = append(txs, tx)
 		if p.String() == end.String() {
@@ -210,17 +210,17 @@ func GetAccountItxs(pager *types.Pager, address string) ([]*types.InternalTxResp
 			CreatedTime:     tx.TimeStamp.ToUint64(),
 		}
 	}
-	return resp, DecodeBig(total).String(), nil
+	return resp, DecodeBig(total).Int64(), nil
 }
 
-func GetAccountErc20Txns(pager *types.Pager, address common.Address) ([]*types.Erc20TxResp, string, error) {
+func GetAccountErc20Txns(pager *types.Pager, address common.Address) ([]*types.Erc20TxResp, int64, error) {
 	num, err := store.ReadAccountErc20Total(context.Background(), mdbx.DB, address)
 	if err != nil && err != kv.NotFound {
-		return nil, "0", err
+		return nil, 0, err
 	}
 	resp := make([]*types.Erc20TxResp, 0)
 	if num == nil {
-		return resp, "0", nil
+		return resp, 0, nil
 	}
 	total := num.String()
 	begin, end := ParsePage(num, pager.Offset, pager.Limit)
@@ -229,7 +229,7 @@ func GetAccountErc20Txns(pager *types.Pager, address common.Address) ([]*types.E
 	for {
 		tx, err := store.ReadAccountErc20ByIndex(context.Background(), mdbx.DB, address, p)
 		if err != nil {
-			return nil, "0", err
+			return nil, 0, err
 		}
 		txs = append(txs, tx)
 		if p.String() == end.String() {
@@ -260,7 +260,7 @@ func GetAccountErc20Txns(pager *types.Pager, address common.Address) ([]*types.E
 
 	accounts, err := GetAccounts(addresses)
 	if err != nil {
-		return nil, "0", err
+		return nil, 0, err
 	}
 	for _, t := range resp {
 		if from, ok := accounts[t.From]; ok {
@@ -283,17 +283,17 @@ func GetAccountErc20Txns(pager *types.Pager, address common.Address) ([]*types.E
 		}
 	}
 
-	return resp, DecodeBig(total).String(), nil
+	return resp, DecodeBig(total).Int64(), nil
 }
 
-func GetAccountErc721Txs(pager *types.Pager, address common.Address) ([]*types.Erc721TxResp, string, error) {
+func GetAccountErc721Txs(pager *types.Pager, address common.Address) ([]*types.Erc721TxResp, int64, error) {
 	num, err := store.ReadAccountErc721Total(context.Background(), mdbx.DB, address)
 	if err != nil && err != kv.NotFound {
-		return nil, "0", err
+		return nil, 0, err
 	}
 	resp := make([]*types.Erc721TxResp, 0)
 	if num == nil {
-		return resp, "0", nil
+		return resp, 0, nil
 	}
 	total := num.String()
 	begin, end := ParsePage(num, pager.Offset, pager.Limit)
@@ -302,7 +302,7 @@ func GetAccountErc721Txs(pager *types.Pager, address common.Address) ([]*types.E
 	for {
 		tx, err := store.ReadAccountErc721ByIndex(context.Background(), mdbx.DB, address, p)
 		if err != nil {
-			return nil, "0", err
+			return nil, 0, err
 		}
 		txs = append(txs, tx)
 		if p.String() == end.String() {
@@ -333,7 +333,7 @@ func GetAccountErc721Txs(pager *types.Pager, address common.Address) ([]*types.E
 
 	accounts, err := GetAccounts(addresses)
 	if err != nil {
-		return nil, "0", err
+		return nil, 0, err
 	}
 	for _, t := range resp {
 		if from, ok := accounts[t.From]; ok {
@@ -356,17 +356,17 @@ func GetAccountErc721Txs(pager *types.Pager, address common.Address) ([]*types.E
 		}
 	}
 
-	return resp, DecodeBig(total).String(), nil
+	return resp, DecodeBig(total).Int64(), nil
 }
 
-func GetAccountErc1155Txs(pager *types.Pager, address common.Address) ([]*types.Erc1155TxResp, string, error) {
+func GetAccountErc1155Txs(pager *types.Pager, address common.Address) ([]*types.Erc1155TxResp, int64, error) {
 	num, err := store.ReadAccountErc1155Total(context.Background(), mdbx.DB, address)
 	if err != nil && err != kv.NotFound {
-		return nil, "0", err
+		return nil, 0, err
 	}
 	resp := make([]*types.Erc1155TxResp, 0)
 	if num == nil {
-		return resp, "0", nil
+		return resp, 0, nil
 	}
 	total := num.String()
 	begin, end := ParsePage(num, pager.Offset, pager.Limit)
@@ -375,7 +375,7 @@ func GetAccountErc1155Txs(pager *types.Pager, address common.Address) ([]*types.
 	for {
 		tx, err := store.ReadAccountErc1155ByIndex(context.Background(), mdbx.DB, address, p)
 		if err != nil {
-			return nil, "0", err
+			return nil, 0, err
 		}
 		txs = append(txs, tx)
 		if p.String() == end.String() {
@@ -408,7 +408,7 @@ func GetAccountErc1155Txs(pager *types.Pager, address common.Address) ([]*types.
 
 	accounts, err := GetAccounts(addresses)
 	if err != nil {
-		return nil, "0", err
+		return nil, 0, err
 	}
 	for _, t := range resp {
 		if from, ok := accounts[t.From]; ok {
@@ -431,5 +431,5 @@ func GetAccountErc1155Txs(pager *types.Pager, address common.Address) ([]*types.
 		}
 	}
 
-	return resp, DecodeBig(total).String(), nil
+	return resp, DecodeBig(total).Int64(), nil
 }

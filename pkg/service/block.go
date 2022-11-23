@@ -264,10 +264,10 @@ func ListBlocks(pager *types.Pager) ([]*types.Block, string, error) {
 	return blocks, total, nil
 }
 
-func ListFullFieldBlocks(pager *types.Pager) ([]*types.ListBlockResp, string, error) {
+func ListFullFieldBlocks(pager *types.Pager) ([]*types.ListBlockResp, int64, error) {
 	blocks, total, err := ListBlocks(pager)
 	if err != nil {
-		return nil, "0", err
+		return nil, 0, err
 	}
 	resp := make([]*types.ListBlockResp, len(blocks))
 	for i, block := range blocks {
@@ -280,7 +280,7 @@ func ListFullFieldBlocks(pager *types.Pager) ([]*types.ListBlockResp, string, er
 			TransactionsTotal: block.TransactionTotal.ToUint64(),
 		}
 	}
-	return resp, DecodeBig(total).String(), nil
+	return resp, DecodeBig(total).Int64(), nil
 }
 
 func ParsePage(num *field.BigInt, offset, limit int64) (*field.BigInt, *field.BigInt) {
