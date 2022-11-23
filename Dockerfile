@@ -1,25 +1,15 @@
-FROM golang:1.19.2-alpine3.16 AS builder
-LABEL stage=builder
+FROM golang
 RUN mkdir /go/src/app
 WORKDIR /go/src/app
 COPY ./ ./
-ARG GoVersion="" 
-ARG Branch=""
-ARG Commit=""
-ARG Date=""
-ARG Author=""
-ARG Email=""
-ARG GoVersion=""
-RUN GOOS=linux go build -o executor -a -installsuffix cgo -ldflags \
-	"-X 'github.com/Ankr-network/uscan/cmd.Branch=${Branch}' \
-	-X 'github.com/Ankr-network/uscan/cmd.Commit=${Commit}' \
-	-X 'github.com/Ankr-network/uscan/cmd.Date=${Date}' \
-	-X 'github.com/Ankr-network/uscan/cmd.Author=${Author}' \
-	-X 'github.com/Ankr-network/uscan/cmd.Email=${Email}' \
-	-X 'github.com/Ankr-network/uscan/cmd.GoVersion=${GoVersion}'" .
 
-FROM alpine:latest
-WORKDIR /root/
-COPY --from=builder /go/src/app/executor .
-COPY --from=builder /go/src/app/.uscan.yaml .
-CMD ["/root/executor"]
+RUN apt-get update && apt-get install -y libzstd-dev
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o executor main.go
+RUN chmod -R 777 ./pkg/files/
+ENV http_addr $http_addr
+ENV http_port $http_port
+ENV rpc_urls $rpc_urls
+ENV db_path $db_path
+
+EXPOSE ${http_addr}
+CMD ["./executor", "$http_addr", "$http_port", "$rpc_urls", "$db_path"]
