@@ -17,7 +17,7 @@ var testClient RpcClient
 
 func TestMain(m *testing.M) {
 	// testClient = NewRpcClient("ws://103.23.44.29:28546")
-	testClient = NewRpcClient([]string{"wss://testnet.ankr.com/ws"})
+	testClient = NewRpcClient([]string{"wss://testnet.ankr.com/ws"}, 0)
 
 	m.Run()
 }

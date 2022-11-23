@@ -8,6 +8,7 @@ import (
 	store "github.com/Ankr-network/uscan/pkg/rawdb"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/ethereum/go-ethereum/common"
+	"strings"
 )
 
 func ListTxs(pager *types.Pager) ([]*types.ListTransactionResp, int64, error) {
@@ -137,7 +138,6 @@ func GetTx(tx string) (*types.TxResp, error) {
 		V:                    txData.V.String(),
 		R:                    txData.R.String(),
 		S:                    txData.S.String(),
-		MethodName:           "", // TODO
 	}
 
 	resp.Status = 3
@@ -260,15 +260,14 @@ func GetTx(tx string) (*types.TxResp, error) {
 	}
 
 	if resp.Method != "" {
-		// TODO
-		//mid := strings.Split(*resp.Method, "0x")
-		//if len(mid) == 2 {
-		//	mname, err := store.GetMethod(mid[1])
-		//	if err != nil && err != gorm.ErrRecordNotFound {
-		//		return nil, err
-		//	}
-		//	resp.MethodName = mname.FuncName
-		//}
+		mid := strings.Split(resp.Method, "0x")
+		if len(mid) == 2 {
+			methodName, err := store.ReadMethodName(context.Background(), mdbx.DB, mid[1])
+			if err != nil && err != kv.NotFound {
+				return nil, err
+			}
+			resp.MethodName = methodName
+		}
 	}
 
 	return resp, nil
