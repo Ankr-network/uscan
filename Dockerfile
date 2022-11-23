@@ -1,4 +1,4 @@
-ROM golang:latest
+FROM golang:latest
 RUN mkdir /go/src/app
 WORKDIR /go/src/app
 COPY ./ ./
