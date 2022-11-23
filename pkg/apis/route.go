@@ -52,7 +52,7 @@ func SetupRouter(g fiber.Router) {
 	g.Get("/tokens/:address/holders", listTokenHolders)
 	g.Get("/tokens/:address/inventory", listInventory)
 	//g.Get("/nfts/:address/:tokenID", getNft)
-	g.Get("/contracts/:address/verify", validateContract)
+	g.Post("/contracts/:address/verify", validateContract)
 	g.Get("/contracts-verify/:id/status", getValidateContractStatus)
 	g.Get("/contracts/metadata", ReadValidateContractMetadata)
 	g.Post("/contracts/metadata", WriteValidateContractMetadata)
