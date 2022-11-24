@@ -1,1 +1,0 @@
-import{aB as s}from"./index.646e8ac8.js";const u=function(t,r,e){const l=r*e,c=e;let o="/v1/blocks?offset="+l+"&limit="+c;return t&&(o=o+"&allView=true"),s({url:o,method:"get"})},f=function(t){return s({url:"/v1/blocks/"+t,method:"get"})};export{u as G,f as a};
