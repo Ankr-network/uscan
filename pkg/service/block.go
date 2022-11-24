@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"math/big"
+	"sort"
 	"unicode"
 )
 
@@ -112,6 +113,7 @@ func GetDateTxs(dateTxs map[string]*field.BigInt) []map[string]string {
 	for k := range dateTxs {
 		keys = append(keys, k)
 	}
+	sort.Strings(keys)
 	resp := make([]map[string]string, 0)
 	for _, key := range keys {
 		resp = append(resp, map[string]string{"date": key, "txCount": dateTxs[key].String()})
