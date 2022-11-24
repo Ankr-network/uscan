@@ -145,7 +145,7 @@ func (n *blockHandle) handle() error {
 func (n *blockHandle) writeTxAndRtLog(ctx context.Context, transactionData []*types.Tx, receiptData []*types.Rt) (err error) {
 
 	for i, v := range transactionData {
-		err = rawdb.WriteBlockIndex(ctx, n.db, n.blockData.Number, field.NewInt(int64(i)), v.Hash)
+		err = rawdb.WriteBlockIndex(ctx, n.db, n.blockData.Number, field.NewInt(int64(i)+1), v.Hash)
 		if err != nil {
 			log.Errorf("write block index(%d): %v", i, err)
 			return err
