@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+
 	"github.com/Ankr-network/uscan/pkg/forkcache"
 
 	"github.com/Ankr-network/uscan/pkg/contract"
@@ -144,6 +145,11 @@ func (n *blockHandle) handle() error {
 func (n *blockHandle) writeTxAndRtLog(ctx context.Context, transactionData []*types.Tx, receiptData []*types.Rt) (err error) {
 
 	for i, v := range transactionData {
+		err = rawdb.WriteBlockIndex(ctx, n.db, n.blockData.Number, field.NewInt(int64(i)), v.Hash)
+		if err != nil {
+			log.Errorf("write block index(%d): %v", i, err)
+			return err
+		}
 		if err = n.writeTxAndRt(ctx, v, receiptData[i]); err != nil {
 			log.Errorf("writeTxAndRt tx(%s): %v", v.Hash.Hex(), err)
 			return err
