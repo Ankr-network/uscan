@@ -85,10 +85,11 @@ func WriteBlockIndex(ctx context.Context, db kv.Writer, blockNum *field.BigInt, 
 }
 
 func getBlockIndex(blockNum *field.BigInt, index *field.BigInt) []byte {
-	key := make([]byte, 0, len(blockKey)+len(blockNum.Bytes())+len(index.Bytes()))
+	key := make([]byte, 0, len(blockKey)+len(blockNum.Bytes())+len(index.Bytes())+1)
 
 	key = append(key, blockKey...)
 	key = append(key, blockNum.Bytes()...)
+	key = append(key, byte('/'))
 	key = append(key, index.Bytes()...)
 	return key
 }
