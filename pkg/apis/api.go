@@ -24,7 +24,10 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 
 	"github.com/Ankr-network/uscan/share"
+	_ "github.com/Ankr-network/uscan/statik"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/filesystem"
+	fs "github.com/rakyll/statik/fs"
 	"github.com/spf13/viper"
 )
 
@@ -34,6 +37,15 @@ func Apis(ctx context.Context) error {
 		ServerHeader:          "uscan team",
 		DisableStartupMessage: true,
 	})
+
+	statikFs, err := fs.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	svc.Use("/", filesystem.New(filesystem.Config{
+		Root: statikFs,
+	}))
 
 	g := svc.Group("/uscan/v1")
 	g.Use(recover.New())

@@ -7,8 +7,13 @@ Email=$(shell git log --pretty=format:%ae $(Commit) -1)
 Ver=$(shell echo $(Branch)-$(Commit)-$(shortDate))
 GoVersion=$(shell go version )
 
+.PHONY: statik
+statik:
+	go install github.com/rakyll/statik@latest
+	statik -f -src=web
+
 .PHONY: compile
-compile:
+compile: statik
 	GOOS=linux go build -a -installsuffix cgo \
 	-ldflags "-X 'github.com/Ankr-network/uscan/cmd.Branch=$(Branch)' \
 	-X 'github.com/Ankr-network/uscan/cmd.Commit=$(Commit)' \

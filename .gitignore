@@ -16,6 +16,9 @@ uscandb
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+# Mac os unuse file
+.DS_Store
+
 mdbx.dat
 mdbx.lck
-.DS_Store
