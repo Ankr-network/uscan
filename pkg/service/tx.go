@@ -138,6 +138,7 @@ func GetTx(tx string) (*types.TxResp, error) {
 		V:                    txData.V.String(),
 		R:                    txData.R.String(),
 		S:                    txData.S.String(),
+		CreatedTime:          txData.TimeStamp.ToUint64(),
 	}
 
 	resp.Status = 3

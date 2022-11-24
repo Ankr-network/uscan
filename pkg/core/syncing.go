@@ -50,8 +50,9 @@ func NewSync(
 
 func (n *Sync) Execute(ctx context.Context) {
 	var (
-		begin, lastBlock, end, forkBlock uint64
-		forkOpen                         bool
+		begin, lastBlock, end uint64
+		//forkBlock uint64
+		//forkOpen                         bool
 	)
 
 	go func() {
@@ -74,18 +75,18 @@ func (n *Sync) Execute(ctx context.Context) {
 					n.storeChan <- serveJob
 				}
 			}
-			forkOpen = true
+			//forkOpen = true
 		}
 	}()
 
-	for forkBlock = range n.client.GetForkBlockNumber(ctx) {
-		if forkOpen {
-			log.Infof("receive fork block: %d", forkBlock)
-			serveJob := job.NewSyncJob(begin, n.client)
-			n.jobChan.AddJob(serveJob)
-			n.forkChan <- serveJob
-		}
-	}
+	//for forkBlock = range n.client.GetForkBlockNumber(ctx) {
+	//	if forkOpen {
+	//		log.Infof("receive fork block: %d", forkBlock)
+	//		serveJob := job.NewSyncJob(begin, n.client)
+	//		n.jobChan.AddJob(serveJob)
+	//		n.forkChan <- serveJob
+	//	}
+	//}
 
 }
 
