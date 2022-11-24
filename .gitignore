@@ -22,3 +22,6 @@ uscandb
 
 mdbx.dat
 mdbx.lck
+
+# statik
+statik/
