@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package share
 
 const (
+
 	TxLookupTbl  = "txlookup"
 	HeadersTbl   = "headers"
 	BodiesTbl    = "bodies"
@@ -27,4 +28,23 @@ const (
 	AccountsTbl  = "accounts"
 	HomeBlockTbl = "homeblock"
 	HomeTxTbl    = "hometx"
+
+	HomeTbl             = "home"
+	AccountsTbl         = "accounts"
+	TxTbl               = "transactions"
+	BlockTbl            = "blocks"
+	TraceLogTbl         = "traceLogs"
+	TransferTbl         = "transfers"
+	HolderTbl           = "holders"
+	HolderSortTabl      = "holdersSort"
+	InventorySortTabl   = "inventorysSort"
+	ValidateContractTbl = "validateContract"
+
+	ForkHomeTbl     = "fork_home"
+	ForkAccountsTbl = "fork_accounts"
+	ForkTxTbl       = "fork_transactions"
+	ForkBlockTbl    = "fork_blocks"
+	ForkTraceLogTbl = "fork_traceLogs"
+	ForkTransferTbl = "fork_transfers"
+
 )

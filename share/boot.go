@@ -21,4 +21,11 @@ const (
 	HttpPort = "http_port"
 	TlsPath  = "tls_path"
 	TLS      = "tls"
+
+	RpcUrls  = "rpc_urls"
+	WorkChan = "work_chan"
+
+	MdbxPath = "db_path"
+
+	ForkBlockNum = "fork_block_number"
 )
