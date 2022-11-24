@@ -274,12 +274,13 @@ func ListFullFieldBlocks(pager *types.Pager) ([]*types.ListBlockResp, int64, err
 	resp := make([]*types.ListBlockResp, len(blocks))
 	for i, block := range blocks {
 		resp[i] = &types.ListBlockResp{
-			GasLimit:          block.GasLimit.String(),
-			GasUsed:           block.GasUsed.String(),
-			Miner:             block.Coinbase.String(),
 			Number:            block.Number.String(),
 			Timestamp:         block.TimeStamp.ToUint64(),
 			TransactionsTotal: block.TransactionTotal.ToUint64(),
+			Miner:             block.Coinbase.String(),
+			GasLimit:          block.GasLimit.String(),
+			GasUsed:           block.GasUsed.String(),
+			BaseFeePerGas:     block.BaseFee.StringPointer(),
 		}
 	}
 	return resp, DecodeBig(total).Int64(), nil
@@ -311,7 +312,76 @@ func DecodeBig(num string) *big.Int {
 	res, _ := hexutil.DecodeBig(num)
 	return res
 }
+func GetBlockTxs(blockNum string, pager *types.Pager) ([]*types.ListTransactionResp, uint64, error) {
+	n := new(big.Int)
+	n, ok := n.SetString(blockNum, 10)
+	if !ok {
+		return nil, 0, errors.New("parse block num error")
+	}
+	num := field.BigInt(*n)
 
-func EncodeBig(num *big.Int) string {
-	return hexutil.EncodeBig(num)
+	block, err := store.ReadBlock(context.Background(), mdbx.DB, &num)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	total := block.TransactionTotal.ToUint64()
+	txs := make([]*types.Tx, 0)
+	begin, end := ParsePage(&block.TransactionTotal, pager.Offset, pager.Limit)
+	p := begin
+	for {
+		tx, err := store.ReadBlockTxByIndex(context.Background(), mdbx.DB, &num, p)
+		if err != nil {
+			return nil, 0, err
+		}
+		txs = append(txs, tx)
+		if p.String() == end.String() {
+			break
+		}
+		p.Add(field.NewInt(-1))
+	}
+
+	resp := make([]*types.ListTransactionResp, 0)
+	addresses := make(map[string]common.Address)
+	for _, tx := range txs {
+		t := &types.ListTransactionResp{
+			Hash:        tx.Hash.Hex(),
+			Method:      tx.Method.String(),
+			BlockHash:   tx.BlockNum.String(),
+			BlockNumber: DecodeBig(tx.BlockNum.String()).String(),
+			From:        tx.From.Hex(),
+			To:          tx.To.Hex(),
+			Gas:         tx.Gas.StringPointer(),
+			GasPrice:    tx.GasPrice.StringPointer(),
+			Value:       tx.Value.StringPointer(),
+			CreatedTime: tx.TimeStamp.ToUint64(),
+		}
+		resp = append(resp, t)
+
+		addresses[tx.From.String()] = tx.From
+		if tx.To != nil {
+			addresses[tx.To.String()] = *tx.To
+		}
+	}
+	accounts, err := GetAccounts(addresses)
+	if err != nil {
+		return nil, 0, err
+	}
+	for _, t := range resp {
+		if from, ok := accounts[t.From]; ok {
+			t.FromName = from.Name
+			t.FromSymbol = from.Symbol
+			if from.Erc20 || from.Erc721 || from.Erc1155 {
+				t.FromContract = true
+			}
+		}
+		if to, ok := accounts[t.To]; ok {
+			t.FromName = to.Name
+			t.FromSymbol = to.Symbol
+			if to.Erc20 || to.Erc721 || to.Erc1155 {
+				t.ToContract = true
+			}
+		}
+	}
+	return resp, total, nil
 }

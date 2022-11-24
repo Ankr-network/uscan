@@ -43,12 +43,13 @@ type BlockResp struct {
 }
 
 type ListBlockResp struct {
-	Number            string `json:"number"`
-	Timestamp         uint64 `json:"timestamp"`
-	TransactionsTotal uint64 `json:"transactionsTotal"`
-	Miner             string `json:"miner"`
-	GasLimit          string `json:"gasLimit"` // int64 改成string
-	GasUsed           string `json:"gasUsed"`  // int64 改成string
+	Number            string  `json:"number"`
+	Timestamp         uint64  `json:"timestamp"`
+	TransactionsTotal uint64  `json:"transactionsTotal"`
+	Miner             string  `json:"miner"`
+	GasLimit          string  `json:"gasLimit"` // int64 改成string
+	GasUsed           string  `json:"gasUsed"`  // int64 改成string
+	BaseFeePerGas     *string `json:"baseFeePerGas"`
 }
 
 type TxResp struct {

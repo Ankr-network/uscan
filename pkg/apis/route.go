@@ -18,6 +18,7 @@ func SetupRouter(g fiber.Router) {
 
 	g.Get("/blocks", listBlocks)
 	g.Get("/blocks/:blockNum", getBlock)
+	g.Get("/blocks/:blockNum/txs", getBlockTxs)
 
 	g.Get("/txs", listTxs)
 	g.Get("/txs/:txHash", getTx)
@@ -99,6 +100,26 @@ func getBlock(c *fiber.Ctx) error {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}
 	return c.Status(http.StatusOK).JSON(response.Ok(block))
+}
+
+func getBlockTxs(c *fiber.Ctx) error {
+	blockNum := c.Params("blockNum")
+	if blockNum == "" {
+		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
+	}
+	f := &types.Pager{}
+	if err := c.QueryParser(f); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
+	}
+	f.Complete()
+	resp, total, err := service.GetBlockTxs(blockNum, f)
+	if err != nil {
+		return err
+	}
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
+	}
+	return c.Status(http.StatusOK).JSON(response.Ok(map[string]interface{}{"items": resp, "total": total}))
 }
 
 func listTxs(c *fiber.Ctx) error {
