@@ -1,6 +1,7 @@
 package apis
 
 import (
+	"fmt"
 	"github.com/Ankr-network/uscan/pkg/response"
 	"github.com/Ankr-network/uscan/pkg/service"
 	"github.com/Ankr-network/uscan/pkg/types"
@@ -10,6 +11,7 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"time"
 )
 
 func SetupRouter(g fiber.Router) {
@@ -81,6 +83,7 @@ func getHome(c *fiber.Ctx) error {
 }
 
 func listBlocks(c *fiber.Ctx) error {
+	fmt.Printf("listBlocks:%d\n", time.Now().UnixMilli())
 	f := &types.Pager{}
 	if err := c.QueryParser(f); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
@@ -90,6 +93,7 @@ func listBlocks(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}
+	fmt.Printf("listBlocks:%d\n", time.Now().UnixMilli())
 	return c.Status(http.StatusOK).JSON(response.Ok(map[string]interface{}{"items": resp, "total": total}))
 }
 
@@ -103,6 +107,7 @@ func getBlock(c *fiber.Ctx) error {
 }
 
 func getBlockTxs(c *fiber.Ctx) error {
+	fmt.Printf("getBlockTxs:%d\n", time.Now().UnixMilli())
 	blockNum := c.Params("blockNum")
 	if blockNum == "" {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
@@ -119,10 +124,12 @@ func getBlockTxs(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}
+	fmt.Printf("getBlockTxs:%d\n", time.Now().UnixMilli())
 	return c.Status(http.StatusOK).JSON(response.Ok(map[string]interface{}{"items": resp, "total": total}))
 }
 
 func listTxs(c *fiber.Ctx) error {
+	fmt.Printf("listTxs:%d\n", time.Now().UnixMilli())
 	f := &types.Pager{}
 	if err := c.QueryParser(f); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
@@ -132,6 +139,7 @@ func listTxs(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}
+	fmt.Printf("listTxs:%d\n", time.Now().UnixMilli())
 	return c.Status(http.StatusOK).JSON(response.Ok(map[string]interface{}{"items": resp, "total": total}))
 }
 
@@ -283,6 +291,7 @@ func getAccountInternalTxns(c *fiber.Ctx) error {
 }
 
 func listTokenTxnsErc20(c *fiber.Ctx) error {
+	fmt.Printf("listTokenTxnsErc20:%d\n", time.Now().UnixMilli())
 	f := &types.Pager{}
 	if err := c.QueryParser(f); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
@@ -292,10 +301,12 @@ func listTokenTxnsErc20(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}
+	fmt.Printf("listTokenTxnsErc20:%d\n", time.Now().UnixMilli())
 	return c.Status(http.StatusOK).JSON(response.Ok(map[string]interface{}{"items": resp, "total": total}))
 }
 
 func listTokenTxnsErc721(c *fiber.Ctx) error {
+	fmt.Printf("listTokenTxnsErc721:%d\n", time.Now().UnixMilli())
 	f := &types.Pager{}
 	if err := c.QueryParser(f); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
@@ -305,10 +316,12 @@ func listTokenTxnsErc721(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}
+	fmt.Printf("listTokenTxnsErc721:%d\n", time.Now().UnixMilli())
 	return c.Status(http.StatusOK).JSON(response.Ok(map[string]interface{}{"items": resp, "total": total}))
 }
 
 func listTokenTxnsErc1155(c *fiber.Ctx) error {
+	fmt.Printf("listTokenTxnsErc1155:%d\n", time.Now().UnixMilli())
 	f := &types.Pager{}
 	if err := c.QueryParser(f); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
@@ -318,6 +331,7 @@ func listTokenTxnsErc1155(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}
+	fmt.Printf("listTokenTxnsErc1155:%d\n", time.Now().UnixMilli())
 	return c.Status(http.StatusOK).JSON(response.Ok(map[string]interface{}{"items": resp, "total": total}))
 }
 
@@ -358,6 +372,7 @@ func getTokenType(c *fiber.Ctx) error {
 }
 
 func listTokenTransfers(c *fiber.Ctx) error {
+	fmt.Printf("listTokenTransfers:%d\n\n", time.Now().UnixMilli())
 	address := c.Params("address")
 	if address == "" {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
@@ -372,6 +387,7 @@ func listTokenTransfers(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}
+	fmt.Printf("listTokenTransfers:%d\n\n", time.Now().UnixMilli())
 	return c.Status(http.StatusOK).JSON(response.Ok(resp))
 }
 
