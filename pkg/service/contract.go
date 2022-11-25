@@ -2,13 +2,10 @@ package service
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/Ankr-network/uscan/pkg/kv"
-	"github.com/Ankr-network/uscan/pkg/kv/mdbx"
-	store "github.com/Ankr-network/uscan/pkg/rawdb"
 	"github.com/Ankr-network/uscan/pkg/response"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -21,31 +18,27 @@ import (
 )
 
 func WriteValidateContractMetadata(metadata *types.ValidateContractMetadata) error {
-	return store.WriteValidateContractMetadata(context.Background(), mdbx.DB, metadata)
+	return store.WriteValidateContractMetadata(metadata)
 }
 
 func ReadValidateContractMetadata() (*types.ValidateContractMetadata, error) {
-	return store.ReadValidateContractMetadata(context.Background(), mdbx.DB)
+	return store.GetValidateContractMetadata()
 }
 
 func ValidateContract(req *types.ValidateContractReq) (map[string]string, error) {
-	//id := strings.Replace(uuid.New().String(), "-", "", -1)
-	//if id == "" {
-	//	return nil, errors.New("uuid is empty")
-	//}
 	if req.ContractAddress == "" {
 		response.ErrVerityContract.Msg = "contract address cannot be empty"
 		return nil, response.ErrVerityContract
 	}
 
-	_, err := store.ReadContract(context.Background(), mdbx.DB, common.HexToAddress(req.ContractAddress))
+	_, err := store.GetContract(common.HexToAddress(req.ContractAddress))
 	if err != nil {
 		if err == kv.NotFound {
 			return nil, response.ErrRecordNotFind
 		}
 		return nil, err
 	}
-	hash, err := store.ReadValidateContract(context.Background(), mdbx.DB, common.HexToAddress(req.ContractAddress))
+	hash, err := store.GetValidateContract(common.HexToAddress(req.ContractAddress))
 	if err != nil && err != kv.NotFound {
 		return nil, err
 	}
@@ -104,7 +97,7 @@ func ValidateContract(req *types.ValidateContractReq) (map[string]string, error)
 		return nil, response.ErrVerityContract
 	}
 
-	if err := store.WriteValidateContractStatus(context.Background(), mdbx.DB, common.HexToAddress(req.ContractAddress), big.NewInt(0)); err != nil {
+	if err := store.WriteValidateContractStatus(common.HexToAddress(req.ContractAddress), big.NewInt(0)); err != nil {
 		return nil, err
 	}
 
@@ -227,7 +220,7 @@ func validateContract(param *types.ContractVerityTmp) error {
 		return err
 	}
 
-	account, err := store.ReadContract(context.Background(), mdbx.DB, common.HexToAddress(param.Address))
+	account, err := store.GetContract(common.HexToAddress(param.Address))
 	if err != nil {
 		return err
 	}
@@ -239,12 +232,12 @@ func validateContract(param *types.ContractVerityTmp) error {
 
 	if codeHash != "" {
 		for k, v := range v.EVM.MethodIdentifiers {
-			err := store.WriteMethodName(context.Background(), mdbx.DB, v, k)
+			err := store.WriteMethodName(v, k)
 			if err != nil {
 				return err
 			}
 		}
-		if err := store.WriteValidateContract(context.Background(), mdbx.DB, common.HexToAddress(param.Address), &types.ContractVerity{
+		if err := store.WriteValidateContract(common.HexToAddress(param.Address), &types.ContractVerity{
 			ContractName:    param.ContractName,
 			CompilerVersion: param.CompilerVersion,
 			Optimization:    param.Optimization,
@@ -282,11 +275,12 @@ func StartHandleContractVerity() {
 				err := validateContract(contractVerityTmp)
 				if err != nil {
 					logrus.Errorf("StartHandleContractVerity validateContract error. err: %+v, contract verity id:%s", err, contractVerityTmp.Address)
-					if err := store.WriteValidateContractStatus(context.Background(), mdbx.DB, common.HexToAddress(contractVerityTmp.Address), big.NewInt(2)); err != nil {
+					if err := store.WriteValidateContractStatus(common.HexToAddress(contractVerityTmp.Address), big.NewInt(2)); err != nil {
 						logrus.Errorf("StartHandleContractVerity UpdateContractVerityTmpStatus error. err: %+v, contract verity id:%s", err, contractVerityTmp.Address)
 					}
 				} else {
-					if err := store.WriteValidateContractStatus(context.Background(), mdbx.DB, common.HexToAddress(contractVerityTmp.Address), big.NewInt(1)); err != nil {
+					logrus.Errorf("StartHandleContractVerity validateContract error. err: %+v, contract verity id:%s", err, contractVerityTmp.Address)
+					if err := store.WriteValidateContractStatus(common.HexToAddress(contractVerityTmp.Address), big.NewInt(1)); err != nil {
 						logrus.Errorf("StartHandleContractVerity UpdateContractVerityTmpStatus error. err: %+v, contract verity id:%s", err, contractVerityTmp.Address)
 					}
 				}
@@ -296,7 +290,7 @@ func StartHandleContractVerity() {
 }
 
 func GetValidateContractStatus(address string) (int64, error) {
-	status, err := store.ReadValidateContractStatus(context.Background(), mdbx.DB, common.HexToAddress(address))
+	status, err := store.GetValidateContractStatus(common.HexToAddress(address))
 	if err != nil {
 		return 0, err
 	}
@@ -305,7 +299,7 @@ func GetValidateContractStatus(address string) (int64, error) {
 
 func GetValidateContract(address common.Address) (*types.ContractVerityInfoResp, error) {
 	resp := &types.ContractVerityInfoResp{}
-	contract, err := store.ReadValidateContract(context.Background(), mdbx.DB, address)
+	contract, err := store.GetValidateContract(address)
 	if err != nil && err != kv.NotFound {
 		return nil, err
 	}
@@ -326,7 +320,7 @@ func GetValidateContract(address common.Address) (*types.ContractVerityInfoResp,
 			Metadata:        metadata,
 			Object:          contract.Object,
 		}
-		proxyContractAddress, err := store.ReadProxyContract(context.Background(), mdbx.DB, address)
+		proxyContractAddress, err := store.GetProxyContract(address)
 		if err != nil && err != kv.NotFound {
 			return nil, err
 		}
@@ -334,7 +328,7 @@ func GetValidateContract(address common.Address) (*types.ContractVerityInfoResp,
 		if proxyContractAddress.String() != nullAddress.String() {
 			resp.ProxyContractAddress = proxyContractAddress.String()
 		}
-		proxyContract, err := store.ReadValidateContract(context.Background(), mdbx.DB, proxyContractAddress)
+		proxyContract, err := store.GetValidateContract(proxyContractAddress)
 		if err != nil && err != kv.NotFound {
 			return nil, err
 		}

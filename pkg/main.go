@@ -18,6 +18,7 @@ package pkg
 
 import (
 	"context"
+	"github.com/Ankr-network/uscan/pkg/kv/mdbx"
 	"github.com/Ankr-network/uscan/pkg/service"
 
 	"github.com/Ankr-network/uscan/pkg/contract"
@@ -27,17 +28,17 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/Ankr-network/uscan/pkg/apis"
-	"github.com/Ankr-network/uscan/pkg/kv/mdbx"
 	"github.com/spf13/cobra"
 	"github.com/sunvim/utils/grace"
 )
 
 func MainRun(cmd *cobra.Command, args []string) {
-	mdbx.NewDB(viper.GetString(share.MdbxPath))
+	db := mdbx.NewMdbx(viper.GetString(share.MdbxPath))
 	rpcMgr := rpcclient.NewRpcClient(viper.GetStringSlice(share.RpcUrls), viper.GetUint64(share.ForkBlockNum))
-	sync := core.NewSync(rpcMgr, contract.NewClient(rpcMgr), mdbx.DB, viper.GetUint64(share.WorkChan), viper.GetUint64(share.ForkBlockNum))
+	sync := core.NewSync(rpcMgr, contract.NewClient(rpcMgr), db, viper.GetUint64(share.WorkChan), viper.GetUint64(share.ForkBlockNum))
 	go sync.Execute(context.Background())
 
+	service.NewStore(db)
 	service.StartHandleContractVerity()
 	_, svc := grace.New(context.Background())
 	svc.RegisterService("web service", apis.Apis)

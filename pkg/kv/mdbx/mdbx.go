@@ -52,12 +52,6 @@ var schemasSort = []string{
 	share.InventorySortTabl,
 }
 
-var DB *MdbxDB
-
-func NewDB(path string) {
-	DB = NewMdbx(path)
-}
-
 func NewMdbx(path string) *MdbxDB {
 	env, err := mdbx.NewEnv()
 	if err != nil {

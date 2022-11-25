@@ -190,7 +190,7 @@ func getAccountInfo(c *fiber.Ctx) error {
 	if address == "" {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
 	}
-	resp, err := service.GetAccountInfo(address)
+	resp, err := service.GetAccountInfo(common.HexToAddress(address))
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}
@@ -207,7 +207,7 @@ func getAccountTxns(c *fiber.Ctx) error {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
 	}
 	f.Complete()
-	resp, err := service.GetAccountTxs(f, address)
+	resp, err := service.GetAccountTxs(f, common.HexToAddress(address))
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}
@@ -275,7 +275,7 @@ func getAccountInternalTxns(c *fiber.Ctx) error {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
 	}
 	f.Complete()
-	resp, total, err := service.GetAccountItxs(f, address)
+	resp, total, err := service.GetAccountItxs(f, common.HexToAddress(address))
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}

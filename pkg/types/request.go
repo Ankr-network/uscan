@@ -7,12 +7,15 @@ type Pager struct {
 	Limit  int64 `query:"limit"`
 }
 
-func (p *Pager) Complete() {
-	if p.Offset < 0 {
-		p.Offset = 0
+func (f *Pager) Complete() {
+	if f.Offset <= 0 {
+		f.Offset = 0
 	}
-	if p.Limit <= 0 {
-		p.Limit = 10
+	if f.Limit <= 0 {
+		f.Limit = 10
+	}
+	if f.Limit > 100 {
+		f.Limit = 100
 	}
 }
 

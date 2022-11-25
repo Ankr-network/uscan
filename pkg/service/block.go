@@ -1,12 +1,9 @@
 package service
 
 import (
-	"context"
 	"errors"
 	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/Ankr-network/uscan/pkg/kv"
-	"github.com/Ankr-network/uscan/pkg/kv/mdbx"
-	store "github.com/Ankr-network/uscan/pkg/rawdb"
 	"github.com/Ankr-network/uscan/pkg/response"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -28,9 +25,9 @@ const (
 )
 
 func Home() (map[string]interface{}, error) {
-	home, err := store.ReadHome(context.Background(), mdbx.DB)
+	home, err := store.GetHome()
 	if err != nil {
-
+		return nil, err
 	}
 	//DateTxs
 	dateTxs := GetDateTxs(home.DateTxs)
@@ -85,7 +82,7 @@ func GetHomeMetrics(home *types.Home, dateTxs []map[string]string, totalTxs, t u
 	metrics := make(map[string]interface{})
 	metrics["address"] = home.AddressTotal.String()
 	metrics["tx"] = home.TxTotal.String()
-	blockNum, err := store.ReadSyncingBlock(context.Background(), mdbx.DB)
+	blockNum, err := store.GetBlockTotal()
 	if err != nil {
 		return nil
 	}
@@ -131,7 +128,7 @@ func Search(f *types.SearchFilter) (map[string]interface{}, error) {
 	case allFilters:
 		address := common.IsHexAddress(f.Keyword)
 		if address {
-			account, err := store.ReadAccount(context.Background(), mdbx.DB, common.HexToAddress(f.Keyword))
+			account, err := store.GetAccount(common.HexToAddress(f.Keyword))
 			if err != nil {
 				return nil, err
 			}
@@ -148,7 +145,7 @@ func Search(f *types.SearchFilter) (map[string]interface{}, error) {
 				return nil, errors.New("parse block num error")
 			}
 			num := field.BigInt(*n)
-			block, err := store.ReadBlock(context.Background(), mdbx.DB, &num)
+			block, err := store.GetBlock(&num)
 			if err != nil && err != kv.NotFound {
 				return nil, err
 			}
@@ -157,7 +154,8 @@ func Search(f *types.SearchFilter) (map[string]interface{}, error) {
 				return resp, nil
 			}
 		}
-		transaction, err := store.ReadTx(context.Background(), mdbx.DB, common.HexToHash(f.Keyword))
+
+		transaction, err := store.GetTx(common.HexToHash(f.Keyword))
 		if err != nil && err != kv.NotFound {
 			return nil, err
 		}
@@ -165,7 +163,7 @@ func Search(f *types.SearchFilter) (map[string]interface{}, error) {
 			resp["type"] = searchTxnHash
 			return resp, nil
 		}
-		//accounts, err := store.GetAccountsByNameOrSymbol(f.Keyword)
+		//accounts, err := rawdb.GetAccountsByNameOrSymbol(f.Keyword)
 		//if err != nil && err != gorm.ErrRecordNotFound {
 		//	return nil, err
 		//}
@@ -196,7 +194,8 @@ func GetBlock(blockNum string) (*types.BlockResp, error) {
 		return nil, errors.New("parse block num error")
 	}
 	num := field.BigInt(*n)
-	block, err := store.ReadBlock(context.Background(), mdbx.DB, &num)
+
+	block, err := store.GetBlock(&num)
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +207,7 @@ func GetBlock(blockNum string) (*types.BlockResp, error) {
 	if err != nil {
 		return nil, err
 	}
-	txs := []string{}
+	txs := make([]string, 0)
 	for _, transaction := range block.Transactions {
 		txs = append(txs, transaction.String())
 	}
@@ -239,35 +238,12 @@ func GetBlock(blockNum string) (*types.BlockResp, error) {
 	return resp, nil
 }
 
-func ListBlocks(pager *types.Pager) ([]*types.Block, string, error) {
-	home, err := store.ReadSyncingBlock(context.Background(), mdbx.DB)
+func ListFullFieldBlocks(pager *types.Pager) ([]*types.ListBlockResp, uint64, error) {
+	total, err := store.GetBlockTotal()
 	if err != nil {
-		return nil, "0", err
+		return nil, 0, err
 	}
-	total := home.String()
-	blocks := make([]*types.Block, 0)
-	if total == "" {
-		return blocks, "0", nil
-	}
-	begin, end := ParsePage(home, pager.Offset, pager.Limit)
-	p := begin
-	for {
-		block, err := store.ReadBlock(context.Background(), mdbx.DB, p)
-		if err != nil {
-			return nil, "0", err
-		}
-		blocks = append(blocks, block)
-		if p.String() == end.String() {
-			break
-		}
-		p.Add(field.NewInt(-1))
-	}
-
-	return blocks, total, nil
-}
-
-func ListFullFieldBlocks(pager *types.Pager) ([]*types.ListBlockResp, int64, error) {
-	blocks, total, err := ListBlocks(pager)
+	blocks, err := store.ListBlocks(total, pager.Offset, pager.Limit)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -283,7 +259,7 @@ func ListFullFieldBlocks(pager *types.Pager) ([]*types.ListBlockResp, int64, err
 			BaseFeePerGas:     block.BaseFee.StringPointer(),
 		}
 	}
-	return resp, DecodeBig(total).Int64(), nil
+	return resp, total.ToUint64(), nil
 }
 
 func ParsePage(num *field.BigInt, offset, limit int64) (*field.BigInt, *field.BigInt) {
@@ -320,27 +296,16 @@ func GetBlockTxs(blockNum string, pager *types.Pager) ([]*types.ListTransactionR
 	}
 	num := field.BigInt(*n)
 
-	block, err := store.ReadBlock(context.Background(), mdbx.DB, &num)
+	block, err := store.GetBlock(&num)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	total := block.TransactionTotal.ToUint64()
-	txs := make([]*types.Tx, 0)
-	begin, end := ParsePage(&block.TransactionTotal, pager.Offset, pager.Limit)
-	p := begin
-	for {
-		tx, err := store.ReadBlockTxByIndex(context.Background(), mdbx.DB, &num, p)
-		if err != nil {
-			return nil, 0, err
-		}
-		txs = append(txs, tx)
-		if p.String() == end.String() {
-			break
-		}
-		p.Add(field.NewInt(-1))
+	total := block.TransactionTotal
+	txs, err := store.ListBlockTxs(&total, &num, pager.Offset, pager.Limit)
+	if err != nil {
+		return nil, 0, err
 	}
-
 	resp := make([]*types.ListTransactionResp, 0)
 	addresses := make(map[string]common.Address)
 	for _, tx := range txs {
@@ -383,5 +348,5 @@ func GetBlockTxs(blockNum string, pager *types.Pager) ([]*types.ListTransactionR
 			}
 		}
 	}
-	return resp, total, nil
+	return resp, total.ToUint64(), nil
 }
