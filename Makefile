@@ -34,6 +34,13 @@ race:
 start: compile
 	bin/uscan --config .uscan.yaml 
 
+.PHONY: init
+init:
+	@echo "Init data dir...."
+	mkdir $HOME/uscn-deploy && cp -r pkg/files $HOME/uscn-deploy/ && chmod -R 777 $HOME/uscn-deploy/files/ &&  cp docker-compose.yaml $HOME/uscn-deploy/
+	@echo "build docker image..."
+	docker build -t uscan:latest .
+	@echo "init finish! Please go to $HOME/uscn"
 
 .PHONY: build
 build: 
