@@ -37,10 +37,12 @@ start: compile
 .PHONY: init
 init:
 	@echo "Init data dir...."
-	mkdir $(HOME)/uscn-deploy && cp -r pkg/files $(HOME)/uscn-deploy/ && chmod -R 777 $(HOME)/uscn-deploy/files/ &&  cp docker-compose.yaml $(HOME)/uscn-deploy/
+	mkdir $(HOME)/uscan-deploy && cp -r pkg/files $(HOME)/uscan-deploy/ && chmod -R 777 $(HOME)/uscan-deploy/files/ &&  cp docker-compose.yaml $(HOME)/uscan-deploy/
 	@echo "build docker image..."
 	docker build -t uscan:latest .
-	@echo "init finish! Please go to $HOME/uscn"
+	docker image prune -f --filter label=stage=builder
+	@echo "init finish! Please go to $(HOME)/uscan-deploy"
+
 
 .PHONY: build
 build: 

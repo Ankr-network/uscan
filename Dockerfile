@@ -1,4 +1,5 @@
 FROM golang:1.19-alpine3.16 AS builder
+LABEL stage=builder
 WORKDIR /uscan
 COPY ./ ./
 
