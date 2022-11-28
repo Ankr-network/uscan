@@ -12,5 +12,8 @@ FROM alpine:3.16
 WORKDIR /app
 RUN apk add --no-cache ca-certificates  libstdc++ tzdata
 COPY --from=builder /uscan/executor /app/
+COPY pkg/files/ /app/pkg/files
+RUN chmod -R 777 /app/pkg/files
+
 EXPOSE 4322
 ENTRYPOINT ["./executor"]

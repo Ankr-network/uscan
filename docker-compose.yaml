@@ -6,7 +6,6 @@ services:
     command: ["--rpc_urls=wss://testnet.ankr.com/ws","--db_path=/app/uscandb"]
     volumes:
       - ./data:/app/uscandb
-      - ./files:/app/pkg/files
     ports:
       - "4322:4322"
     logging:
