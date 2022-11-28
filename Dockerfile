@@ -16,4 +16,4 @@ COPY pkg/files/ /app/pkg/files
 RUN chmod -R 777 /app/pkg/files
 
 EXPOSE 4322
-ENTRYPOINT ["./executor"]
+ENTRYPOINT ["/app/executor"]
