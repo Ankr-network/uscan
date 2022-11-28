@@ -19,6 +19,7 @@ package apis
 import (
 	"context"
 	"fmt"
+
 	"github.com/Ankr-network/uscan/pkg/log"
 	"github.com/Ankr-network/uscan/share"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -43,7 +44,7 @@ func Apis(ctx context.Context) error {
 		log.Fatal(err)
 	}
 
-	svc.Use("/", filesystem.New(filesystem.Config{
+	svc.Use("/*", filesystem.New(filesystem.Config{
 		Root: statikFs,
 	}))
 
