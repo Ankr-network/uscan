@@ -40,7 +40,7 @@ init:
 	mkdir $(HOME)/uscan-deploy  &&  cp docker-compose.yaml $(HOME)/uscan-deploy/
 	@echo "build docker image..."
 	docker build -t uscan:latest .
-	docker image prune -f --filter label=stage=builder
+	docker image prune -f --filter label=stage=uscan-builder
 	@echo "init finish! Please go to $(HOME)/uscan-deploy"
 
 
