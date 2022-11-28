@@ -44,7 +44,7 @@ func Apis(ctx context.Context) error {
 		log.Fatal(err)
 	}
 
-	svc.Use("/*", filesystem.New(filesystem.Config{
+	svc.Use("/", filesystem.New(filesystem.Config{
 		Root: statikFs,
 	}))
 
