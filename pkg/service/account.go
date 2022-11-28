@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/Ankr-network/uscan/pkg/kv"
+	"github.com/Ankr-network/uscan/pkg/log"
 	"github.com/Ankr-network/uscan/pkg/response"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -188,6 +189,7 @@ func GetAccountItxs(pager *types.Pager, address common.Address) ([]*types.Intern
 func GetAccountErc20Txns(pager *types.Pager, address common.Address) ([]*types.Erc20TxResp, uint64, error) {
 	total, err := store.GetAccountErc20Total(address)
 	if err != nil && err != kv.NotFound {
+		log.Infof("GetAccountErc20Txns, GetAccountErc20Total:%s", err)
 		return nil, 0, err
 	}
 	resp := make([]*types.Erc20TxResp, 0)
@@ -197,6 +199,7 @@ func GetAccountErc20Txns(pager *types.Pager, address common.Address) ([]*types.E
 
 	txs, err := store.ListAccountErc20Txs(address, total, pager.Offset, pager.Limit)
 	if err != nil {
+		log.Infof("GetAccountErc20Txns, ListAccountErc20Txs:%s", err)
 		return nil, 0, err
 	}
 	addresses := make(map[string]common.Address)
@@ -221,6 +224,7 @@ func GetAccountErc20Txns(pager *types.Pager, address common.Address) ([]*types.E
 
 	accounts, err := GetAccounts(addresses)
 	if err != nil {
+		log.Infof("GetAccountErc20Txns, GetAccounts:%s", err)
 		return nil, 0, err
 	}
 	for _, t := range resp {

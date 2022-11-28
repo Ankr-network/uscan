@@ -1,7 +1,6 @@
 package apis
 
 import (
-	"fmt"
 	"github.com/Ankr-network/uscan/pkg/log"
 	"github.com/Ankr-network/uscan/pkg/response"
 	"github.com/Ankr-network/uscan/pkg/service"
@@ -94,7 +93,7 @@ func listBlocks(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}
-	fmt.Printf("listBlocks:%d", time.Now().UnixMilli())
+	log.Infof("listBlocks:%d", time.Now().UnixMilli())
 	return c.Status(http.StatusOK).JSON(response.Ok(map[string]interface{}{"items": resp, "total": total}))
 }
 
