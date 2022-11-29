@@ -190,7 +190,8 @@ func (s *Store) ListAccountITxs(address common.Address, total *field.BigInt, off
 		tx, err := rawdb.ReadAccountITxByIndex(s.ctx, s.db, address, p)
 		if err != nil {
 			log.Infof("ListAccountITxs ReadAccountITxByIndex error. err:%s, p:%d", err, p.ToUint64())
-			return nil, err
+			//return nil, err
+			continue
 		}
 		txs = append(txs, tx)
 		if p.String() == end.String() {
