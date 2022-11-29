@@ -90,7 +90,19 @@ func (n *blockHandle) updateForkHome(ctx context.Context) (err error) {
 
 	oldHome, err := forkcache.ReadHome(ctx, n.db)
 	if err != nil {
-		return err
+		if errors.Is(err, kv.NotFound) {
+			home = &types.Home{
+				TxTotal:      *field.NewInt(0),
+				AddressTotal: *field.NewInt(0),
+				Erc20Total:   *field.NewInt(0),
+				Erc721Total:  *field.NewInt(0),
+				Erc1155Total: *field.NewInt(0),
+			}
+			err = nil
+		} else {
+			log.Errorf("get fork home: %v", err)
+			return err
+		}
 	}
 	HomeMap[n.blockData.Number] = &Home{
 		TxTotal:      *home.TxTotal.Sub(&oldHome.TxTotal),
