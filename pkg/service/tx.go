@@ -33,6 +33,9 @@ func ListTxs(pager *types.Pager) ([]*types.ListTransactionResp, uint64, error) {
 			Value:       tx.Value.StringPointer(),
 			CreatedTime: tx.TimeStamp.ToUint64(),
 		}
+		if t.Method == "0x" {
+			t.Method = ""
+		}
 		resp = append(resp, t)
 
 		addresses[tx.From.String()] = tx.From
