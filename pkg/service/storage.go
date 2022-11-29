@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/Ankr-network/uscan/pkg/kv"
+	"github.com/Ankr-network/uscan/pkg/log"
 	rawdb "github.com/Ankr-network/uscan/pkg/rawdb"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -183,10 +184,12 @@ func (s *Store) ListAccountITxs(address common.Address, total *field.BigInt, off
 		return txs, nil
 	}
 	begin, end := ParsePage(total, offset, limit)
+	log.Infof("ListAccountITxs ParsePage, total:%d, begin:%d, end:%d", total.ToUint64(), begin.ToUint64(), end.ToUint64())
 	p := begin
 	for {
 		tx, err := rawdb.ReadAccountITxByIndex(s.ctx, s.db, address, p)
 		if err != nil {
+			log.Infof("ListAccountITxs ReadAccountITxByIndex error. err:%s, p:%d", err, p.ToUint64())
 			return nil, err
 		}
 		txs = append(txs, tx)
