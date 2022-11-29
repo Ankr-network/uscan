@@ -129,7 +129,7 @@ func Search(f *types.SearchFilter) (map[string]interface{}, error) {
 		address := common.IsHexAddress(f.Keyword)
 		if address {
 			account, err := store.GetAccount(common.HexToAddress(f.Keyword))
-			if err != nil {
+			if err != nil && err != kv.NotFound {
 				return nil, err
 			}
 			if account != nil {
