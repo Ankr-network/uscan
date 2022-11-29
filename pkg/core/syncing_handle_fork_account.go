@@ -3,7 +3,6 @@ package core
 import (
 	"context"
 	"errors"
-
 	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/Ankr-network/uscan/pkg/forkcache"
 	"github.com/Ankr-network/uscan/pkg/kv"

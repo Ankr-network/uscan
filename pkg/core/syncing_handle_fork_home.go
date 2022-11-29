@@ -12,9 +12,11 @@ import (
 	"github.com/Ankr-network/uscan/pkg/types"
 )
 
+var forkHomeCache *types.Home
+
 func (n *blockHandle) updateForkHome(ctx context.Context) (err error) {
 	var home *types.Home
-	if homeCache == nil {
+	if forkHomeCache == nil {
 		home, err = forkcache.ReadHome(ctx, n.db)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
@@ -27,15 +29,15 @@ func (n *blockHandle) updateForkHome(ctx context.Context) (err error) {
 					DateTxs:      make(map[string]*field.BigInt),
 				}
 				err = nil
-				homeCache = home
+				forkHomeCache = home
 			} else {
 				return err
 			}
 		} else {
-			homeCache = home
+			forkHomeCache = home
 		}
 	} else {
-		home = homeCache
+		home = forkHomeCache
 	}
 
 	home.BlockNumber.SetBytes(n.blockData.Number.Bytes())
@@ -85,5 +87,32 @@ func (n *blockHandle) updateForkHome(ctx context.Context) (err error) {
 		log.Errorf("write fork syncing block: %v", err)
 		return err
 	}
+
+	oldHome, err := forkcache.ReadHome(ctx, n.db)
+	if err != nil {
+		return err
+	}
+	HomeMap[n.blockData.Number] = &Home{
+		TxTotal:      *home.TxTotal.Sub(&oldHome.TxTotal),
+		AddressTotal: *home.AddressTotal.Sub(&oldHome.AddressTotal),
+		Erc20Total:   *home.Erc20Total.Sub(&oldHome.Erc20Total),
+		Erc721Total:  *home.Erc721Total.Sub(&oldHome.Erc721Total),
+		Erc1155Total: *home.Erc1155Total.Sub(&oldHome.Erc1155Total),
+	}
+
+	return forkcache.WriteHome(ctx, n.db, home)
+}
+
+func (n *blockHandle) deleteForkHome(ctx context.Context) (err error) {
+	home, err := forkcache.ReadHome(ctx, n.db)
+	if err != nil {
+		return err
+	}
+	home.TxTotal.Sub(&HomeMap[n.blockData.Number].TxTotal)
+	home.AddressTotal.Sub(&HomeMap[n.blockData.Number].AddressTotal)
+	home.Erc20Total.Sub(&HomeMap[n.blockData.Number].Erc20Total)
+	home.Erc721Total.Sub(&HomeMap[n.blockData.Number].Erc721Total)
+	home.Erc1155Total.Sub(&HomeMap[n.blockData.Number].Erc1155Total)
+
 	return forkcache.WriteHome(ctx, n.db, home)
 }

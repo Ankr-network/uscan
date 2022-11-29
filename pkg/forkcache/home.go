@@ -41,10 +41,6 @@ func WriteHome(ctx context.Context, db kv.Writer, home *types.Home) (err error) 
 	return db.Put(ctx, homeKey, bytesRes, &kv.WriteOption{Table: share.ForkHomeTbl})
 }
 
-func DeleteHome(ctx context.Context, db kv.Writer) (err error) {
-	return db.Del(ctx, homeKey, &kv.WriteOption{Table: share.ForkHomeTbl})
-}
-
 func ReadSyncingBlock(ctx context.Context, db kv.Reader) (bk *field.BigInt, err error) {
 	var bytesRes []byte
 	bytesRes, err = db.Get(ctx, syncingKey, &kv.ReadOption{Table: share.ForkHomeTbl})
@@ -59,8 +55,4 @@ func ReadSyncingBlock(ctx context.Context, db kv.Reader) (bk *field.BigInt, err 
 
 func WriteSyncingBlock(ctx context.Context, db kv.Writer, bk *field.BigInt) (err error) {
 	return db.Put(ctx, syncingKey, bk.Bytes(), &kv.WriteOption{Table: share.ForkHomeTbl})
-}
-
-func DeleteSyncingBlock(ctx context.Context, db kv.Writer) (err error) {
-	return db.Del(ctx, syncingKey, &kv.WriteOption{Table: share.ForkHomeTbl})
 }

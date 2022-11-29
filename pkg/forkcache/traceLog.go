@@ -44,11 +44,6 @@ func ReadTraceTx(ctx context.Context, db kv.Reader, hash common.Hash) (res *type
 	return
 }
 
-func DeleteTraceTx(ctx context.Context, db kv.Writer, hash common.Hash) (err error) {
-	var key = append(traceTxPrefix, hash.Bytes()...)
-	return db.Del(ctx, key, &kv.WriteOption{Table: share.ForkTraceLogTbl})
-}
-
 func WriteTraceTx2(ctx context.Context, db kv.Writer, hash common.Hash, data *types.TraceTx2) (err error) {
 	var (
 		bytesRes []byte

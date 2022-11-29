@@ -34,4 +34,5 @@ const (
 	ForkBlockTbl    = "fork_blocks"
 	ForkTraceLogTbl = "fork_traceLogs"
 	ForkTransferTbl = "fork_transfers"
+	ForkIndexTbl    = "fork_index"
 )

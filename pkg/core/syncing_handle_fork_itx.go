@@ -8,7 +8,13 @@ import (
 	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/log"
 	"github.com/Ankr-network/uscan/pkg/types"
+	"github.com/Ankr-network/uscan/pkg/utils"
+	"github.com/Ankr-network/uscan/share"
 	"github.com/ethereum/go-ethereum/common"
+)
+
+var (
+	forkAccountItxTotalMap = utils.NewCache()
 )
 
 func (n *blockHandle) writeForkITx(ctx context.Context, itxmap map[common.Hash][]*types.InternalTx) (err error) {
@@ -29,6 +35,12 @@ func (n *blockHandle) writeForkITx(ctx context.Context, itxmap map[common.Hash][
 				log.Errorf("write fork itx(%s): %v", k.Hex(), err)
 				return err
 			}
+			deleteMap[share.ForkTxTbl] = append(deleteMap[share.ForkTxTbl], append(append([]byte("/fork/iTx/"), k.Bytes()...), append([]byte("/"), itxTotal.Add(field.NewInt(1)).Bytes()...)...))
+			if indexMap["/fork/iTx/"+k.String()+"/index"] == nil {
+				indexMap["/fork/iTx/"+k.String()+"/index"] = field.NewInt(0)
+			}
+			indexMap["/fork/iTx/"+k.String()+"/index"] = indexMap["/fork/iTx/"+k.String()+"/index"].Add(field.NewInt(1))
+
 			key := &types.InternalTxKey{
 				TransactionHash: v.TransactionHash,
 				Index:           *itxTotal,
@@ -45,17 +57,31 @@ func (n *blockHandle) writeForkITx(ctx context.Context, itxmap map[common.Hash][
 				}
 			}
 		}
+
+		oldTotal, err := forkcache.ReadITxTotal(ctx, n.db, k)
+		if errors.Is(err, kv.NotFound) {
+			oldTotal = field.NewInt(0)
+		} else {
+			log.Errorf("get fork itx total: %v", err)
+			return err
+		}
+		total := itxTotal.Sub(oldTotal)
+		if totalMap[share.ForkTxTbl+":"+"/fork/iTx/"+k.String()+"/total"] == nil {
+			totalMap[share.ForkTxTbl+":"+"/fork/iTx/"+k.String()+"/total"] = field.NewInt(0)
+		}
+		totalMap[share.ForkTxTbl+":"+"/fork/iTx/"+k.String()+"/total"] = totalMap[share.ForkTxTbl+":"+"/fork/iTx/"+k.String()+"/total"].Add(total)
 		if err = forkcache.WriteItxTotal(ctx, n.db, k, itxTotal); err != nil {
 			log.Errorf("write fork itx total: %v", err)
 			return err
 		}
+
 	}
 	return nil
 }
 
 func (n *blockHandle) writeForkAccountItx(ctx context.Context, addr common.Address, data *types.InternalTxKey) (err error) {
 	var total = &field.BigInt{}
-	if bytesRes, ok := accountItxTotalMap.Get(addr); ok {
+	if bytesRes, ok := forkAccountItxTotalMap.Get(addr); ok {
 		total.SetBytes(bytesRes.([]byte))
 	} else {
 		total, err = forkcache.ReadAccountITxTotal(ctx, n.db, addr)
@@ -75,10 +101,20 @@ func (n *blockHandle) writeForkAccountItx(ctx context.Context, addr common.Addre
 		log.Errorf("write fork account itx : %v", err)
 		return err
 	}
+	deleteMap[share.ForkAccountsTbl] = append(deleteMap[share.ForkAccountsTbl], append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/itx/"), total.Bytes()...)...))
+	if indexMap["/fork/"+addr.String()+"/itx/index"] == nil {
+		indexMap["/fork/"+addr.String()+"/itx/index"] = field.NewInt(0)
+	}
+	indexMap["/fork/"+addr.String()+"/itx/index"] = indexMap["/fork/"+addr.String()+"/itx/index"].Add(field.NewInt(1))
 
 	err = forkcache.WriteAccountITxTotal(ctx, n.db, addr, total)
 	if err == nil {
-		accountItxTotalMap.Add(addr, total.Bytes())
+		forkAccountItxTotalMap.Add(addr, total.Bytes())
 	}
+	if totalMap[share.ForkAccountsTbl+":"+"/fork/"+addr.String()+"/itx/total"] == nil {
+		totalMap[share.ForkAccountsTbl+":"+"/fork/"+addr.String()+"/itx/total"] = field.NewInt(0)
+	}
+	totalMap[share.ForkAccountsTbl+":"+"/fork/"+addr.String()+"/itx/total"] = totalMap[share.ForkAccountsTbl+":"+"/fork/"+addr.String()+"/itx/total"].Add(field.NewInt(1))
+
 	return
 }

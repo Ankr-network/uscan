@@ -2,6 +2,7 @@ package forkcache
 
 import (
 	"context"
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/Ankr-network/uscan/pkg/kv"
@@ -29,6 +30,14 @@ table: transfers
 /fork/erc20/<index> => erc20 transfer info
 /fork/erc721/<index> => erc1155 transfer info
 /fork/erc1155/<index> => erc1155 transfer info
+
+/fork/erc20/<contract>/total => total
+/fork/erc721/<contract>/total => total
+/fork/erc1155/<contract>/total => total
+
+/fork/erc20/<contract>/<index> => <erc20 total index>
+/fork/erc721/<contract>/<index> => <erc721 total index>
+/fork/erc1155/<contract>/<index> => <erc1155 total index>
 */
 
 func WriteErc20Total(ctx context.Context, db kv.Writer, total *field.BigInt) error {
@@ -44,10 +53,6 @@ func ReadErc20Total(ctx context.Context, db kv.Reader) (total *field.BigInt, err
 	total = &field.BigInt{}
 	total.SetBytes(bytesRes)
 	return
-}
-
-func DeleteErc20Total(ctx context.Context, db kv.Writer) error {
-	return db.Del(ctx, erc20TotalKey, &kv.WriteOption{Table: share.ForkTransferTbl})
 }
 
 func WriteErc721Total(ctx context.Context, db kv.Writer, total *field.BigInt) error {
@@ -66,10 +71,6 @@ func ReadErc721Total(ctx context.Context, db kv.Reader) (total *field.BigInt, er
 	return
 }
 
-func DeleteErc721Total(ctx context.Context, db kv.Writer) error {
-	return db.Del(ctx, erc721TotalKey, &kv.WriteOption{Table: share.ForkTransferTbl})
-}
-
 func WriteErc1155Total(ctx context.Context, db kv.Writer, total *field.BigInt) error {
 	return db.Put(ctx, erc1155TotalKey, total.Bytes(), &kv.WriteOption{Table: share.ForkTransferTbl})
 }
@@ -84,10 +85,6 @@ func ReadErc1155Total(ctx context.Context, db kv.Reader) (total *field.BigInt, e
 	total = &field.BigInt{}
 	total.SetBytes(bytesRes)
 	return
-}
-
-func DeleteErc1155Total(ctx context.Context, db kv.Writer) error {
-	return db.Del(ctx, erc1155TotalKey, &kv.WriteOption{Table: share.ForkTransferTbl})
 }
 
 func WriteErc20Transfer(ctx context.Context, db kv.Writer, index *field.BigInt, data *types.Erc20Transfer) (err error) {
@@ -108,10 +105,6 @@ func ReadErc20Transfer(ctx context.Context, db kv.Reader, index *field.BigInt) (
 	data = &types.Erc20Transfer{}
 	err = data.Unmarshal(bytesRes)
 	return
-}
-
-func DeleteErc20Transfer(ctx context.Context, db kv.Writer, index *field.BigInt) (err error) {
-	return db.Del(ctx, append(erc20IndexPrefix, index.Bytes()...), &kv.WriteOption{Table: share.ForkTransferTbl})
 }
 
 func WriteErc721Transfer(ctx context.Context, db kv.Writer, index *field.BigInt, data *types.Erc721Transfer) (err error) {
@@ -135,10 +128,6 @@ func ReadErc721Transfer(ctx context.Context, db kv.Reader, index *field.BigInt) 
 	return
 }
 
-func DeleteErc721Transfer(ctx context.Context, db kv.Writer, index *field.BigInt, data *types.Erc721Transfer) (err error) {
-	return db.Del(ctx, append(erc721IndexPrefix, index.Bytes()...), &kv.WriteOption{Table: share.ForkTransferTbl})
-}
-
 func WriteErc1155Transfer(ctx context.Context, db kv.Writer, index *field.BigInt, data *types.Erc1155Transfer) (err error) {
 	var bytesRes []byte
 	bytesRes, err = data.Marshal()
@@ -160,6 +149,92 @@ func ReadErc1155Transfer(ctx context.Context, db kv.Reader, index *field.BigInt)
 	return
 }
 
-func DeleteErc1155Transfer(ctx context.Context, db kv.Writer, index *field.BigInt) (err error) {
-	return db.Del(ctx, append(erc1155IndexPrefix, index.Bytes()...), &kv.WriteOption{Table: share.ForkTransferTbl})
+func WriteErc20ContractTotal(ctx context.Context, db kv.Writer, contract common.Address, total *field.BigInt) error {
+	return db.Put(ctx, append(append([]byte("/fork/erc20/"), contract.Bytes()...), []byte("/total")...), total.Bytes(), &kv.WriteOption{Table: share.ForkTransferTbl})
+}
+
+func ReadErc20ContractTotal(ctx context.Context, db kv.Reader, contract common.Address) (total *field.BigInt, err error) {
+	var bytesRes []byte
+	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/erc20/"), contract.Bytes()...), []byte("/total")...), &kv.ReadOption{Table: share.ForkTransferTbl})
+	if err != nil {
+		return
+	}
+	total = &field.BigInt{}
+	total.SetBytes(bytesRes)
+	return
+}
+
+func WriteErc721ContractTotal(ctx context.Context, db kv.Writer, contract common.Address, total *field.BigInt) error {
+	return db.Put(ctx, append(append([]byte("/fork/erc721/"), contract.Bytes()...), []byte("/total")...), total.Bytes(), &kv.WriteOption{Table: share.ForkTransferTbl})
+}
+
+func ReadErc721ContractTotal(ctx context.Context, db kv.Reader, contract common.Address) (total *field.BigInt, err error) {
+	var bytesRes []byte
+	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/erc721/"), contract.Bytes()...), []byte("/total")...), &kv.ReadOption{Table: share.ForkTransferTbl})
+	if err != nil {
+		return
+	}
+	total = &field.BigInt{}
+	total.SetBytes(bytesRes)
+	return
+}
+
+func WriteErc1155ContractTotal(ctx context.Context, db kv.Writer, contract common.Address, total *field.BigInt) error {
+	return db.Put(ctx, append(append([]byte("/fork/erc1155/"), contract.Bytes()...), []byte("/total")...), total.Bytes(), &kv.WriteOption{Table: share.ForkTransferTbl})
+}
+
+func ReadErc1155ContractTotal(ctx context.Context, db kv.Reader, contract common.Address) (total *field.BigInt, err error) {
+	var bytesRes []byte
+	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/erc1155/"), contract.Bytes()...), []byte("/total")...), &kv.ReadOption{Table: share.ForkTransferTbl})
+	if err != nil {
+		return
+	}
+	total = &field.BigInt{}
+	total.SetBytes(bytesRes)
+	return
+}
+
+func WriteErc20ContractTransfer(ctx context.Context, db kv.Writer, contract common.Address, index *field.BigInt, data *field.BigInt) (err error) {
+	return db.Put(ctx, append(append([]byte("/fork/erc20/"), contract.Bytes()...), append([]byte("/"), index.Bytes()...)...), data.Bytes(), &kv.WriteOption{Table: share.ForkTransferTbl})
+}
+
+func ReadErc20ContractTransfer(ctx context.Context, db kv.Reader, contract common.Address, index *field.BigInt) (data *field.BigInt, err error) {
+	var bytesRes []byte
+	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/erc20/"), contract.Bytes()...), append([]byte("/"), index.Bytes()...)...), &kv.ReadOption{Table: share.ForkTransferTbl})
+	if err != nil {
+		return
+	}
+	data = &field.BigInt{}
+	data.SetBytes(bytesRes)
+	return
+}
+
+func WriteErc721ContractTransfer(ctx context.Context, db kv.Writer, contract common.Address, index *field.BigInt, data *field.BigInt) (err error) {
+	return db.Put(ctx, append(append([]byte("/fork/erc721/"), contract.Bytes()...), append([]byte("/"), index.Bytes()...)...), data.Bytes(), &kv.WriteOption{Table: share.ForkTransferTbl})
+}
+
+func ReadErc721ContractTransfer(ctx context.Context, db kv.Reader, contract common.Address, index *field.BigInt) (data *field.BigInt, err error) {
+	var bytesRes []byte
+	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/erc721/"), contract.Bytes()...), append([]byte("/"), index.Bytes()...)...), &kv.ReadOption{Table: share.ForkTransferTbl})
+	if err != nil {
+		return
+	}
+	data = &field.BigInt{}
+	data.SetBytes(bytesRes)
+	return
+}
+
+func WriteErc1155ContractTransfer(ctx context.Context, db kv.Writer, contract common.Address, index *field.BigInt, data *field.BigInt) (err error) {
+	return db.Put(ctx, append(append([]byte("/fork/erc1155/"), contract.Bytes()...), append([]byte("/"), index.Bytes()...)...), data.Bytes(), &kv.WriteOption{Table: share.ForkTransferTbl})
+}
+
+func ReadErc1155ContractTransfer(ctx context.Context, db kv.Reader, contract common.Address, index *field.BigInt) (data *field.BigInt, err error) {
+	var bytesRes []byte
+	bytesRes, err = db.Get(ctx, append(append([]byte("/fork/erc1155/"), contract.Bytes()...), append([]byte("/"), index.Bytes()...)...), &kv.ReadOption{Table: share.ForkTransferTbl})
+	if err != nil {
+		return
+	}
+	data = &field.BigInt{}
+	data.SetBytes(bytesRes)
+	return
 }

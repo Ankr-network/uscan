@@ -11,10 +11,10 @@ import (
 )
 
 var (
-	txKey      = []byte("/tx/")
-	rtKey      = []byte("/rt/")
-	txTotalKey = []byte("/all/tx/total")
-	txIndexKey = []byte("/all/tx/")
+	txKey      = []byte("/fork/tx/")
+	rtKey      = []byte("/fork/rt/")
+	txTotalKey = []byte("/fork/all/tx/total")
+	txIndexKey = []byte("/fork/all/tx/")
 )
 
 /*
@@ -75,10 +75,6 @@ func ReadTxByIndex(ctx context.Context, db kv.Reader, index *field.BigInt) (data
 	return ReadTx(ctx, db, hash)
 }
 
-func DeleteTxIndex(ctx context.Context, db kv.Writer, index *field.BigInt) error {
-	return db.Del(ctx, append(txIndexKey, index.Bytes()...), &kv.WriteOption{Table: share.ForkTxTbl})
-}
-
 func WriteTxTotal(ctx context.Context, db kv.Writer, total *field.BigInt) error {
 	return db.Put(ctx, txTotalKey, total.Bytes(), &kv.WriteOption{Table: share.ForkTxTbl})
 }
@@ -92,10 +88,6 @@ func ReadTxTotal(ctx context.Context, db kv.Reader) (total *field.BigInt, err er
 	total = &field.BigInt{}
 	total.SetBytes(bytesRes)
 	return
-}
-
-func DeleteTxTotal(ctx context.Context, db kv.Writer) error {
-	return db.Del(ctx, txTotalKey, &kv.WriteOption{Table: share.ForkTxTbl})
 }
 
 func WriteRt(ctx context.Context, db kv.Writer, hash common.Hash, data *types.Rt) (err error) {

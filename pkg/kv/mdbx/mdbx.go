@@ -53,9 +53,11 @@ var schemasSort = []string{
 }
 
 var DB *MdbxDB
+var ForkDB *MdbxDB
 
-func NewDB(path string) {
+func NewDB(path, forkPath string) {
 	DB = NewMdbx(path)
+	ForkDB = NewMdbx(forkPath)
 }
 
 func NewMdbx(path string) *MdbxDB {

@@ -33,9 +33,9 @@ import (
 )
 
 func MainRun(cmd *cobra.Command, args []string) {
-	mdbx.NewDB(viper.GetString(share.MdbxPath))
-	rpcMgr := rpcclient.NewRpcClient(viper.GetStringSlice(share.RpcUrls), viper.GetUint64(share.ForkBlockNum))
-	sync := core.NewSync(rpcMgr, contract.NewClient(rpcMgr), mdbx.DB, viper.GetUint64(share.WorkChan), viper.GetUint64(share.ForkBlockNum))
+	mdbx.NewDB(viper.GetString(share.MdbxPath), viper.GetString(share.MdbxForkPath))
+	rpcMgr := rpcclient.NewRpcClient(viper.GetStringSlice(share.RpcUrls))
+	sync := core.NewSync(rpcMgr, contract.NewClient(rpcMgr), mdbx.DB, mdbx.ForkDB, viper.GetUint64(share.WorkChan))
 	go sync.Execute(context.Background())
 
 	service.StartHandleContractVerity()

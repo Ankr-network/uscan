@@ -3,8 +3,6 @@ package core
 import (
 	"context"
 	"errors"
-	"time"
-
 	"github.com/Ankr-network/uscan/pkg/contract"
 	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/Ankr-network/uscan/pkg/job"
@@ -14,76 +12,86 @@ import (
 	"github.com/Ankr-network/uscan/pkg/rpcclient"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/Ankr-network/uscan/pkg/workpool"
+	"github.com/Ankr-network/uscan/share"
+	"github.com/spf13/viper"
 )
+
+type Jobs struct {
+	Main *job.SyncJob
+	Fork *job.SyncJob
+}
 
 type Sync struct {
 	client         rpcclient.RpcClient
 	contractClient contract.Contractor
 	db             kv.Database
+	forkDb         kv.Database
 	jobChan        workpool.Dispathcher
-	storeChan      chan *job.SyncJob
-	forkChan       chan *job.SyncJob
-	forkBlock      uint64
+	storeChan      chan *Jobs
 }
 
 func NewSync(
 	client rpcclient.RpcClient,
 	contractClient contract.Contractor,
 	db kv.Database,
+	forkDB kv.Database,
 	chanSize uint64,
-	forkBlockNum uint64,
 ) *Sync {
 	s := &Sync{
 		client:         client,
 		contractClient: contractClient,
 		db:             db,
+		forkDb:         forkDB,
 		jobChan:        workpool.NewDispathcher(int(chanSize)),
-		storeChan:      make(chan *job.SyncJob, chanSize*2),
-		forkChan:       make(chan *job.SyncJob, chanSize*2),
-		forkBlock:      forkBlockNum,
+		storeChan:      make(chan *Jobs, chanSize*2),
 	}
 	go s.storeEvent()
-	go s.storeForkEvent()
 	job.GlobalInit(int(chanSize))
 	return s
 }
 
 func (n *Sync) Execute(ctx context.Context) {
 	var (
-		begin, lastBlock, end, forkBlock uint64
-		forkOpen                         bool
+		begin, lastBlock, end, forkBlockNumber, forkStart uint64
 	)
 
-	go func() {
-		begin = n.getBeginBlock()
-		for lastBlock = range n.client.GetLatestBlockNumber(ctx) {
-			log.Infof("receive block: %d", lastBlock)
-			if lastBlock <= n.forkBlock {
-				continue
-			}
-			end = lastBlock - n.forkBlock
-			if begin > end {
-				continue
-			}
+	forkBlockNumber = viper.GetUint64(share.ForkBlockNum)
+	begin = n.getBeginBlock()
 
-			if end >= begin {
-				log.Infof("from %d to %d", begin, end)
-				for ; begin <= end; begin++ {
-					serveJob := job.NewSyncJob(begin, n.client)
-					n.jobChan.AddJob(serveJob)
-					n.storeChan <- serveJob
-				}
-			}
-			forkOpen = true
+	go func() {
+		for latestBlockNumber := range n.client.GetLatestBlockNumber(ctx) {
+			lastBlock = latestBlockNumber
+			log.Infof("receive block: %d", lastBlock)
 		}
 	}()
 
-	for forkBlock = range n.client.GetForkBlockNumber(ctx) {
-		if forkOpen {
-			log.Infof("receive fork block: %d", forkBlock)
-			serveJob := job.NewSyncJob(begin, n.client)
-			n.jobChan.AddJob(serveJob)
-			n.forkChan <- serveJob
+	for ; begin <= lastBlock; begin++ {
+		var mainJob, forkJob *job.SyncJob
+		end = lastBlock
+		if forkStart > 0 {
+			forkJob = job.NewSyncJob(begin, n.client)
+			if forkStart <= begin-forkBlockNumber {
+				mainJob = job.NewSyncJob(forkStart, n.client)
+				forkStart++
+			}
+		} else {
+			if begin <= end-forkBlockNumber {
+				mainJob = job.NewSyncJob(begin, n.client)
+			} else {
+				forkJob = job.NewSyncJob(begin, n.client)
+				forkStart = begin
+
+			}
+		}
+		if mainJob != nil {
+			n.jobChan.AddJob(mainJob)
+		}
+		if forkJob != nil {
+			n.jobChan.AddJob(forkJob)
+		}
+		n.storeChan <- &Jobs{
+			Main: mainJob,
+			Fork: forkJob,
 		}
 	}
 
@@ -102,67 +110,126 @@ func (n *Sync) getBeginBlock() uint64 {
 }
 
 func (n *Sync) storeEvent() {
-	var blockNum uint64
-	for job := range n.storeChan {
+	var (
+		blockNum uint64
+		err      error
+	)
+	for j := range n.storeChan {
 		for {
-			blockNum = job.Block
-			if job.Completed {
-				if err := newBlockHandle(
-					job.BlockData,
-					job.TransactionDatas,
-					job.ReceiptDatas,
-					job.ContractOrMemberData,
-					job.ContractInfoMap,
-					job.ProxyContracts,
-					job.InternalTxs,
-					job.CallFrames,
-					n.contractClient,
-					n.db,
-				).handle(); err != nil {
-					log.Errorf("handle event data: %d", job.Block)
-					goto end
-				} else {
-					// n.toGetDebugLog(job.TransactionDatas)
-				}
-				break
+			blockNum, err = n.handleJobs(j)
+			if err != nil {
+				goto end
 			}
-			time.Sleep(time.Millisecond * 500)
+			break
 		}
 	}
 end:
 	log.Fatalf("handle failed: %d", blockNum)
 }
 
-func (n *Sync) storeForkEvent() {
-	var blockNum uint64
-	for job := range n.forkChan {
-		for {
-			blockNum = job.Block
-			if job.Completed {
-				if err := newBlockHandle(
-					job.BlockData,
-					job.TransactionDatas,
-					job.ReceiptDatas,
-					job.ContractOrMemberData,
-					job.ContractInfoMap,
-					job.ProxyContracts,
-					job.InternalTxs,
-					job.CallFrames,
-					n.contractClient,
-					n.db,
-				).handleFork(); err != nil {
-					log.Errorf("handle fork event data: %d", job.Block)
-					goto end
-				} else {
-					// n.toGetDebugLog(job.TransactionDatas)
-				}
-				break
-			}
-			time.Sleep(time.Millisecond * 500)
+func (n *Sync) handleJobs(jobs *Jobs) (blockNum uint64, err error) {
+	var (
+		ctxMain, ctxFork context.Context
+		errMain, errFork error
+	)
+	ctxMain, errMain = n.db.BeginTx(context.Background())
+	if errMain != nil {
+		return blockNum, errMain
+	}
+	ctxFork, errFork = n.forkDb.BeginTx(context.Background())
+	if errFork != nil {
+		return blockNum, errFork
+	}
+
+	defer func() {
+		if ctxMain == nil && ctxFork == nil {
+			n.db.Commit(ctxMain)
+			n.forkDb.Commit(ctxFork)
+			log.Infof("write block complete: %d", blockNum)
+		} else {
+			n.db.RollBack(ctxMain)
+			n.forkDb.RollBack(ctxFork)
+		}
+	}()
+
+	// handle contract data
+	if jobs.Fork != nil {
+		blockNum = jobs.Fork.Block
+		if errFork = newBlockHandle(
+			jobs.Fork.BlockData,
+			jobs.Fork.TransactionDatas,
+			jobs.Fork.ReceiptDatas,
+			jobs.Fork.ContractOrMemberData,
+			jobs.Fork.ContractInfoMap,
+			jobs.Fork.ProxyContracts,
+			jobs.Fork.InternalTxs,
+			jobs.Fork.CallFrames,
+			n.contractClient,
+			n.forkDb,
+		).handleContractData(ctxFork); errFork != nil {
+			log.Errorf("handle contract data: %d", blockNum)
+			return blockNum, errFork
+		}
+	} else {
+		blockNum = jobs.Main.Block
+		if errMain = newBlockHandle(
+			jobs.Main.BlockData,
+			jobs.Main.TransactionDatas,
+			jobs.Main.ReceiptDatas,
+			jobs.Main.ContractOrMemberData,
+			jobs.Main.ContractInfoMap,
+			jobs.Main.ProxyContracts,
+			jobs.Main.InternalTxs,
+			jobs.Main.CallFrames,
+			n.contractClient,
+			n.db,
+		).handleContractData(ctxMain); errMain != nil {
+			log.Errorf("handle contract data: %d", blockNum)
+			return blockNum, errMain
 		}
 	}
-end:
-	log.Fatalf("handle fork failed: %d", blockNum)
+
+	// handle main job
+	if jobs.Main != nil {
+		blockNum = jobs.Main.Block
+		if errMain = newBlockHandle(
+			jobs.Main.BlockData,
+			jobs.Main.TransactionDatas,
+			jobs.Main.ReceiptDatas,
+			jobs.Main.ContractOrMemberData,
+			jobs.Main.ContractInfoMap,
+			jobs.Main.ProxyContracts,
+			jobs.Main.InternalTxs,
+			jobs.Main.CallFrames,
+			n.contractClient,
+			n.db,
+		).handleMain(ctxMain); errMain != nil {
+			log.Errorf("handle main event data: %d", blockNum)
+			return blockNum, errMain
+		}
+	}
+
+	// handle fork job
+	if jobs.Fork != nil {
+		blockNum = jobs.Fork.Block
+		if errFork = newBlockHandle(
+			jobs.Fork.BlockData,
+			jobs.Fork.TransactionDatas,
+			jobs.Fork.ReceiptDatas,
+			jobs.Fork.ContractOrMemberData,
+			jobs.Fork.ContractInfoMap,
+			jobs.Fork.ProxyContracts,
+			jobs.Fork.InternalTxs,
+			jobs.Fork.CallFrames,
+			n.contractClient,
+			n.forkDb,
+		).handleFork(ctxFork); errFork != nil {
+			log.Errorf("handle fork event data: %d", blockNum)
+			return blockNum, errFork
+		}
+	}
+
+	return blockNum, nil
 }
 
 func (n *Sync) toGetDebugLog(txes []*types.Tx) {

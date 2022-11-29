@@ -2,19 +2,26 @@ package core
 
 import (
 	"context"
-	"github.com/Ankr-network/uscan/pkg/forkcache"
-
 	"github.com/Ankr-network/uscan/pkg/contract"
 	"github.com/Ankr-network/uscan/pkg/contract/eip"
 	"github.com/Ankr-network/uscan/pkg/field"
+	"github.com/Ankr-network/uscan/pkg/forkcache"
 	"github.com/Ankr-network/uscan/pkg/log"
 	"github.com/Ankr-network/uscan/pkg/types"
+	"github.com/Ankr-network/uscan/share"
 	"github.com/ethereum/go-ethereum/common"
 )
 
 func (n *blockHandle) writeForkTxAndRtLog(ctx context.Context, transactionData []*types.Tx, receiptData []*types.Rt) (err error) {
 
 	for i, v := range transactionData {
+		err = forkcache.WriteBlockIndex(ctx, n.db, n.blockData.Number, field.NewInt(int64(i)), v.Hash)
+		if err != nil {
+			log.Errorf("write fork block index(%d): %v", i, err)
+			return err
+		}
+		deleteMap[share.ForkBlockTbl] = append(deleteMap[share.ForkBlockTbl], append(append([]byte("/fork/block/"), n.blockData.Number.Bytes()...), append([]byte("/"), field.NewInt(int64(i)).Bytes()...)...))
+
 		if err = n.writeForkTxAndRt(ctx, v, receiptData[i]); err != nil {
 			log.Errorf("writeForkTxAndRt tx(%s): %v", v.Hash.Hex(), err)
 			return err
@@ -131,6 +138,26 @@ func (n *blockHandle) writeForkTraceTx2(ctx context.Context, callFrames map[comm
 			Res: v.JsonToString(),
 		}); err != nil {
 			log.Errorf("write fork trace tx2: %v", err)
+			return err
+		}
+	}
+	return nil
+}
+
+func (n *blockHandle) deleteForkTxAndRtLog(ctx context.Context, transactionData []*types.Tx, receiptData []*types.Rt) (err error) {
+	for i, v := range transactionData {
+		if err = n.deleteForkTxAndRt(ctx, v, receiptData[i]); err != nil {
+			log.Errorf("deleteForkTxAndRt tx(%s): %v", v.Hash.Hex(), err)
+			return err
+		}
+	}
+	return nil
+}
+
+func (n *blockHandle) deleteForkTraceTx2(ctx context.Context, callFrames map[common.Hash]*types.CallFrame) (err error) {
+	for k := range callFrames {
+		if err = forkcache.DeleteTraceTx2(ctx, n.db, k); err != nil {
+			log.Errorf("delete fork trace tx2: %v", err)
 			return err
 		}
 	}

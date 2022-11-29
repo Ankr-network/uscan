@@ -50,11 +50,6 @@ func ReadITx(ctx context.Context, db kv.Reader, hash common.Hash, index *field.B
 	return
 }
 
-func DeleteITx(ctx context.Context, db kv.Writer, hash common.Hash, index *field.BigInt) (err error) {
-	var key = GetITxKey(hash, index)
-	return db.Del(ctx, key, &kv.WriteOption{Table: share.ForkTxTbl})
-}
-
 func WriteItxTotal(ctx context.Context, db kv.Writer, hash common.Hash, total *field.BigInt) (err error) {
 	return db.Put(ctx, GetITxTotalKey(hash), total.Bytes(), &kv.WriteOption{Table: share.ForkTxTbl})
 }
@@ -69,10 +64,6 @@ func ReadITxTotal(ctx context.Context, db kv.Reader, hash common.Hash) (total *f
 	total = &field.BigInt{}
 	total.SetBytes(bytesRes)
 	return
-}
-
-func DeleteItxTotal(ctx context.Context, db kv.Writer, hash common.Hash) (err error) {
-	return db.Del(ctx, GetITxTotalKey(hash), &kv.WriteOption{Table: share.ForkTxTbl})
 }
 
 func GetITxKey(hash common.Hash, index *field.BigInt) []byte {

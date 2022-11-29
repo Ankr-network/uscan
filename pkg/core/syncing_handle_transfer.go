@@ -27,6 +27,10 @@ var (
 	erc20TrasferAccountTotalMap   = utils.NewCache()
 	erc721TrasferAccountTotalMap  = utils.NewCache()
 	erc1155TrasferAccountTotalMap = utils.NewCache()
+
+	erc20ContractTransferTotal   *field.BigInt
+	erc721ContractTransferTotal  *field.BigInt
+	erc1155ContractTransferTotal *field.BigInt
 )
 
 // ------------------- erc20 transfer -----------------
@@ -85,6 +89,29 @@ func (n *blockHandle) writeErc20Transfer(ctx context.Context, data *types.Erc20T
 			}
 		}
 	}
+
+	if erc20ContractTransferTotal == nil {
+		erc20ContractTransferTotal, err = rawdb.ReadErc20ContractTotal(ctx, n.db, data.Contract)
+		if err != nil {
+			if errors.Is(err, kv.NotFound) {
+				erc20ContractTransferTotal = field.NewInt(0)
+				err = nil
+			} else {
+				log.Errorf("get erc20 contract transfer total: %v", err)
+				return err
+			}
+		}
+	}
+	erc20ContractTransferTotal.Add(field.NewInt(1))
+	err = rawdb.WriteErc20ContractTransfer(ctx, n.db, data.Contract, erc20ContractTransferTotal, erc20TrasferTotal)
+	if err != nil {
+		log.Errorf("write erc20 contract transfer: %v", err)
+	}
+	err = rawdb.WriteErc20ContractTotal(ctx, n.db, data.Contract, erc20ContractTransferTotal)
+	if err != nil {
+		log.Errorf("write erc20 contract total: %v", err)
+	}
+
 	return nil
 }
 
@@ -246,6 +273,29 @@ func (n *blockHandle) writeErc721Transfer(ctx context.Context, data *types.Erc72
 			}
 		}
 	}
+
+	if erc721ContractTransferTotal == nil {
+		erc721ContractTransferTotal, err = rawdb.ReadErc721ContractTotal(ctx, n.db, data.Contract)
+		if err != nil {
+			if errors.Is(err, kv.NotFound) {
+				erc721ContractTransferTotal = field.NewInt(0)
+				err = nil
+			} else {
+				log.Errorf("get erc721 contract transfer total: %v", err)
+				return err
+			}
+		}
+	}
+	erc721ContractTransferTotal.Add(field.NewInt(1))
+	err = rawdb.WriteErc721ContractTransfer(ctx, n.db, data.Contract, erc721ContractTransferTotal, erc721TrasferTotal)
+	if err != nil {
+		log.Errorf("write erc721 contract transfer: %v", err)
+	}
+	err = rawdb.WriteErc721ContractTotal(ctx, n.db, data.Contract, erc721ContractTransferTotal)
+	if err != nil {
+		log.Errorf("write erc721 contract total: %v", err)
+	}
+
 	return nil
 }
 
@@ -403,6 +453,29 @@ func (n *blockHandle) writeErc1155Transfer(ctx context.Context, data *types.Erc1
 			return err
 		}
 	}
+
+	if erc1155ContractTransferTotal == nil {
+		erc1155ContractTransferTotal, err = rawdb.ReadErc1155ContractTotal(ctx, n.db, data.Contract)
+		if err != nil {
+			if errors.Is(err, kv.NotFound) {
+				erc1155ContractTransferTotal = field.NewInt(0)
+				err = nil
+			} else {
+				log.Errorf("get erc1155 contract transfer total: %v", err)
+				return err
+			}
+		}
+	}
+	erc1155ContractTransferTotal.Add(field.NewInt(1))
+	err = rawdb.WriteErc1155ContractTransfer(ctx, n.db, data.Contract, erc1155ContractTransferTotal, erc1155TrasferTotal)
+	if err != nil {
+		log.Errorf("write erc1155 contract transfer: %v", err)
+	}
+	err = rawdb.WriteErc1155ContractTotal(ctx, n.db, data.Contract, erc1155ContractTransferTotal)
+	if err != nil {
+		log.Errorf("write erc1155 contract total: %v", err)
+	}
+
 	return nil
 }
 
