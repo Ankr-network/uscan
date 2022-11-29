@@ -189,9 +189,8 @@ func (s *Store) ListAccountITxs(address common.Address, total *field.BigInt, off
 	for {
 		tx, err := rawdb.ReadAccountITxByIndex(s.ctx, s.db, address, p)
 		if err != nil {
-			log.Infof("ListAccountITxs ReadAccountITxByIndex error. err:%s, p:%d", err, p.ToUint64())
-			//return nil, err
-			continue
+			log.Errorf("ListAccountITxs ReadAccountITxByIndex error. err:%s, p:%d, total:%d, begin:%d, end:%d", err, p.ToUint64(), total.ToUint64(), begin.ToUint64(), end.ToUint64())
+			return nil, err
 		}
 		txs = append(txs, tx)
 		if p.String() == end.String() {

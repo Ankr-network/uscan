@@ -42,12 +42,14 @@ func (n *blockHandle) writeITx(ctx context.Context, itxmap map[common.Hash][]*ty
 			if v.From != (common.Address{}) {
 				if err = n.writeAccountItx(ctx, v.From, key); err != nil {
 					log.Errorf("write account(from: %s) Itx: %v", v.From.Hex(), err)
+					return err
 				}
 			}
 
 			if v.To != (common.Address{}) {
 				if err = n.writeAccountItx(ctx, v.To, key); err != nil {
 					log.Errorf("write account(to: %s) Itx: %v", v.To.Hex(), err)
+					return err
 				}
 			}
 		}
