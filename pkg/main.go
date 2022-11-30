@@ -19,6 +19,7 @@ package pkg
 import (
 	"context"
 	"github.com/Ankr-network/uscan/pkg/service"
+	"os"
 
 	"github.com/Ankr-network/uscan/pkg/contract"
 	"github.com/Ankr-network/uscan/pkg/core"
@@ -33,6 +34,7 @@ import (
 )
 
 func MainRun(cmd *cobra.Command, args []string) {
+	os.Remove(viper.GetString(share.MdbxForkPath))
 	mdbx.NewDB(viper.GetString(share.MdbxPath), viper.GetString(share.MdbxForkPath))
 	rpcMgr := rpcclient.NewRpcClient(viper.GetStringSlice(share.RpcUrls))
 	sync := core.NewSync(rpcMgr, contract.NewClient(rpcMgr), mdbx.DB, mdbx.ForkDB, viper.GetUint64(share.WorkChan))

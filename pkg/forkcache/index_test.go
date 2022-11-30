@@ -1,16 +1,16 @@
 package forkcache
 
 import (
+	"context"
 	"github.com/Ankr-network/uscan/pkg/field"
+	"github.com/Ankr-network/uscan/pkg/kv/mdbx"
+	"github.com/Ankr-network/uscan/pkg/rawdb"
 	"testing"
 )
 
 func TestIndex(t *testing.T) {
-	var indexMap = make(map[string]*field.BigInt, 0)
-	if indexMap["x"] == nil {
-		indexMap["x"] = field.NewInt(1)
-	}
-	b := indexMap["x"].Add(field.NewInt(1))
-	t.Log(indexMap["x"].Bytes())
-	t.Log(b.Bytes())
+	db := mdbx.NewMdbx("./uscandb")
+	blockNumber := field.NewInt(3232254)
+	val, _ := rawdb.ReadBlock(context.Background(), db, blockNumber)
+	t.Log(val.Number)
 }
