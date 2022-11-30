@@ -3,9 +3,9 @@ package service
 import (
 	"context"
 	"github.com/Ankr-network/uscan/pkg/field"
-	store "github.com/Ankr-network/uscan/pkg/fulldb"
 	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/kv/mdbx"
+	store "github.com/Ankr-network/uscan/pkg/storage/fulldb"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/ethereum/go-ethereum/common"
 )

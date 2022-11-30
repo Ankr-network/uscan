@@ -3,8 +3,8 @@ package forkdb
 import (
 	"context"
 	"github.com/Ankr-network/uscan/pkg/field"
-	"github.com/Ankr-network/uscan/pkg/fulldb"
 	"github.com/Ankr-network/uscan/pkg/kv/mdbx"
+	"github.com/Ankr-network/uscan/pkg/storage/fulldb"
 	"testing"
 )
 

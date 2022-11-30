@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/Ankr-network/uscan/pkg/fulldb"
 	"github.com/Ankr-network/uscan/pkg/kv/memorydb"
+	"github.com/Ankr-network/uscan/pkg/storage/fulldb"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 )

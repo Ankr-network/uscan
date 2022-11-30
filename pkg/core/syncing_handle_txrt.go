@@ -5,9 +5,9 @@ import (
 	"errors"
 
 	"github.com/Ankr-network/uscan/pkg/field"
-	"github.com/Ankr-network/uscan/pkg/fulldb"
 	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/log"
+	"github.com/Ankr-network/uscan/pkg/storage/fulldb"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/Ankr-network/uscan/pkg/utils"
 	"github.com/ethereum/go-ethereum/common"
