@@ -45,7 +45,7 @@ func (n *blockHandle) writeForkTxAndRt(ctx context.Context, tx *types.Tx, rt *ty
 	if indexMap["/fork/all/tx/index"] == nil {
 		indexMap["/fork/all/tx/index"] = field.NewInt(0)
 	}
-	indexMap["/fork/all/tx/index"] = indexMap["/fork/all/tx/index"].Add(field.NewInt(1))
+	indexMap["/fork/all/tx/index"].Add(field.NewInt(1))
 
 	if err = forkcache.WriteRt(ctx, n.db, tx.Hash, rt); err != nil {
 		log.Errorf("write fork rt: %v", err)
@@ -82,6 +82,7 @@ func (n *blockHandle) writeForkAccountTx(ctx context.Context, addr common.Addres
 			}
 		}
 	}
+
 	total.Add(field.NewInt(1))
 	err = forkcache.WriteAccountTxIndex(ctx, n.db, addr, total, hash)
 	if err != nil {
@@ -92,25 +93,23 @@ func (n *blockHandle) writeForkAccountTx(ctx context.Context, addr common.Addres
 	if indexMap["/fork/"+addr.String()+"/tx/index"] == nil {
 		indexMap["/fork/"+addr.String()+"/tx/index"] = field.NewInt(0)
 	}
-	indexMap["/fork/"+addr.String()+"/tx/index"] = indexMap["/fork/"+addr.String()+"/tx/index"].Add(field.NewInt(1))
+	indexMap["/fork/"+addr.String()+"/tx/index"].Add(field.NewInt(1))
 
 	err = forkcache.WriteAccountTxTotal(ctx, n.db, addr, total)
 	if err == nil {
 		forkAccountItxTotalMap.Add(addr, total.Bytes())
 	}
+
 	if totalMap[share.ForkAccountsTbl+":"+"/fork/"+addr.String()+"/tx/total"] == nil {
 		totalMap[share.ForkAccountsTbl+":"+"/fork/"+addr.String()+"/tx/total"] = field.NewInt(0)
 	}
-	totalMap[share.ForkAccountsTbl+":"+"/fork/"+addr.String()+"/tx/total"] = totalMap[share.ForkAccountsTbl+":"+"/fork/"+addr.String()+"/tx/total"].Add(field.NewInt(1))
+	totalMap[share.ForkAccountsTbl+":"+"/fork/"+addr.String()+"/tx/total"].Add(field.NewInt(1))
+
 	return
 }
 
 func (n *blockHandle) writeForkTxTotal(ctx context.Context) error {
 	if forkTxTotal != nil {
-		err := forkcache.WriteTxTotal(ctx, n.db, forkTxTotal)
-		if err != nil {
-			return err
-		}
 		oldTotal, err := forkcache.ReadTxTotal(ctx, n.db)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
@@ -121,11 +120,18 @@ func (n *blockHandle) writeForkTxTotal(ctx context.Context) error {
 				return err
 			}
 		}
-		total := forkTxTotal.Sub(oldTotal)
+
+		err = forkcache.WriteTxTotal(ctx, n.db, forkTxTotal)
+		if err != nil {
+			return err
+		}
+
+		newTotal := forkTxTotal
+		newTotal.Sub(oldTotal)
 		if totalMap[share.ForkTxTbl+":"+"/fork/all/tx/total"] == nil {
 			totalMap[share.ForkTxTbl+":"+"/fork/all/tx/total"] = field.NewInt(0)
 		}
-		totalMap[share.ForkTxTbl+":"+"/fork/all/tx/total"] = totalMap[share.ForkTxTbl+":"+"/fork/all/tx/total"].Add(total)
+		totalMap[share.ForkTxTbl+":"+"/fork/all/tx/total"].Add(newTotal)
 	}
 	return nil
 }

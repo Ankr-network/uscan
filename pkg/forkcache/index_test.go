@@ -10,6 +10,7 @@ func TestIndex(t *testing.T) {
 	if indexMap["x"] == nil {
 		indexMap["x"] = field.NewInt(1)
 	}
-	indexMap["x"].Add(field.NewInt(1))
+	b := indexMap["x"].Add(field.NewInt(1))
 	t.Log(indexMap["x"].Bytes())
+	t.Log(b.Bytes())
 }

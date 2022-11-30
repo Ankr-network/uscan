@@ -142,7 +142,7 @@ func (n *Sync) handleJobs(jobs *Jobs) (blockNum uint64, err error) {
 	}
 
 	defer func() {
-		if ctxMain == nil && ctxFork == nil {
+		if errMain == nil && errFork == nil {
 			n.db.Commit(ctxMain)
 			n.forkDb.Commit(ctxFork)
 			log.Infof("write block complete: %d", blockNum)
@@ -165,12 +165,12 @@ func (n *Sync) handleJobs(jobs *Jobs) (blockNum uint64, err error) {
 			jobs.Fork.InternalTxs,
 			jobs.Fork.CallFrames,
 			n.contractClient,
-			n.forkDb,
+			n.db,
 		).handleContractData(ctxFork); errFork != nil {
-			log.Errorf("handle contract data: %d", blockNum)
+			log.Errorf("handle contract data from fork: %d", blockNum)
 			return blockNum, errFork
 		}
-	} else {
+	} else if jobs.Main != nil {
 		blockNum = jobs.Main.Block
 		if errMain = newBlockHandle(
 			jobs.Main.BlockData,
@@ -184,7 +184,7 @@ func (n *Sync) handleJobs(jobs *Jobs) (blockNum uint64, err error) {
 			n.contractClient,
 			n.db,
 		).handleContractData(ctxMain); errMain != nil {
-			log.Errorf("handle contract data: %d", blockNum)
+			log.Errorf("handle contract data from main: %d", blockNum)
 			return blockNum, errMain
 		}
 	}
@@ -205,6 +205,22 @@ func (n *Sync) handleJobs(jobs *Jobs) (blockNum uint64, err error) {
 			n.db,
 		).handleMain(ctxMain); errMain != nil {
 			log.Errorf("handle main event data: %d", blockNum)
+			return blockNum, errMain
+		}
+
+		if errMain = newBlockHandle(
+			jobs.Main.BlockData,
+			jobs.Main.TransactionDatas,
+			jobs.Main.ReceiptDatas,
+			jobs.Main.ContractOrMemberData,
+			jobs.Main.ContractInfoMap,
+			jobs.Main.ProxyContracts,
+			jobs.Main.InternalTxs,
+			jobs.Main.CallFrames,
+			n.contractClient,
+			n.forkDb,
+		).handleDeleteFork(ctxMain); errMain != nil {
+			log.Errorf("handle delete fork event data: %d", blockNum)
 			return blockNum, errMain
 		}
 	}

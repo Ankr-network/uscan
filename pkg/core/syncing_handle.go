@@ -134,27 +134,30 @@ func (n *blockHandle) handleMain(ctx context.Context) (err error) {
 		return err
 	}
 
-	// delete fork cache
+	return nil
+}
+
+func (n *blockHandle) handleDeleteFork(ctx context.Context) (err error) {
 	err = forkcache.DeleteBlock(ctx, n.db, n.blockData.Number)
 	if err != nil {
-		log.Errorf("delete block : %v, block: %s", err, n.blockData.Number.String())
+		log.Errorf("delete fork block : %v, block: %s", err, n.blockData.Number.String())
 		return err
 	}
 
 	if len(n.transactionData) > 0 {
 		if err = n.deleteForkTxAndRtLog(ctx, n.transactionData, n.receiptData); err != nil {
-			log.Errorf("delete tx and rt: %v", err)
+			log.Errorf("delete fork tx and rt: %v", err)
 			return err
 		}
 
 		if err = n.deleteForkTraceTx2(ctx, n.callFrames); err != nil {
-			log.Errorf("delete callFrames: %v", err)
+			log.Errorf("delete fork callFrames: %v", err)
 			return err
 		}
 	}
 
 	if err = n.deleteForkHome(ctx); err != nil {
-		log.Errorf("delete home : %v", err)
+		log.Errorf("delete fork home : %v", err)
 		return err
 	}
 
@@ -167,6 +170,7 @@ func (n *blockHandle) handleMain(ctx context.Context) (err error) {
 						return err
 					}
 				}
+				delete(deleteMap, k1)
 			}
 			delete(blockDeleteMap, k)
 		}
@@ -188,7 +192,12 @@ func (n *blockHandle) handleMain(ctx context.Context) (err error) {
 				i.SetBytes(bytesRes)
 				i.Add(v1)
 				err = n.db.Put(ctx, []byte(k1), i.Bytes(), &kv.WriteOption{Table: share.ForkIndexTbl})
+				if err != nil {
+					return err
+				}
+				delete(indexMap, k1)
 			}
+			delete(blockIndexMap, k)
 		}
 	}
 
@@ -211,7 +220,12 @@ func (n *blockHandle) handleMain(ctx context.Context) (err error) {
 				i.SetBytes(bytesRes)
 				i.Sub(v1)
 				err = n.db.Put(ctx, key, i.Bytes(), &kv.WriteOption{Table: tableName})
+				if err != nil {
+					return err
+				}
+				delete(totalMap, k1)
 			}
+			delete(blockTotalMap, k)
 		}
 	}
 
@@ -252,12 +266,12 @@ func (n *blockHandle) handleFork(ctx context.Context) (err error) {
 		}
 
 		if err = n.writeForkITx(ctx, n.internalTxs); err != nil {
-			log.Errorf("write itxs: %v", err)
+			log.Errorf("write fork itxs: %v", err)
 			return err
 		}
 
 		if err = n.writeForkTraceTx2(ctx, n.callFrames); err != nil {
-			log.Errorf("write callFrames: %v", err)
+			log.Errorf("write fork callFrames: %v", err)
 			return err
 		}
 	}

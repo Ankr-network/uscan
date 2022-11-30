@@ -106,7 +106,7 @@ func (n *blockHandle) writeForkTxAndRtLog(ctx context.Context, transactionData [
 								Quantity:        (field.BigInt)(*erc1155TransferBatch.Values[i]),
 								TimeStamp:       n.blockData.TimeStamp,
 							}); err != nil {
-								log.Errorf("write fork erc1155Transfer single: %v", err)
+								log.Errorf("write fork erc1155Transfer batch: %v", err)
 								return err
 							}
 						}
