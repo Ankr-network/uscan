@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"github.com/Ankr-network/uscan/pkg/field"
-	"github.com/Ankr-network/uscan/pkg/forkcache"
 	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/log"
+	"github.com/Ankr-network/uscan/pkg/storage/forkdb"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -14,7 +14,7 @@ import (
 func (n *blockHandle) checkForkNewAddr(ctx context.Context) (*field.BigInt, error) {
 	var newAddrTotal = field.NewInt(0)
 	for k, v := range n.contractOrMemberData {
-		account, err := forkcache.ReadAccount(ctx, n.db, k)
+		account, err := forkdb.ReadAccount(ctx, n.db, k)
 		if err != nil {
 			if !errors.Is(err, kv.NotFound) {
 				log.Errorf("read fork account(%s): %v", k.Hex(), err)
@@ -74,7 +74,7 @@ func (n *blockHandle) readForkAccount(ctx context.Context, addr common.Address) 
 	if ok {
 		return acc, nil
 	}
-	account, err := forkcache.ReadAccount(ctx, n.db, addr)
+	account, err := forkdb.ReadAccount(ctx, n.db, addr)
 	if err != nil {
 		if !errors.Is(err, kv.NotFound) {
 			log.Errorf("read fork account(%s): %v", addr.Hex(), err)
@@ -88,7 +88,7 @@ func (n *blockHandle) readForkAccount(ctx context.Context, addr common.Address) 
 
 func (n *blockHandle) updateForkAccounts(ctx context.Context) (err error) {
 	for k, v := range n.contractOrMemberData {
-		if err = forkcache.WriteAccount(ctx, n.db, k, v); err != nil {
+		if err = forkdb.WriteAccount(ctx, n.db, k, v); err != nil {
 			log.Errorf("write fork account(%s): %v", k.Hex(), err)
 			return err
 		}

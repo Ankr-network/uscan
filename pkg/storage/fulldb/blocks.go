@@ -1,4 +1,4 @@
-package forkcache
+package fulldb
 
 import (
 	"context"
@@ -11,14 +11,14 @@ import (
 )
 
 var (
-	blockKey = []byte("/fork/block/")
+	blockKey []byte = []byte("/block/")
 )
 
 /*
 table: blocks
 
-/fork/block/<block num> => block info
-/fork/block/<block num>/index => tx hash
+/block/<block num> => block info
+/block/<block num>/index => tx hash
 */
 
 func ReadBlock(ctx context.Context, db kv.Reader, blockNum *field.BigInt) (bk *types.Block, err error) {
@@ -27,7 +27,7 @@ func ReadBlock(ctx context.Context, db kv.Reader, blockNum *field.BigInt) (bk *t
 		bytesRes []byte
 	)
 
-	bytesRes, err = db.Get(ctx, key, &kv.ReadOption{Table: share.ForkBlockTbl})
+	bytesRes, err = db.Get(ctx, key, &kv.ReadOption{Table: share.BlockTbl})
 	if err != nil {
 		return
 	}
@@ -51,12 +51,7 @@ func WriteBlock(ctx context.Context, db kv.Writer, blockNum *field.BigInt, bk *t
 		return
 	}
 
-	return db.Put(ctx, key, bytesRes, &kv.WriteOption{Table: share.ForkBlockTbl})
-}
-
-func DeleteBlock(ctx context.Context, db kv.Writer, blockNum *field.BigInt) (err error) {
-	var key = append(blockKey, blockNum.Bytes()...)
-	return db.Del(ctx, key, &kv.WriteOption{Table: share.ForkBlockTbl})
+	return db.Put(ctx, key, bytesRes, &kv.WriteOption{Table: share.BlockTbl})
 }
 
 func ReadBlockIndex(ctx context.Context, db kv.Reader, blockNum *field.BigInt, index *field.BigInt) (txHash common.Hash, err error) {
@@ -64,7 +59,7 @@ func ReadBlockIndex(ctx context.Context, db kv.Reader, blockNum *field.BigInt, i
 		bytesRes []byte
 	)
 
-	bytesRes, err = db.Get(ctx, getBlockIndex(blockNum, index), &kv.ReadOption{Table: share.ForkBlockTbl})
+	bytesRes, err = db.Get(ctx, getBlockIndex(blockNum, index), &kv.ReadOption{Table: share.BlockTbl})
 	if err != nil {
 		return
 	}
@@ -73,7 +68,7 @@ func ReadBlockIndex(ctx context.Context, db kv.Reader, blockNum *field.BigInt, i
 }
 
 func WriteBlockIndex(ctx context.Context, db kv.Writer, blockNum *field.BigInt, index *field.BigInt, txHash common.Hash) (err error) {
-	return db.Put(ctx, getBlockIndex(blockNum, index), txHash.Bytes(), &kv.WriteOption{Table: share.ForkBlockTbl})
+	return db.Put(ctx, getBlockIndex(blockNum, index), txHash.Bytes(), &kv.WriteOption{Table: share.BlockTbl})
 }
 
 func getBlockIndex(blockNum *field.BigInt, index *field.BigInt) []byte {

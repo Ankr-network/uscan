@@ -1,4 +1,4 @@
-package forkcache
+package fulldb
 
 import (
 	"context"
@@ -10,15 +10,15 @@ import (
 )
 
 var (
-	traceTxPrefix  = []byte("/fork/tracetx/")
-	traceTx2Prefix = []byte("/fork/tracetx2/")
+	traceTxPrefix  = []byte("/tracetx/")
+	traceTx2Prefix = []byte("/tracetx2/")
 )
 
 /*
 table: traceLogs
 
-/fork/tracetx/<txhash> => trace tx info
-/fork/tracetx2/<txhash> => trace tx2 info
+/tracetx/<txhash> => trace tx info
+/tracetx2/<txhash> => trace tx2 info
 */
 
 func WriteTraceTx(ctx context.Context, db kv.Writer, hash common.Hash, data *types.TraceTx) (err error) {
@@ -30,12 +30,12 @@ func WriteTraceTx(ctx context.Context, db kv.Writer, hash common.Hash, data *typ
 	if err != nil {
 		return
 	}
-	return db.Put(ctx, key, bytesRes, &kv.WriteOption{Table: share.ForkTraceLogTbl})
+	return db.Put(ctx, key, bytesRes, &kv.WriteOption{Table: share.TraceLogTbl})
 }
 
 func ReadTraceTx(ctx context.Context, db kv.Reader, hash common.Hash) (res *types.TraceTx, err error) {
 	var bytesRes []byte
-	bytesRes, err = db.Get(ctx, append(traceTxPrefix, hash.Bytes()...), &kv.ReadOption{Table: share.ForkTraceLogTbl})
+	bytesRes, err = db.Get(ctx, append(traceTxPrefix, hash.Bytes()...), &kv.ReadOption{Table: share.TraceLogTbl})
 	if err != nil {
 		return
 	}
@@ -53,21 +53,16 @@ func WriteTraceTx2(ctx context.Context, db kv.Writer, hash common.Hash, data *ty
 	if err != nil {
 		return
 	}
-	return db.Put(ctx, key, bytesRes, &kv.WriteOption{Table: share.ForkTraceLogTbl})
+	return db.Put(ctx, key, bytesRes, &kv.WriteOption{Table: share.TraceLogTbl})
 }
 
 func ReadTraceTx2(ctx context.Context, db kv.Reader, hash common.Hash) (res *types.TraceTx2, err error) {
 	var bytesRes []byte
-	bytesRes, err = db.Get(ctx, append(traceTx2Prefix, hash.Bytes()...), &kv.ReadOption{Table: share.ForkTraceLogTbl})
+	bytesRes, err = db.Get(ctx, append(traceTx2Prefix, hash.Bytes()...), &kv.ReadOption{Table: share.TraceLogTbl})
 	if err != nil {
 		return
 	}
 	res = &types.TraceTx2{}
 	err = res.Unmarshal(bytesRes)
 	return
-}
-
-func DeleteTraceTx2(ctx context.Context, db kv.Writer, hash common.Hash) (err error) {
-	var key = append(traceTx2Prefix, hash.Bytes()...)
-	return db.Del(ctx, key, &kv.WriteOption{Table: share.ForkTraceLogTbl})
 }

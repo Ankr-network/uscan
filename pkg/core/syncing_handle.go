@@ -6,10 +6,10 @@ import (
 	"github.com/Ankr-network/uscan/pkg/contract"
 	"github.com/Ankr-network/uscan/pkg/contract/eip"
 	"github.com/Ankr-network/uscan/pkg/field"
-	"github.com/Ankr-network/uscan/pkg/forkcache"
+	"github.com/Ankr-network/uscan/pkg/forkdb"
+	"github.com/Ankr-network/uscan/pkg/fulldb"
 	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/log"
-	"github.com/Ankr-network/uscan/pkg/rawdb"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/Ankr-network/uscan/share"
 	"github.com/ethereum/go-ethereum/common"
@@ -81,7 +81,7 @@ func newBlockHandle(
 }
 
 func (n *blockHandle) handleMain(ctx context.Context) (err error) {
-	err = rawdb.WriteBlock(ctx, n.db, n.blockData.Number, n.blockData)
+	err = fulldb.WriteBlock(ctx, n.db, n.blockData.Number, n.blockData)
 	if err != nil {
 		log.Errorf("write block : %v, block: %s", err, n.blockData.Number.String())
 		return err
@@ -138,7 +138,7 @@ func (n *blockHandle) handleMain(ctx context.Context) (err error) {
 }
 
 func (n *blockHandle) handleDeleteFork(ctx context.Context) (err error) {
-	err = forkcache.DeleteBlock(ctx, n.db, n.blockData.Number)
+	err = forkdb.DeleteBlock(ctx, n.db, n.blockData.Number)
 	if err != nil {
 		log.Errorf("delete fork block : %v, block: %s", err, n.blockData.Number.String())
 		return err
@@ -234,7 +234,7 @@ func (n *blockHandle) handleDeleteFork(ctx context.Context) (err error) {
 
 func (n *blockHandle) handleFork(ctx context.Context) (err error) {
 
-	err = forkcache.WriteBlock(ctx, n.db, n.blockData.Number, n.blockData)
+	err = forkdb.WriteBlock(ctx, n.db, n.blockData.Number, n.blockData)
 	if err != nil {
 		log.Errorf("write fork block : %v, block: %s", err, n.blockData.Number.String())
 		return err
@@ -313,7 +313,7 @@ func (n *blockHandle) handleContractData(ctx context.Context) (err error) {
 func (n *blockHandle) writeTxAndRtLog(ctx context.Context, transactionData []*types.Tx, receiptData []*types.Rt) (err error) {
 
 	for i, v := range transactionData {
-		err = rawdb.WriteBlockIndex(ctx, n.db, n.blockData.Number, field.NewInt(int64(i)), v.Hash)
+		err = fulldb.WriteBlockIndex(ctx, n.db, n.blockData.Number, field.NewInt(int64(i)), v.Hash)
 		if err != nil {
 			log.Errorf("write block index(%d): %v", i, err)
 			return err
@@ -430,7 +430,7 @@ func (n *blockHandle) writeTxAndRtLog(ctx context.Context, transactionData []*ty
 
 func (n *blockHandle) writeTraceTx2(ctx context.Context, callFrames map[common.Hash]*types.CallFrame) (err error) {
 	for k, v := range callFrames {
-		if err = rawdb.WriteTraceTx2(ctx, n.db, k, &types.TraceTx2{
+		if err = fulldb.WriteTraceTx2(ctx, n.db, k, &types.TraceTx2{
 			Res: v.JsonToString(),
 		}); err != nil {
 			log.Errorf("write trace tx2: %v", err)

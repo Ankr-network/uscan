@@ -1,4 +1,4 @@
-package rawdb
+package fulldb
 
 import (
 	"context"

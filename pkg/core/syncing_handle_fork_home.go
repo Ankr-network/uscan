@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/Ankr-network/uscan/pkg/field"
-	"github.com/Ankr-network/uscan/pkg/forkcache"
+	"github.com/Ankr-network/uscan/pkg/forkdb"
 	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/log"
 	"github.com/Ankr-network/uscan/pkg/types"
@@ -17,7 +17,7 @@ var forkHomeCache *types.Home
 func (n *blockHandle) updateForkHome(ctx context.Context) (err error) {
 	var home *types.Home
 	if forkHomeCache == nil {
-		home, err = forkcache.ReadHome(ctx, n.db)
+		home, err = forkdb.ReadHome(ctx, n.db)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
 				log.Infof("read fork home not found")
@@ -83,12 +83,12 @@ func (n *blockHandle) updateForkHome(ctx context.Context) (err error) {
 
 	delete(home.DateTxs, time.Unix(int64(n.blockData.TimeStamp.ToUint64()-(3600*24*14)), 0).UTC().Format(timeLayout))
 
-	if err = forkcache.WriteSyncingBlock(ctx, n.db, n.blockData.Number); err != nil {
+	if err = forkdb.WriteSyncingBlock(ctx, n.db, n.blockData.Number); err != nil {
 		log.Errorf("write fork syncing block: %v", err)
 		return err
 	}
 
-	oldHome, err := forkcache.ReadHome(ctx, n.db)
+	oldHome, err := forkdb.ReadHome(ctx, n.db)
 	if err != nil {
 		if errors.Is(err, kv.NotFound) {
 			home = &types.Home{
@@ -112,11 +112,11 @@ func (n *blockHandle) updateForkHome(ctx context.Context) (err error) {
 		Erc1155Total: *home.Erc1155Total.Sub(&oldHome.Erc1155Total),
 	}
 
-	return forkcache.WriteHome(ctx, n.db, home)
+	return forkdb.WriteHome(ctx, n.db, home)
 }
 
 func (n *blockHandle) deleteForkHome(ctx context.Context) (err error) {
-	home, err := forkcache.ReadHome(ctx, n.db)
+	home, err := forkdb.ReadHome(ctx, n.db)
 	if err != nil {
 		return err
 	}
@@ -126,5 +126,5 @@ func (n *blockHandle) deleteForkHome(ctx context.Context) (err error) {
 	home.Erc721Total.Sub(&HomeMap[n.blockData.Number].Erc721Total)
 	home.Erc1155Total.Sub(&HomeMap[n.blockData.Number].Erc1155Total)
 
-	return forkcache.WriteHome(ctx, n.db, home)
+	return forkdb.WriteHome(ctx, n.db, home)
 }

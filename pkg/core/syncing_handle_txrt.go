@@ -5,9 +5,9 @@ import (
 	"errors"
 
 	"github.com/Ankr-network/uscan/pkg/field"
+	"github.com/Ankr-network/uscan/pkg/fulldb"
 	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/log"
-	"github.com/Ankr-network/uscan/pkg/rawdb"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/Ankr-network/uscan/pkg/utils"
 	"github.com/ethereum/go-ethereum/common"
@@ -20,7 +20,7 @@ var (
 
 func (n *blockHandle) writeTxAndRt(ctx context.Context, tx *types.Tx, rt *types.Rt) (err error) {
 	if txTotal == nil {
-		txTotal, err = rawdb.ReadTxTotal(ctx, n.db)
+		txTotal, err = fulldb.ReadTxTotal(ctx, n.db)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
 				txTotal = field.NewInt(0)
@@ -31,17 +31,17 @@ func (n *blockHandle) writeTxAndRt(ctx context.Context, tx *types.Tx, rt *types.
 		}
 	}
 
-	if err = rawdb.WriteTx(ctx, n.db, tx.Hash, tx); err != nil {
+	if err = fulldb.WriteTx(ctx, n.db, tx.Hash, tx); err != nil {
 		log.Errorf("write tx(%s): %v", tx.Hash.Hex(), err)
 		return err
 	}
 
-	if err = rawdb.WriteTxIndex(ctx, n.db, txTotal.Add(field.NewInt(1)), tx.Hash); err != nil {
+	if err = fulldb.WriteTxIndex(ctx, n.db, txTotal.Add(field.NewInt(1)), tx.Hash); err != nil {
 		log.Errorf("write tx(%s) index: %v", tx.Hash.Hex(), err)
 		return err
 	}
 
-	if err = rawdb.WriteRt(ctx, n.db, tx.Hash, rt); err != nil {
+	if err = fulldb.WriteRt(ctx, n.db, tx.Hash, rt); err != nil {
 		log.Errorf("write rt: %v", err)
 		return err
 	}
@@ -68,7 +68,7 @@ func (n *blockHandle) writeAccountTx(ctx context.Context, addr common.Address, h
 	if bytesRes, ok := accountTxTotalMap.Get(addr); ok {
 		total.SetBytes(bytesRes.([]byte))
 	} else {
-		total, err = rawdb.ReadAccountTxTotal(ctx, n.db, addr)
+		total, err = fulldb.ReadAccountTxTotal(ctx, n.db, addr)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
 				total = field.NewInt(0)
@@ -77,12 +77,12 @@ func (n *blockHandle) writeAccountTx(ctx context.Context, addr common.Address, h
 		}
 	}
 	total.Add(field.NewInt(1))
-	err = rawdb.WriteAccountTxIndex(ctx, n.db, addr, total, hash)
+	err = fulldb.WriteAccountTxIndex(ctx, n.db, addr, total, hash)
 	if err != nil {
 		log.Errorf("write account(%s) tx(%s) index: %v", addr.Hex(), hash.Hex(), err)
 		return err
 	}
-	err = rawdb.WriteAccountTxTotal(ctx, n.db, addr, total)
+	err = fulldb.WriteAccountTxTotal(ctx, n.db, addr, total)
 	if err == nil {
 		accountItxTotalMap.Add(addr, total.Bytes())
 	}
@@ -91,7 +91,7 @@ func (n *blockHandle) writeAccountTx(ctx context.Context, addr common.Address, h
 
 func (n *blockHandle) writeTxTotal(ctx context.Context) (err error) {
 	if txTotal != nil {
-		err = rawdb.WriteTxTotal(ctx, n.db, txTotal)
+		err = fulldb.WriteTxTotal(ctx, n.db, txTotal)
 	}
 	return
 }

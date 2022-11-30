@@ -5,7 +5,7 @@ import (
 	"github.com/Ankr-network/uscan/pkg/contract"
 	"github.com/Ankr-network/uscan/pkg/contract/eip"
 	"github.com/Ankr-network/uscan/pkg/field"
-	"github.com/Ankr-network/uscan/pkg/forkcache"
+	"github.com/Ankr-network/uscan/pkg/forkdb"
 	"github.com/Ankr-network/uscan/pkg/log"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/Ankr-network/uscan/share"
@@ -15,7 +15,7 @@ import (
 func (n *blockHandle) writeForkTxAndRtLog(ctx context.Context, transactionData []*types.Tx, receiptData []*types.Rt) (err error) {
 
 	for i, v := range transactionData {
-		err = forkcache.WriteBlockIndex(ctx, n.db, n.blockData.Number, field.NewInt(int64(i)), v.Hash)
+		err = forkdb.WriteBlockIndex(ctx, n.db, n.blockData.Number, field.NewInt(int64(i)), v.Hash)
 		if err != nil {
 			log.Errorf("write fork block index(%d): %v", i, err)
 			return err
@@ -134,7 +134,7 @@ func (n *blockHandle) writeForkTxAndRtLog(ctx context.Context, transactionData [
 
 func (n *blockHandle) writeForkTraceTx2(ctx context.Context, callFrames map[common.Hash]*types.CallFrame) (err error) {
 	for k, v := range callFrames {
-		if err = forkcache.WriteTraceTx2(ctx, n.db, k, &types.TraceTx2{
+		if err = forkdb.WriteTraceTx2(ctx, n.db, k, &types.TraceTx2{
 			Res: v.JsonToString(),
 		}); err != nil {
 			log.Errorf("write fork trace tx2: %v", err)
@@ -156,7 +156,7 @@ func (n *blockHandle) deleteForkTxAndRtLog(ctx context.Context, transactionData 
 
 func (n *blockHandle) deleteForkTraceTx2(ctx context.Context, callFrames map[common.Hash]*types.CallFrame) (err error) {
 	for k := range callFrames {
-		if err = forkcache.DeleteTraceTx2(ctx, n.db, k); err != nil {
+		if err = forkdb.DeleteTraceTx2(ctx, n.db, k); err != nil {
 			log.Errorf("delete fork trace tx2: %v", err)
 			return err
 		}

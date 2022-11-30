@@ -5,10 +5,10 @@ import (
 	"errors"
 	"github.com/Ankr-network/uscan/pkg/contract"
 	"github.com/Ankr-network/uscan/pkg/field"
+	"github.com/Ankr-network/uscan/pkg/fulldb"
 	"github.com/Ankr-network/uscan/pkg/job"
 	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/log"
-	"github.com/Ankr-network/uscan/pkg/rawdb"
 	"github.com/Ankr-network/uscan/pkg/rpcclient"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/Ankr-network/uscan/pkg/workpool"
@@ -98,7 +98,7 @@ func (n *Sync) Execute(ctx context.Context) {
 }
 
 func (n *Sync) getBeginBlock() uint64 {
-	syncingBlock, err := rawdb.ReadSyncingBlock(context.Background(), n.db)
+	syncingBlock, err := fulldb.ReadSyncingBlock(context.Background(), n.db)
 	if err != nil {
 		if errors.Is(err, kv.NotFound) {
 			syncingBlock = field.NewInt(0)

@@ -3,14 +3,13 @@ package core
 import (
 	"context"
 	"errors"
-	"github.com/Ankr-network/uscan/pkg/utils"
-	"github.com/Ankr-network/uscan/share"
-
 	"github.com/Ankr-network/uscan/pkg/field"
-	"github.com/Ankr-network/uscan/pkg/forkcache"
 	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/log"
+	"github.com/Ankr-network/uscan/pkg/storage/forkdb"
 	"github.com/Ankr-network/uscan/pkg/types"
+	"github.com/Ankr-network/uscan/pkg/utils"
+	"github.com/Ankr-network/uscan/share"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -21,7 +20,7 @@ var (
 
 func (n *blockHandle) writeForkTxAndRt(ctx context.Context, tx *types.Tx, rt *types.Rt) (err error) {
 	if forkTxTotal == nil {
-		forkTxTotal, err = forkcache.ReadTxTotal(ctx, n.db)
+		forkTxTotal, err = forkdb.ReadTxTotal(ctx, n.db)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
 				forkTxTotal = field.NewInt(0)
@@ -32,12 +31,12 @@ func (n *blockHandle) writeForkTxAndRt(ctx context.Context, tx *types.Tx, rt *ty
 		}
 	}
 
-	if err = forkcache.WriteTx(ctx, n.db, tx.Hash, tx); err != nil {
+	if err = forkdb.WriteTx(ctx, n.db, tx.Hash, tx); err != nil {
 		log.Errorf("write fork tx(%s): %v", tx.Hash.Hex(), err)
 		return err
 	}
 
-	if err = forkcache.WriteTxIndex(ctx, n.db, forkTxTotal.Add(field.NewInt(1)), tx.Hash); err != nil {
+	if err = forkdb.WriteTxIndex(ctx, n.db, forkTxTotal.Add(field.NewInt(1)), tx.Hash); err != nil {
 		log.Errorf("write fork tx(%s) index: %v", tx.Hash.Hex(), err)
 		return err
 	}
@@ -47,7 +46,7 @@ func (n *blockHandle) writeForkTxAndRt(ctx context.Context, tx *types.Tx, rt *ty
 	}
 	indexMap["/fork/all/tx/index"].Add(field.NewInt(1))
 
-	if err = forkcache.WriteRt(ctx, n.db, tx.Hash, rt); err != nil {
+	if err = forkdb.WriteRt(ctx, n.db, tx.Hash, rt); err != nil {
 		log.Errorf("write fork rt: %v", err)
 		return err
 	}
@@ -74,7 +73,7 @@ func (n *blockHandle) writeForkAccountTx(ctx context.Context, addr common.Addres
 	if bytesRes, ok := forkAccountTxTotalMap.Get(addr); ok {
 		total.SetBytes(bytesRes.([]byte))
 	} else {
-		total, err = forkcache.ReadAccountTxTotal(ctx, n.db, addr)
+		total, err = forkdb.ReadAccountTxTotal(ctx, n.db, addr)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
 				total = field.NewInt(0)
@@ -84,7 +83,7 @@ func (n *blockHandle) writeForkAccountTx(ctx context.Context, addr common.Addres
 	}
 
 	total.Add(field.NewInt(1))
-	err = forkcache.WriteAccountTxIndex(ctx, n.db, addr, total, hash)
+	err = forkdb.WriteAccountTxIndex(ctx, n.db, addr, total, hash)
 	if err != nil {
 		log.Errorf("write fork account(%s) tx(%s) index: %v", addr.Hex(), hash.Hex(), err)
 		return err
@@ -95,7 +94,7 @@ func (n *blockHandle) writeForkAccountTx(ctx context.Context, addr common.Addres
 	}
 	indexMap["/fork/"+addr.String()+"/tx/index"].Add(field.NewInt(1))
 
-	err = forkcache.WriteAccountTxTotal(ctx, n.db, addr, total)
+	err = forkdb.WriteAccountTxTotal(ctx, n.db, addr, total)
 	if err == nil {
 		forkAccountItxTotalMap.Add(addr, total.Bytes())
 	}
@@ -110,7 +109,7 @@ func (n *blockHandle) writeForkAccountTx(ctx context.Context, addr common.Addres
 
 func (n *blockHandle) writeForkTxTotal(ctx context.Context) error {
 	if forkTxTotal != nil {
-		oldTotal, err := forkcache.ReadTxTotal(ctx, n.db)
+		oldTotal, err := forkdb.ReadTxTotal(ctx, n.db)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
 				oldTotal = field.NewInt(0)
@@ -121,7 +120,7 @@ func (n *blockHandle) writeForkTxTotal(ctx context.Context) error {
 			}
 		}
 
-		err = forkcache.WriteTxTotal(ctx, n.db, forkTxTotal)
+		err = forkdb.WriteTxTotal(ctx, n.db, forkTxTotal)
 		if err != nil {
 			return err
 		}
@@ -137,12 +136,12 @@ func (n *blockHandle) writeForkTxTotal(ctx context.Context) error {
 }
 
 func (n *blockHandle) deleteForkTxAndRt(ctx context.Context, tx *types.Tx, rt *types.Rt) (err error) {
-	if err = forkcache.DeleteTx(ctx, n.db, tx.Hash); err != nil {
+	if err = forkdb.DeleteTx(ctx, n.db, tx.Hash); err != nil {
 		log.Errorf("delete fork tx(%s): %v", tx.Hash.Hex(), err)
 		return err
 	}
 
-	if err = forkcache.DeleteRt(ctx, n.db, tx.Hash); err != nil {
+	if err = forkdb.DeleteRt(ctx, n.db, tx.Hash); err != nil {
 		log.Errorf("delete fork rt: %v", err)
 		return err
 	}

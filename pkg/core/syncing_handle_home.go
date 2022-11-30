@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/Ankr-network/uscan/pkg/field"
+	"github.com/Ankr-network/uscan/pkg/fulldb"
 	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/log"
-	"github.com/Ankr-network/uscan/pkg/rawdb"
 	"github.com/Ankr-network/uscan/pkg/types"
 )
 
@@ -17,7 +17,7 @@ var homeCache *types.Home
 func (n *blockHandle) updateHome(ctx context.Context) (err error) {
 	var home *types.Home
 	if homeCache == nil {
-		home, err = rawdb.ReadHome(ctx, n.db)
+		home, err = fulldb.ReadHome(ctx, n.db)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
 				log.Infof("read home not found")
@@ -83,9 +83,9 @@ func (n *blockHandle) updateHome(ctx context.Context) (err error) {
 
 	delete(home.DateTxs, time.Unix(int64(n.blockData.TimeStamp.ToUint64()-(3600*24*14)), 0).UTC().Format(timeLayout))
 
-	if err = rawdb.WriteSyncingBlock(ctx, n.db, n.blockData.Number); err != nil {
+	if err = fulldb.WriteSyncingBlock(ctx, n.db, n.blockData.Number); err != nil {
 		log.Errorf("write syncing block: %v", err)
 		return err
 	}
-	return rawdb.WriteHome(ctx, n.db, home)
+	return fulldb.WriteHome(ctx, n.db, home)
 }
