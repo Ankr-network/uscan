@@ -36,6 +36,7 @@ func SetupRouter(g fiber.Router) {
 	//g.Get("/accounts", listAccounts)
 	g.Get("/accounts/:address", getAccountInfo)
 	g.Get("/accounts/:address/txns", getAccountTxns)
+	g.Get("/accounts/:address/total", getAccountTotal)
 	//g.Get("/accounts/:address/txns/download", downloadAccountTxns)
 	g.Get("/accounts/:address/txns-erc20", getAccountErc20Txns)
 	//g.Get("/accounts/:address/txns-erc20/download", downloadAccountErc20Txns)
@@ -216,6 +217,19 @@ func getAccountTxns(c *fiber.Ctx) error {
 	}
 	f.Complete()
 	resp, err := service.GetAccountTxs(f, common.HexToAddress(address))
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
+	}
+	return c.Status(http.StatusOK).JSON(response.Ok(resp))
+}
+
+func getAccountTotal(c *fiber.Ctx) error {
+	address := c.Params("address")
+	if address == "" {
+		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
+	}
+
+	resp, err := service.GetAccountTotal(common.HexToAddress(address))
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}

@@ -55,16 +55,10 @@ func GetAccountTxs(pager *types.Pager, address common.Address) (map[string]inter
 		return nil, err
 	}
 	txsResp := make([]*types.ListTransactionResp, 0)
-	otherTotal := map[string]uint64{
-		"internalTotal": 0,
-		"erc20Total":    0,
-		"erc721Total":   0,
-		"erc1155Total":  0,
-	}
+
 	resp := map[string]interface{}{
-		"items":      txsResp,
-		"total":      0,
-		"otherTotal": otherTotal,
+		"items": txsResp,
+		"total": 0,
 	}
 	if total == nil {
 		return resp, nil
@@ -117,6 +111,20 @@ func GetAccountTxs(pager *types.Pager, address common.Address) (map[string]inter
 		}
 	}
 
+	resp = map[string]interface{}{
+		"items": txsResp,
+		"total": total.ToUint64(),
+	}
+	return resp, nil
+}
+
+func GetAccountTotal(address common.Address) (map[string]uint64, error) {
+	otherTotal := map[string]uint64{
+		"internalTotal": 0,
+		"erc20Total":    0,
+		"erc721Total":   0,
+		"erc1155Total":  0,
+	}
 	itxTotal, err := store.GetAccountITxTotal(address)
 	if err != nil && err != kv.NotFound {
 		return nil, err
@@ -146,12 +154,7 @@ func GetAccountTxs(pager *types.Pager, address common.Address) (map[string]inter
 	if erc1155Total != nil {
 		otherTotal["erc1155Total"] = erc1155Total.ToUint64()
 	}
-	resp = map[string]interface{}{
-		"items":      txsResp,
-		"total":      total.ToUint64(),
-		"otherTotal": otherTotal,
-	}
-	return resp, nil
+	return otherTotal, nil
 }
 
 func GetAccountItxs(pager *types.Pager, address common.Address) ([]*types.InternalTxResp, uint64, error) {
