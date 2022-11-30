@@ -124,6 +124,11 @@ func GetAccountTotal(address common.Address) (map[string]uint64, error) {
 		"erc20Total":    0,
 		"erc721Total":   0,
 		"erc1155Total":  0,
+		"txTotal":       0,
+	}
+	txTotal, err := store.GetAccountTxTotal(address)
+	if err != nil && err != kv.NotFound {
+		return nil, err
 	}
 	itxTotal, err := store.GetAccountITxTotal(address)
 	if err != nil && err != kv.NotFound {
@@ -140,6 +145,10 @@ func GetAccountTotal(address common.Address) (map[string]uint64, error) {
 	erc1155Total, err := store.GetAccountErc1155Total(address)
 	if err != nil && err != kv.NotFound {
 		return nil, err
+	}
+
+	if txTotal != nil {
+		otherTotal["txTotal"] = txTotal.ToUint64()
 	}
 
 	if itxTotal != nil {
