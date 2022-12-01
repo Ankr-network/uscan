@@ -1,0 +1,1 @@
+import{r as t}from"../../assets/index.ce741f41.js";const o=function(o){return t({url:"/accounts/"+o,method:"get"})},e=function(o){return t({url:"/accounts/"+o+"/total",method:"get"})};export{e as G,o as a};
