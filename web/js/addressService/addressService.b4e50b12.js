@@ -1,1 +1,0 @@
-import{r as t}from"../../assets/index.dfa6266a.js";const o=function(o){return t({url:"/accounts/"+o,method:"get"})},a=function(o){return t({url:"/accounts/"+o+"/total",method:"get"})};export{a as G,o as a};
