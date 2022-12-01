@@ -1,1 +1,0 @@
-import{r as t}from"../../assets/index.bb287700.js";const o=function(o){return t({url:"/accounts/"+o,method:"get"})},n=function(o){return t({url:"/accounts/"+o+"/total",method:"get"})};export{n as G,o as a};
