@@ -260,7 +260,7 @@ func validateContract(param *types.ContractVerityTmp) error {
 }
 
 func getSolcFile(compilerFileName string) string {
-	return fmt.Sprintf("%s%s", "./pkg/files/", compilerFileName)
+	return fmt.Sprintf("%s%s", "/go/src/app/pkg/files/", compilerFileName)
 }
 
 var ContractVerityChain = make(chan *types.ContractVerityTmp, 100)
@@ -358,7 +358,7 @@ func GetValidateContract(address common.Address) (*types.ContractVerityInfoResp,
 }
 
 func ReadMetaData() (*types.ValidateContractMetadata, error) {
-	jsonFile, err := os.Open("/app/pkg/files/metadata.json")
+	jsonFile, err := os.Open("app/pkg/files/metadata.json")
 	if err != nil {
 		return nil, err
 	}
