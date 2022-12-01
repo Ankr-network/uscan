@@ -238,14 +238,14 @@ func GetTokenType(address common.Address) (interface{}, error) {
 	if err != nil && err != kv.NotFound {
 		return nil, err
 	}
-	if erc20Count != nil {
+	if erc721Count != nil {
 		resp["erc721"] = erc721Count.ToUint64()
 	}
 	erc1155Count, err := store.GetAccountErc1155Total(address)
 	if err != nil && err != kv.NotFound {
 		return nil, err
 	}
-	if erc20Count != nil {
+	if erc1155Count != nil {
 		resp["erc1155"] = erc1155Count.ToUint64()
 	}
 	return resp, nil
