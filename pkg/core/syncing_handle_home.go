@@ -46,7 +46,7 @@ func (n *blockHandle) updateHome(ctx context.Context) (err error) {
 	home.AddressTotal.Add(n.newAddrTotal)
 	home.Erc20Total.Add(n.newErc20Total)
 	home.Erc721Total.Add(n.newErc721Total)
-	home.Erc721Total.Add(n.newErc1155Total)
+	home.Erc1155Total.Add(n.newErc1155Total)
 	home.Blocks = append(home.Blocks, &types.BkSim{
 		Number:            *n.blockData.Number,
 		Timestamp:         n.blockData.TimeStamp,
