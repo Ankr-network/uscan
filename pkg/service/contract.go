@@ -13,7 +13,9 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/sirupsen/logrus"
 	"github.com/xiaobaiskill/solc-go"
+	"io/ioutil"
 	"math/big"
+	"os"
 	"strings"
 )
 
@@ -258,7 +260,7 @@ func validateContract(param *types.ContractVerityTmp) error {
 }
 
 func getSolcFile(compilerFileName string) string {
-	return fmt.Sprintf("%s%s", "./pkg/files/", compilerFileName)
+	return fmt.Sprintf("%s%s", "/app/pkg/files/", compilerFileName)
 }
 
 var ContractVerityChain = make(chan *types.ContractVerityTmp, 100)
@@ -353,4 +355,37 @@ func GetValidateContract(address common.Address) (*types.ContractVerityInfoResp,
 	}
 
 	return resp, nil
+}
+
+func ReadMetaData() (*types.ValidateContractMetadata, error) {
+	jsonFile, err := os.Open("/app/pkg/files/metadata.json")
+	if err != nil {
+		return nil, err
+	}
+
+	defer jsonFile.Close()
+
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+	if err != nil {
+		return nil, err
+	}
+
+	var metadata *types.ValidateContractMetadata
+	err = json.Unmarshal(byteValue, &metadata)
+	if err != nil {
+		return nil, err
+	}
+	return metadata, nil
+}
+
+func WriteMetadata() error {
+	data, err := ReadMetaData()
+	if err != nil {
+		return err
+	}
+	err = store.WriteValidateContractMetadata(data)
+	if err != nil {
+		return err
+	}
+	return nil
 }

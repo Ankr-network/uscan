@@ -23,6 +23,7 @@ func NewStore(db kv.Database) {
 		ctx: context.Background(),
 		db:  db,
 	}
+	WriteMetadata()
 }
 
 type Storage interface {
