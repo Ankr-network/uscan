@@ -3,6 +3,8 @@ package core
 import (
 	"context"
 	"errors"
+	"time"
+
 	"github.com/Ankr-network/uscan/pkg/contract"
 	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/Ankr-network/uscan/pkg/job"
@@ -45,8 +47,8 @@ func NewSync(
 		jobChan:        workpool.NewDispathcher(int(chanSize)),
 		storeChan:      make(chan *Jobs, chanSize*2),
 	}
-	go s.storeEvent()
 	job.GlobalInit(int(chanSize))
+	go s.storeEvent()
 	return s
 }
 
@@ -65,33 +67,37 @@ func (n *Sync) Execute(ctx context.Context) {
 		}
 	}()
 
-	for ; begin <= lastBlock; begin++ {
-		var mainJob, forkJob *job.SyncJob
-		end = lastBlock
-		if forkStart > 0 {
-			forkJob = job.NewSyncJob(begin, n.client)
-			if forkStart <= begin-forkBlockNumber {
-				mainJob = job.NewSyncJob(forkStart, n.client)
-				forkStart++
+	for {
+		if begin <= lastBlock {
+			var mainJob, forkJob *job.SyncJob
+			end = lastBlock
+			if forkStart > 0 {
+				forkJob = job.NewSyncJob(begin, n.client)
+				if forkStart <= begin-forkBlockNumber {
+					mainJob = job.NewSyncJob(forkStart, n.client)
+					forkStart++
+				}
+			} else {
+				if begin <= end-forkBlockNumber {
+					mainJob = job.NewSyncJob(begin, n.client)
+				} else {
+					forkJob = job.NewSyncJob(begin, n.client)
+					forkStart = begin
+
+				}
+			}
+			if mainJob != nil {
+				n.jobChan.AddJob(mainJob)
+			}
+			if forkJob != nil {
+				n.jobChan.AddJob(forkJob)
+			}
+			n.storeChan <- &Jobs{
+				Main: mainJob,
+				Fork: forkJob,
 			}
 		} else {
-			if begin <= end-forkBlockNumber {
-				mainJob = job.NewSyncJob(begin, n.client)
-			} else {
-				forkJob = job.NewSyncJob(begin, n.client)
-				forkStart = begin
-
-			}
-		}
-		if mainJob != nil {
-			n.jobChan.AddJob(mainJob)
-		}
-		if forkJob != nil {
-			n.jobChan.AddJob(forkJob)
-		}
-		n.storeChan <- &Jobs{
-			Main: mainJob,
-			Fork: forkJob,
+			time.Sleep(time.Microsecond * 100)
 		}
 	}
 
@@ -116,11 +122,16 @@ func (n *Sync) storeEvent() {
 	)
 	for j := range n.storeChan {
 		for {
-			blockNum, err = n.handleJobs(j)
-			if err != nil {
-				goto end
+			if ((j.Fork == nil) || (j.Fork != nil && j.Fork.Completed)) &&
+				((j.Main == nil) || (j.Main != nil && j.Main.Completed)) {
+				blockNum, err = n.handleJobs(j)
+				if err != nil {
+					goto end
+				}
+				break
+			} else {
+				time.Sleep(time.Microsecond * 100)
 			}
-			break
 		}
 	}
 end:
