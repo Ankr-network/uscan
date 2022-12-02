@@ -47,7 +47,6 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is .uscan.yaml)")
 
 	rootCmd.Flags().StringP(share.HttpAddr, "", "0.0.0.0", "service boot with this address")

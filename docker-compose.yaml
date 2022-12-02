@@ -3,10 +3,9 @@ services:
   uscan-backend:
     image: uscan:latest
     restart: always
-    command: ["--rpc_urls=wss://testnet.ankr.com/ws","--db_path=/app/uscandb","--db_path=/app/uscanforkdb"]
+    command: ["--rpc_urls=wss://testnet.ankr.com/ws","--db_path=/app/uscandb"]
     volumes:
       - ./data:/app/uscandb
-      - ./data:/app/uscanforkdb
     ports:
       - "4322:4322"
     logging:

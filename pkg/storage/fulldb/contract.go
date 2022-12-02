@@ -80,7 +80,7 @@ func WriteMethodName(ctx context.Context, db kv.Writer, methodID, methodName str
 	return db.Put(ctx, append(ContractMethodPrefix, []byte(methodID)...), []byte(methodName), &kv.WriteOption{Table: share.ValidateContractTbl})
 }
 
-func ReadMethodName(ctx context.Context, db kv.Reader, methodID, methodName string) (data string, err error) {
+func ReadMethodName(ctx context.Context, db kv.Reader, methodID string) (data string, err error) {
 	rs, err := db.Get(ctx, append(ContractMethodPrefix, []byte(methodID)...), &kv.ReadOption{Table: share.ValidateContractTbl})
 	if err != nil {
 		return "", err

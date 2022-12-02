@@ -41,6 +41,7 @@ func MainRun(cmd *cobra.Command, args []string) {
 	sync := core.NewSync(rpcMgr, contract.NewClient(rpcMgr), storage.St.FullDB, storage.St.ForkDB, viper.GetUint64(share.WorkChan))
 	go sync.Execute(context.Background())
 
+	service.NewStore(storage.St.FullDB)
 	service.StartHandleContractVerity()
 	_, svc := grace.New(context.Background())
 	svc.RegisterService("web service", apis.Apis)

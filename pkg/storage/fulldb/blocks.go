@@ -2,12 +2,12 @@ package fulldb
 
 import (
 	"context"
-	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/Ankr-network/uscan/share"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 var (
@@ -65,6 +65,19 @@ func ReadBlockIndex(ctx context.Context, db kv.Reader, blockNum *field.BigInt, i
 	}
 	txHash.SetBytes(bytesRes)
 	return
+}
+
+func ReadBlockTxByIndex(ctx context.Context, db kv.Reader, blockNum *field.BigInt, index *field.BigInt) (tx *types.Tx, err error) {
+	var (
+		bytesRes []byte
+	)
+
+	bytesRes, err = db.Get(ctx, getBlockIndex(blockNum, index), &kv.ReadOption{Table: share.BlockTbl})
+	if err != nil {
+		return
+	}
+	hash := common.BytesToHash(bytesRes)
+	return ReadTx(ctx, db, hash)
 }
 
 func WriteBlockIndex(ctx context.Context, db kv.Writer, blockNum *field.BigInt, index *field.BigInt, txHash common.Hash) (err error) {

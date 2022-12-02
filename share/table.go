@@ -17,6 +17,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package share
 
 const (
+	TxLookupTbl  = "txlookup"
+	HeadersTbl   = "headers"
+	BodiesTbl    = "bodies"
+	ContractsTbl = "contracts"
+	Erc20Tbl     = "erc20"
+	Erc721Tbl    = "erc721"
+	Erc1155Tbl   = "erc1155"
+	HomeBlockTbl = "homeblock"
+	HomeTxTbl    = "hometx"
+
 	HomeTbl             = "home"
 	AccountsTbl         = "accounts"
 	TxTbl               = "transactions"

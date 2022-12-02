@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"errors"
+
 	"github.com/Ankr-network/uscan/pkg/contract"
 	"github.com/Ankr-network/uscan/pkg/contract/eip"
 	"github.com/Ankr-network/uscan/pkg/field"
@@ -313,7 +314,7 @@ func (n *blockHandle) handleContractData(ctx context.Context) (err error) {
 func (n *blockHandle) writeTxAndRtLog(ctx context.Context, transactionData []*types.Tx, receiptData []*types.Rt) (err error) {
 
 	for i, v := range transactionData {
-		err = fulldb.WriteBlockIndex(ctx, n.db, n.blockData.Number, field.NewInt(int64(i)), v.Hash)
+		err = fulldb.WriteBlockIndex(ctx, n.db, n.blockData.Number, field.NewInt(int64(i)+1), v.Hash)
 		if err != nil {
 			log.Errorf("write block index(%d): %v", i, err)
 			return err

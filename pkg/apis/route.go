@@ -1,6 +1,7 @@
 package apis
 
 import (
+	"github.com/Ankr-network/uscan/pkg/log"
 	"github.com/Ankr-network/uscan/pkg/response"
 	"github.com/Ankr-network/uscan/pkg/service"
 	"github.com/Ankr-network/uscan/pkg/types"
@@ -10,6 +11,7 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"time"
 )
 
 func SetupRouter(g fiber.Router) {
@@ -18,6 +20,7 @@ func SetupRouter(g fiber.Router) {
 
 	g.Get("/blocks", listBlocks)
 	g.Get("/blocks/:blockNum", getBlock)
+	g.Get("/blocks/:blockNum/txs", getBlockTxs)
 
 	g.Get("/txs", listTxs)
 	g.Get("/txs/:txHash", getTx)
@@ -33,6 +36,7 @@ func SetupRouter(g fiber.Router) {
 	//g.Get("/accounts", listAccounts)
 	g.Get("/accounts/:address", getAccountInfo)
 	g.Get("/accounts/:address/txns", getAccountTxns)
+	g.Get("/accounts/:address/total", getAccountTotal)
 	//g.Get("/accounts/:address/txns/download", downloadAccountTxns)
 	g.Get("/accounts/:address/txns-erc20", getAccountErc20Txns)
 	//g.Get("/accounts/:address/txns-erc20/download", downloadAccountErc20Txns)
@@ -52,7 +56,7 @@ func SetupRouter(g fiber.Router) {
 	g.Get("/tokens/:address/holders", listTokenHolders)
 	g.Get("/tokens/:address/inventory", listInventory)
 	//g.Get("/nfts/:address/:tokenID", getNft)
-	g.Get("/contracts/:address/verify", validateContract)
+	g.Post("/contracts/:address/verify", validateContract)
 	g.Get("/contracts-verify/:id/status", getValidateContractStatus)
 	g.Get("/contracts/metadata", ReadValidateContractMetadata)
 	g.Post("/contracts/metadata", WriteValidateContractMetadata)
@@ -80,6 +84,7 @@ func getHome(c *fiber.Ctx) error {
 }
 
 func listBlocks(c *fiber.Ctx) error {
+	log.Infof("listBlocks:%d", time.Now().UnixMilli())
 	f := &types.Pager{}
 	if err := c.QueryParser(f); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
@@ -89,6 +94,7 @@ func listBlocks(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}
+	log.Infof("listBlocks:%d", time.Now().UnixMilli())
 	return c.Status(http.StatusOK).JSON(response.Ok(map[string]interface{}{"items": resp, "total": total}))
 }
 
@@ -101,7 +107,30 @@ func getBlock(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(response.Ok(block))
 }
 
+func getBlockTxs(c *fiber.Ctx) error {
+	log.Infof("getBlockTxs:%d", time.Now().UnixMilli())
+	blockNum := c.Params("blockNum")
+	if blockNum == "" {
+		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
+	}
+	f := &types.Pager{}
+	if err := c.QueryParser(f); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
+	}
+	f.Complete()
+	resp, total, err := service.GetBlockTxs(blockNum, f)
+	if err != nil {
+		return err
+	}
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
+	}
+	log.Infof("getBlockTxs:%d", time.Now().UnixMilli())
+	return c.Status(http.StatusOK).JSON(response.Ok(map[string]interface{}{"items": resp, "total": total}))
+}
+
 func listTxs(c *fiber.Ctx) error {
+	log.Infof("listTxs:%d", time.Now().UnixMilli())
 	f := &types.Pager{}
 	if err := c.QueryParser(f); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
@@ -111,6 +140,7 @@ func listTxs(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}
+	log.Infof("listTxs:%d", time.Now().UnixMilli())
 	return c.Status(http.StatusOK).JSON(response.Ok(map[string]interface{}{"items": resp, "total": total}))
 }
 
@@ -169,7 +199,7 @@ func getAccountInfo(c *fiber.Ctx) error {
 	if address == "" {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
 	}
-	resp, err := service.GetAccountInfo(address)
+	resp, err := service.GetAccountInfo(common.HexToAddress(address))
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}
@@ -186,7 +216,20 @@ func getAccountTxns(c *fiber.Ctx) error {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
 	}
 	f.Complete()
-	resp, err := service.GetAccountTxs(f, address)
+	resp, err := service.GetAccountTxs(f, common.HexToAddress(address))
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
+	}
+	return c.Status(http.StatusOK).JSON(response.Ok(resp))
+}
+
+func getAccountTotal(c *fiber.Ctx) error {
+	address := c.Params("address")
+	if address == "" {
+		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
+	}
+
+	resp, err := service.GetAccountTotal(common.HexToAddress(address))
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}
@@ -254,7 +297,7 @@ func getAccountInternalTxns(c *fiber.Ctx) error {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
 	}
 	f.Complete()
-	resp, total, err := service.GetAccountItxs(f, address)
+	resp, total, err := service.GetAccountItxs(f, common.HexToAddress(address))
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}
@@ -262,6 +305,7 @@ func getAccountInternalTxns(c *fiber.Ctx) error {
 }
 
 func listTokenTxnsErc20(c *fiber.Ctx) error {
+	log.Infof("listTokenTxnsErc20:%d", time.Now().UnixMilli())
 	f := &types.Pager{}
 	if err := c.QueryParser(f); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
@@ -271,10 +315,12 @@ func listTokenTxnsErc20(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}
+	log.Infof("listTokenTxnsErc20:%d", time.Now().UnixMilli())
 	return c.Status(http.StatusOK).JSON(response.Ok(map[string]interface{}{"items": resp, "total": total}))
 }
 
 func listTokenTxnsErc721(c *fiber.Ctx) error {
+	log.Infof("listTokenTxnsErc721:%d", time.Now().UnixMilli())
 	f := &types.Pager{}
 	if err := c.QueryParser(f); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
@@ -284,10 +330,12 @@ func listTokenTxnsErc721(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}
+	log.Infof("listTokenTxnsErc721:%d", time.Now().UnixMilli())
 	return c.Status(http.StatusOK).JSON(response.Ok(map[string]interface{}{"items": resp, "total": total}))
 }
 
 func listTokenTxnsErc1155(c *fiber.Ctx) error {
+	log.Infof("listTokenTxnsErc1155:%d", time.Now().UnixMilli())
 	f := &types.Pager{}
 	if err := c.QueryParser(f); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
@@ -297,6 +345,7 @@ func listTokenTxnsErc1155(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}
+	log.Infof("listTokenTxnsErc1155:%d", time.Now().UnixMilli())
 	return c.Status(http.StatusOK).JSON(response.Ok(map[string]interface{}{"items": resp, "total": total}))
 }
 
@@ -337,6 +386,7 @@ func getTokenType(c *fiber.Ctx) error {
 }
 
 func listTokenTransfers(c *fiber.Ctx) error {
+	log.Infof("listTokenTransfers:%d\n", time.Now().UnixMilli())
 	address := c.Params("address")
 	if address == "" {
 		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
@@ -351,6 +401,7 @@ func listTokenTransfers(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}
+	log.Infof("listTokenTransfers:%d\n", time.Now().UnixMilli())
 	return c.Status(http.StatusOK).JSON(response.Ok(resp))
 }
 
