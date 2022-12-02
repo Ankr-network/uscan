@@ -97,7 +97,7 @@ func (n *Sync) Execute(ctx context.Context) {
 				Fork: forkJob,
 			}
 		} else {
-			time.Sleep(time.Microsecond * 100)
+			time.Sleep(time.Millisecond * 100)
 		}
 	}
 
@@ -130,7 +130,7 @@ func (n *Sync) storeEvent() {
 				}
 				break
 			} else {
-				time.Sleep(time.Microsecond * 100)
+				time.Sleep(time.Millisecond * 100)
 			}
 		}
 	}
