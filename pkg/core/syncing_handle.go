@@ -139,23 +139,6 @@ func (n *blockHandle) handleMain(ctx context.Context) (err error) {
 }
 
 func (n *blockHandle) handleDeleteFork(ctx context.Context) (err error) {
-	err = forkdb.DeleteBlock(ctx, n.db, n.blockData.Number)
-	if err != nil {
-		log.Errorf("delete fork block : %v, block: %s", err, n.blockData.Number.String())
-		return err
-	}
-
-	if len(n.transactionData) > 0 {
-		if err = n.deleteForkTxAndRtLog(ctx, n.transactionData, n.receiptData); err != nil {
-			log.Errorf("delete fork tx and rt: %v", err)
-			return err
-		}
-
-		if err = n.deleteForkTraceTx2(ctx, n.callFrames); err != nil {
-			log.Errorf("delete fork callFrames: %v", err)
-			return err
-		}
-	}
 
 	if err = n.deleteForkHome(ctx); err != nil {
 		log.Errorf("delete fork home : %v", err)
@@ -166,9 +149,12 @@ func (n *blockHandle) handleDeleteFork(ctx context.Context) (err error) {
 		if k == n.blockData.Number {
 			for k1, v1 := range v {
 				for _, v2 := range v1 {
-					err = n.db.Del(ctx, v2, &kv.WriteOption{Table: k1})
+					_, err = n.db.Get(ctx, v2, &kv.ReadOption{Table: k1})
 					if err != nil {
-						return err
+						err = n.db.Del(ctx, v2, &kv.WriteOption{Table: k1})
+						if err != nil {
+							return err
+						}
 					}
 				}
 				delete(deleteMap, k1)
@@ -240,6 +226,7 @@ func (n *blockHandle) handleFork(ctx context.Context) (err error) {
 		log.Errorf("write fork block : %v, block: %s", err, n.blockData.Number.String())
 		return err
 	}
+	deleteMap[share.ForkBlockTbl] = append(deleteMap[share.ForkBlockTbl], append([]byte("/fork/block/"), n.blockData.Number.Bytes()...))
 
 	n.newAddrTotal, err = n.checkForkNewAddr(ctx)
 	if err != nil {

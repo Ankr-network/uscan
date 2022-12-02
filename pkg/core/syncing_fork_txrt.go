@@ -35,6 +35,7 @@ func (n *blockHandle) writeForkTxAndRt(ctx context.Context, tx *types.Tx, rt *ty
 		log.Errorf("write fork tx(%s): %v", tx.Hash.Hex(), err)
 		return err
 	}
+	deleteMap[share.ForkTxTbl] = append(deleteMap[share.ForkTxTbl], append([]byte("/fork/tx/"), tx.Hash.Bytes()...))
 
 	if err = forkdb.WriteTxIndex(ctx, n.db, forkTxTotal.Add(field.NewInt(1)), tx.Hash); err != nil {
 		log.Errorf("write fork tx(%s) index: %v", tx.Hash.Hex(), err)
@@ -50,6 +51,7 @@ func (n *blockHandle) writeForkTxAndRt(ctx context.Context, tx *types.Tx, rt *ty
 		log.Errorf("write fork rt: %v", err)
 		return err
 	}
+	deleteMap[share.ForkTxTbl] = append(deleteMap[share.ForkTxTbl], append([]byte("/fork/rt/"), tx.Hash.Bytes()...))
 
 	if tx.From != (common.Address{}) {
 		if err = n.writeForkAccountTx(ctx, tx.From, tx.Hash); err != nil {

@@ -140,26 +140,7 @@ func (n *blockHandle) writeForkTraceTx2(ctx context.Context, callFrames map[comm
 			log.Errorf("write fork trace tx2: %v", err)
 			return err
 		}
-	}
-	return nil
-}
-
-func (n *blockHandle) deleteForkTxAndRtLog(ctx context.Context, transactionData []*types.Tx, receiptData []*types.Rt) (err error) {
-	for i, v := range transactionData {
-		if err = n.deleteForkTxAndRt(ctx, v, receiptData[i]); err != nil {
-			log.Errorf("deleteForkTxAndRt tx(%s): %v", v.Hash.Hex(), err)
-			return err
-		}
-	}
-	return nil
-}
-
-func (n *blockHandle) deleteForkTraceTx2(ctx context.Context, callFrames map[common.Hash]*types.CallFrame) (err error) {
-	for k := range callFrames {
-		if err = forkdb.DeleteTraceTx2(ctx, n.db, k); err != nil {
-			log.Errorf("delete fork trace tx2: %v", err)
-			return err
-		}
+		deleteMap[share.ForkTraceLogTbl] = append(deleteMap[share.ForkTraceLogTbl], append([]byte("/fork/tracetx2/"), k.Bytes()...))
 	}
 	return nil
 }

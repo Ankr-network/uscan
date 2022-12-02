@@ -118,7 +118,11 @@ func (n *blockHandle) updateForkHome(ctx context.Context) (err error) {
 func (n *blockHandle) deleteForkHome(ctx context.Context) (err error) {
 	home, err := forkdb.ReadHome(ctx, n.db)
 	if err != nil {
-		return err
+		if errors.Is(err, kv.NotFound) {
+			return nil
+		} else {
+			return err
+		}
 	}
 	home.TxTotal.Sub(&HomeMap[n.blockData.Number].TxTotal)
 	home.AddressTotal.Sub(&HomeMap[n.blockData.Number].AddressTotal)
