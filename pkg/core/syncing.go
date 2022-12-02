@@ -83,7 +83,6 @@ func (n *Sync) Execute(ctx context.Context) {
 				} else {
 					forkJob = job.NewSyncJob(begin, n.client)
 					forkStart = begin
-
 				}
 			}
 			if mainJob != nil {
@@ -92,6 +91,7 @@ func (n *Sync) Execute(ctx context.Context) {
 			if forkJob != nil {
 				n.jobChan.AddJob(forkJob)
 			}
+
 			n.storeChan <- &Jobs{
 				Main: mainJob,
 				Fork: forkJob,
@@ -178,21 +178,17 @@ func (n *Sync) handleJobs(jobs *Jobs) (err error) {
 			n.forkDb,
 		)
 		if errFork = forkHandle.handleFork(ctxFork); errFork != nil {
-			log.Errorf("handle fork event data: %d", jobs.Fork.BlockData.Number.String())
+			log.Errorf("handle fork event data: %s", jobs.Fork.BlockData.Number.String())
 			return errFork
 		}
-		delForkBlockNumber := jobs.Fork.BlockData.Number.Sub(field.NewInt(n.forkNum))
+		delForkBlockNumber := field.NewInt(0)
+		delForkBlockNumber.SetBytes(jobs.Fork.BlockData.Number.Bytes())
+		delForkBlockNumber.Sub(field.NewInt(n.forkNum))
 
 		if errFork = forkHandle.handleDeleteFork(ctxFork, delForkBlockNumber); errFork != nil {
-			log.Errorf("delete fork  data: %d", jobs.Fork.BlockData.Number.String())
+			log.Errorf("delete fork data: %s", jobs.Fork.BlockData.Number.String())
 			return errFork
 		}
-
-		// errFork = forkHandle.handleContractData(ctxFork)
-		// if errFork != nil {
-		// 	log.Errorf("handle contract data from fork: %d", blockNum)
-		// 	return blockNum, errFork
-		// }
 	}
 
 	if jobs.Main != nil {
@@ -210,94 +206,19 @@ func (n *Sync) handleJobs(jobs *Jobs) (err error) {
 			n.db,
 		)
 		if errMain = mainHandle.handleMain(ctxMain); errMain != nil {
-			log.Errorf("handle main data: %d", jobs.Main.BlockData.Number.String())
+			log.Errorf("handle main data: %s", jobs.Main.BlockData.Number.String())
 			return errMain
 		}
 	}
 
-	//  if jobs.Main != nil {
-	// 	blockNum = jobs.Main.Block
-	// 	if errMain = newBlockHandle(
-	// 		jobs.Main.BlockData,
-	// 		jobs.Main.TransactionDatas,
-	// 		jobs.Main.ReceiptDatas,
-	// 		jobs.Main.ContractOrMemberData,
-	// 		jobs.Main.ContractInfoMap,
-	// 		jobs.Main.ProxyContracts,
-	// 		jobs.Main.InternalTxs,
-	// 		jobs.Main.CallFrames,
-	// 		n.contractClient,
-	// 		n.db,
-	// 	).handleContractData(ctxMain); errMain != nil {
-	// 		log.Errorf("handle contract data from main: %d", blockNum)
-	// 		return blockNum, errMain
-	// 	}
-	// }
-
-	// handle main job
-	if jobs.Main != nil {
-		// blockNum = jobs.Main.Block
-		// if errMain = newBlockHandle(
-		// 	jobs.Main.BlockData,
-		// 	jobs.Main.TransactionDatas,
-		// 	jobs.Main.ReceiptDatas,
-		// 	jobs.Main.ContractOrMemberData,
-		// 	jobs.Main.ContractInfoMap,
-		// 	jobs.Main.ProxyContracts,
-		// 	jobs.Main.InternalTxs,
-		// 	jobs.Main.CallFrames,
-		// 	n.contractClient,
-		// 	n.db,
-		// ).handleMain(ctxMain); errMain != nil {
-		// 	log.Errorf("handle main event data: %d", blockNum)
-		// 	return blockNum, errMain
-		// }
-
-		// if errMain = newBlockHandle(
-		// 	jobs.Main.BlockData,
-		// 	jobs.Main.TransactionDatas,
-		// 	jobs.Main.ReceiptDatas,
-		// 	jobs.Main.ContractOrMemberData,
-		// 	jobs.Main.ContractInfoMap,
-		// 	jobs.Main.ProxyContracts,
-		// 	jobs.Main.InternalTxs,
-		// 	jobs.Main.CallFrames,
-		// 	n.contractClient,
-		// 	n.forkDb,
-		// ).handleDeleteFork(ctxFork); errMain != nil {
-		// 	log.Errorf("handle delete fork event data: %d", blockNum)
-		// 	return blockNum, errMain
-		// }
-	}
-
-	// handle fork job
-	if jobs.Fork != nil {
-		// blockNum = jobs.Fork.Block
-		// if errFork = newBlockHandle(
-		// 	jobs.Fork.BlockData,
-		// 	jobs.Fork.TransactionDatas,
-		// 	jobs.Fork.ReceiptDatas,
-		// 	jobs.Fork.ContractOrMemberData,
-		// 	jobs.Fork.ContractInfoMap,
-		// 	jobs.Fork.ProxyContracts,
-		// 	jobs.Fork.InternalTxs,
-		// 	jobs.Fork.CallFrames,
-		// 	n.contractClient,
-		// 	n.forkDb,
-		// ).handleFork(ctxFork); errFork != nil {
-		// 	log.Errorf("handle fork event data: %d", blockNum)
-		// 	return blockNum, errFork
-		// }
-	}
-
 	if forkHandle != nil {
 		if errFork = forkHandle.handleContractData(ctxFork); errFork != nil {
-			log.Errorf("handle contract data from fork: %d", forkHandle.blockData.Number.String())
+			log.Errorf("handle contract data from fork: %s", forkHandle.blockData.Number.String())
 			return errFork
 		}
 	} else if mainHandle != nil {
 		if errFork = mainHandle.handleContractData(ctxMain); errFork != nil {
-			log.Errorf("handle contract data from fork: %d", mainHandle.blockData.Number.String())
+			log.Errorf("handle contract data from fork: %s", mainHandle.blockData.Number.String())
 			return errFork
 		}
 	}

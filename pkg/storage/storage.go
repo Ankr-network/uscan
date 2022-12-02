@@ -36,10 +36,32 @@ type StorageImpl struct {
 	FullDB *mdbx.MdbxDB
 }
 
+var schemas = []string{}
+
 func NewStorage(path string) *StorageImpl {
 	return &StorageImpl{
-		ForkDB: mdbx.NewMdbx(path + "/fork"),
-		FullDB: mdbx.NewMdbx(path),
+		ForkDB: mdbx.NewMdbx(path+"/fork", []string{
+			share.ForkHomeTbl,
+			share.ForkAccountsTbl,
+			share.ForkTxTbl,
+			share.ForkBlockTbl,
+			share.ForkTraceLogTbl,
+			share.ForkTransferTbl,
+			share.ForkIndexTbl,
+		}, []string{}),
+		FullDB: mdbx.NewMdbx(path, []string{
+			share.AccountsTbl,
+			share.HomeTbl,
+			share.TxTbl,
+			share.BlockTbl,
+			share.TraceLogTbl,
+			share.TransferTbl,
+			share.HolderTbl,
+			share.ValidateContractTbl,
+		}, []string{
+			share.HolderSortTabl,
+			share.InventorySortTabl,
+		}),
 	}
 }
 
