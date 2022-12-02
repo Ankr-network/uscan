@@ -72,6 +72,19 @@ func ReadBlockIndex(ctx context.Context, db kv.Reader, blockNum *field.BigInt, i
 	return
 }
 
+func ReadBlockTxByIndex(ctx context.Context, db kv.Reader, blockNum *field.BigInt, index *field.BigInt) (tx *types.Tx, err error) {
+	var (
+		bytesRes []byte
+	)
+
+	bytesRes, err = db.Get(ctx, getBlockIndex(blockNum, index), &kv.ReadOption{Table: share.ForkBlockTbl})
+	if err != nil {
+		return
+	}
+	hash := common.BytesToHash(bytesRes)
+	return ReadTx(ctx, db, hash)
+}
+
 func WriteBlockIndex(ctx context.Context, db kv.Writer, blockNum *field.BigInt, index *field.BigInt, txHash common.Hash) (err error) {
 	return db.Put(ctx, getBlockIndex(blockNum, index), txHash.Bytes(), &kv.WriteOption{Table: share.ForkBlockTbl})
 }

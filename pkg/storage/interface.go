@@ -28,6 +28,7 @@ type Storage interface {
 
 	ReadBlock(ctx context.Context, blockNum *field.BigInt) (bk *types.Block, err error)
 	ReadBlockIndex(ctx context.Context, blockNum *field.BigInt, index *field.BigInt) (txHash common.Hash, err error)
+	ReadBlockTxByIndex(ctx context.Context, blockNum *field.BigInt, index *field.BigInt) (tx *types.Tx, err error)
 
 	WriteValidateContractMetadata(ctx context.Context, data *types.ValidateContractMetadata) error
 	ReadValidateContractMetadata(ctx context.Context) (acc *types.ValidateContractMetadata, err error)

@@ -528,13 +528,15 @@ func (s *StorageImpl) ReadBlock(ctx context.Context, blockNum *field.BigInt) (bk
 	var bytesRes []byte
 
 	bytesRes, err = s.ForkDB.Get(ctx, append([]byte("/fork/block/"), blockNum.Bytes()...), &kv.ReadOption{Table: share.ForkBlockTbl})
-	if errors.Is(err, kv.NotFound) {
-		bytesRes, err = s.FullDB.Get(ctx, []byte("/block/"), &kv.ReadOption{Table: share.ForkBlockTbl})
-		if err != nil {
+	if err != nil {
+		if errors.Is(err, kv.NotFound) {
+			bytesRes, err = s.FullDB.Get(ctx, []byte("/block/"), &kv.ReadOption{Table: share.ForkBlockTbl})
+			if err != nil {
+				return
+			}
+		} else {
 			return
 		}
-	} else {
-		return
 	}
 
 	bk = &types.Block{}
@@ -556,27 +558,55 @@ func (s *StorageImpl) ReadBlockIndex(ctx context.Context, blockNum *field.BigInt
 	var bytesRes []byte
 
 	bytesRes, err = s.ForkDB.Get(ctx, forkKey, &kv.ReadOption{Table: share.ForkBlockTbl})
-
 	if err != nil {
-		return
+		if errors.Is(err, kv.NotFound) {
+			fullKey := make([]byte, 0, len([]byte("/block/"))+len(blockNum.Bytes())+len(index.Bytes())+1)
+			fullKey = append(fullKey, []byte("/block/")...)
+			fullKey = append(fullKey, blockNum.Bytes()...)
+			fullKey = append(fullKey, byte('/'))
+			fullKey = append(fullKey, index.Bytes()...)
+			bytesRes, err = s.FullDB.Get(ctx, fullKey, &kv.ReadOption{Table: share.BlockTbl})
+			if err != nil {
+				return
+			}
+		} else {
+			return
+		}
 	}
 	txHash.SetBytes(bytesRes)
 
-	if txHash.String() == "" {
-		fullKey := make([]byte, 0, len([]byte("/fork/block/"))+len(blockNum.Bytes())+len(index.Bytes())+1)
-		fullKey = append(fullKey, []byte("/fork/block/")...)
-		fullKey = append(fullKey, blockNum.Bytes()...)
-		fullKey = append(fullKey, byte('/'))
-		fullKey = append(fullKey, index.Bytes()...)
+	return
+}
 
-		bytesRes, err = s.ForkDB.Get(ctx, fullKey, &kv.ReadOption{Table: share.ForkBlockTbl})
-		if err != nil {
+func (s *StorageImpl) ReadBlockTxByIndex(ctx context.Context, blockNum *field.BigInt, index *field.BigInt) (tx *types.Tx, err error) {
+	forkKey := make([]byte, 0, len([]byte("/fork/block/"))+len(blockNum.Bytes())+len(index.Bytes())+1)
+	forkKey = append(forkKey, []byte("/fork/block/")...)
+	forkKey = append(forkKey, blockNum.Bytes()...)
+	forkKey = append(forkKey, byte('/'))
+	forkKey = append(forkKey, index.Bytes()...)
+
+	var bytesRes []byte
+
+	bytesRes, err = s.ForkDB.Get(ctx, forkKey, &kv.ReadOption{Table: share.ForkBlockTbl})
+	if err != nil {
+		if errors.Is(err, kv.NotFound) {
+			fullKey := make([]byte, 0, len([]byte("/block/"))+len(blockNum.Bytes())+len(index.Bytes())+1)
+			fullKey = append(fullKey, []byte("/block/")...)
+			fullKey = append(fullKey, blockNum.Bytes()...)
+			fullKey = append(fullKey, byte('/'))
+			fullKey = append(fullKey, index.Bytes()...)
+			bytesRes, err = s.FullDB.Get(ctx, fullKey, &kv.ReadOption{Table: share.BlockTbl})
+			if err != nil {
+				return
+			}
+			hash := common.BytesToHash(bytesRes)
+			return fulldb.ReadTx(ctx, s.FullDB, hash)
+		} else {
 			return
 		}
-		txHash.SetBytes(bytesRes)
 	}
-
-	return
+	hash := common.BytesToHash(bytesRes)
+	return forkdb.ReadTx(ctx, s.ForkDB, hash)
 }
 
 func (s *StorageImpl) WriteValidateContractMetadata(ctx context.Context, data *types.ValidateContractMetadata) error {
@@ -924,13 +954,15 @@ func (s *StorageImpl) ReadSyncingBlock(ctx context.Context) (bk *field.BigInt, e
 	var bytesRes []byte
 
 	bytesRes, err = s.ForkDB.Get(ctx, []byte("/fork/syncing"), &kv.ReadOption{Table: share.ForkHomeTbl})
-	if errors.Is(err, kv.NotFound) {
-		bytesRes, err = s.FullDB.Get(ctx, []byte("/syncing"), &kv.ReadOption{Table: share.HomeTbl})
-		if err != nil {
+	if err != nil {
+		if errors.Is(err, kv.NotFound) {
+			bytesRes, err = s.FullDB.Get(ctx, []byte("/syncing"), &kv.ReadOption{Table: share.HomeTbl})
+			if err != nil {
+				return
+			}
+		} else {
 			return
 		}
-	} else {
-		return
 	}
 
 	bk = &field.BigInt{}
@@ -997,13 +1029,15 @@ func (s *StorageImpl) ReadITxTotal(ctx context.Context, hash common.Hash) (total
 func (s *StorageImpl) ReadTraceTx(ctx context.Context, hash common.Hash) (res *types.TraceTx, err error) {
 	var bytesRes []byte
 	bytesRes, err = s.ForkDB.Get(ctx, append([]byte("/fork/tracetx/"), hash.Bytes()...), &kv.ReadOption{Table: share.ForkTraceLogTbl})
-	if errors.Is(err, kv.NotFound) {
-		bytesRes, err = s.FullDB.Get(ctx, append([]byte("/tracetx/"), hash.Bytes()...), &kv.ReadOption{Table: share.TraceLogTbl})
-		if err != nil {
+	if err != nil {
+		if errors.Is(err, kv.NotFound) {
+			bytesRes, err = s.FullDB.Get(ctx, append([]byte("/tracetx/"), hash.Bytes()...), &kv.ReadOption{Table: share.TraceLogTbl})
+			if err != nil {
+				return
+			}
+		} else {
 			return
 		}
-	} else {
-		return
 	}
 
 	res = &types.TraceTx{}
@@ -1015,13 +1049,15 @@ func (s *StorageImpl) ReadTraceTx(ctx context.Context, hash common.Hash) (res *t
 func (s *StorageImpl) ReadTraceTx2(ctx context.Context, hash common.Hash) (res *types.TraceTx2, err error) {
 	var bytesRes []byte
 	bytesRes, err = s.ForkDB.Get(ctx, append([]byte("/fork/tracetx2/"), hash.Bytes()...), &kv.ReadOption{Table: share.ForkTraceLogTbl})
-	if errors.Is(err, kv.NotFound) {
-		bytesRes, err = s.FullDB.Get(ctx, append([]byte("/tracetx2/"), hash.Bytes()...), &kv.ReadOption{Table: share.TraceLogTbl})
-		if err != nil {
+	if err != nil {
+		if errors.Is(err, kv.NotFound) {
+			bytesRes, err = s.FullDB.Get(ctx, append([]byte("/tracetx2/"), hash.Bytes()...), &kv.ReadOption{Table: share.TraceLogTbl})
+			if err != nil {
+				return
+			}
+		} else {
 			return
 		}
-	} else {
-		return
 	}
 	res = &types.TraceTx2{}
 	err = res.Unmarshal(bytesRes)
@@ -1033,13 +1069,15 @@ func (s *StorageImpl) ReadTx(ctx context.Context, hash common.Hash) (data *types
 	var bytesRes []byte
 
 	bytesRes, err = s.ForkDB.Get(ctx, append([]byte("/fork/tx/"), hash.Bytes()...), &kv.ReadOption{Table: share.ForkTxTbl})
-	if errors.Is(err, kv.NotFound) {
-		bytesRes, err = s.FullDB.Get(ctx, append([]byte("/tx/"), hash.Bytes()...), &kv.ReadOption{Table: share.TxTbl})
-		if err != nil {
+	if err != nil {
+		if errors.Is(err, kv.NotFound) {
+			bytesRes, err = s.FullDB.Get(ctx, append([]byte("/tx/"), hash.Bytes()...), &kv.ReadOption{Table: share.TxTbl})
+			if err != nil {
+				return
+			}
+		} else {
 			return
 		}
-	} else {
-		return
 	}
 
 	data = &types.Tx{}
@@ -1107,13 +1145,15 @@ func (s *StorageImpl) ReadTxTotal(ctx context.Context) (total *field.BigInt, err
 func (s *StorageImpl) ReadRt(ctx context.Context, hash common.Hash) (data *types.Rt, err error) {
 	var bytesRes []byte
 	bytesRes, err = s.ForkDB.Get(ctx, append([]byte("/fork/rt/"), hash.Bytes()...), &kv.ReadOption{Table: share.ForkTxTbl})
-	if errors.Is(err, kv.NotFound) {
-		bytesRes, err = s.FullDB.Get(ctx, append([]byte("/rt/"), hash.Bytes()...), &kv.ReadOption{Table: share.TxTbl})
-		if err != nil {
+	if err != nil {
+		if errors.Is(err, kv.NotFound) {
+			bytesRes, err = s.FullDB.Get(ctx, append([]byte("/rt/"), hash.Bytes()...), &kv.ReadOption{Table: share.TxTbl})
+			if err != nil {
+				return
+			}
+		} else {
 			return
 		}
-	} else {
-		return
 	}
 	data = &types.Rt{}
 	err = data.Unmarshal(bytesRes)
