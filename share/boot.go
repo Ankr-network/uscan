@@ -25,8 +25,7 @@ const (
 	RpcUrls  = "rpc_urls"
 	WorkChan = "work_chan"
 
-	MdbxPath     = "db_path"
-	MdbxForkPath = "db_fork_path"
+	MdbxPath = "db_path"
 
 	ForkBlockNum = "fork_block_number"
 )

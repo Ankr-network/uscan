@@ -37,9 +37,9 @@ type StorageImpl struct {
 	FullDB *mdbx.MdbxDB
 }
 
-func NewStorage(forkDbPath, fullDbPath string) *StorageImpl {
-	mdbx.ForkDB = mdbx.NewMdbx(forkDbPath)
-	mdbx.DB = mdbx.NewMdbx(fullDbPath)
+func NewStorage(path string) *StorageImpl {
+	mdbx.ForkDB = mdbx.NewMdbx(path + "/fork")
+	mdbx.DB = mdbx.NewMdbx(path)
 	return &StorageImpl{
 		ForkDB: mdbx.ForkDB,
 		FullDB: mdbx.DB,
