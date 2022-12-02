@@ -22,9 +22,9 @@ table: index
 /fork/erc20/index => index
 /fork/erc721/index => index
 /fork/erc1155/index => index
-/fork/erc20/<contract>/<index> => <erc20 total index>
-/fork/erc721/<contract>/<index> => <erc721 total index>
-/fork/erc1155/<contract>/<index> => <erc1155 total index>
+/fork/erc20/<contract>/index => index
+/fork/erc721/<contract>/index => index
+/fork/erc1155/<contract>/index => index
 */
 
 func ReadAddressTxIndex(ctx context.Context, db kv.Reader, addr common.Address) (index *field.BigInt, err error) {
@@ -119,7 +119,7 @@ func WriteITxIndex(ctx context.Context, db kv.Writer, hash common.Hash, index *f
 
 func ReadTxTotalIndex(ctx context.Context, db kv.Reader) (index *field.BigInt, err error) {
 	var bytesRes []byte
-	bytesRes, err = db.Get(ctx, []byte("/fork/all/tx/index"), &kv.ReadOption{Table: share.ForkTxTbl})
+	bytesRes, err = db.Get(ctx, []byte("/fork/all/tx/index"), &kv.ReadOption{Table: share.ForkIndexTbl})
 	if err != nil {
 		return
 	}
@@ -129,41 +129,77 @@ func ReadTxTotalIndex(ctx context.Context, db kv.Reader) (index *field.BigInt, e
 }
 
 func WriteTxTotalIndex(ctx context.Context, db kv.Writer, index *field.BigInt) error {
-	return db.Put(ctx, []byte("/fork/all/tx/index"), index.Bytes(), &kv.WriteOption{Table: share.ForkTxTbl})
+	return db.Put(ctx, []byte("/fork/all/tx/index"), index.Bytes(), &kv.WriteOption{Table: share.ForkIndexTbl})
 }
 
 func ReadErc20Index(ctx context.Context, db kv.Reader) (index *field.BigInt, err error) {
 	var bytesRes []byte
-	bytesRes, err = db.Get(ctx, append(erc20IndexPrefix, append([]byte("/index"))...), &kv.ReadOption{Table: share.ForkTxTbl})
+	bytesRes, err = db.Get(ctx, append(erc20IndexPrefix, append([]byte("/index"))...), &kv.ReadOption{Table: share.ForkIndexTbl})
 	index = &field.BigInt{}
 	index.SetBytes(bytesRes)
 	return
 }
 
 func WriteErc20Index(ctx context.Context, db kv.Writer, index *field.BigInt) error {
-	return db.Put(ctx, append(erc20IndexPrefix, append([]byte("/index"))...), index.Bytes(), &kv.WriteOption{Table: share.ForkTxTbl})
+	return db.Put(ctx, append(erc20IndexPrefix, append([]byte("/index"))...), index.Bytes(), &kv.WriteOption{Table: share.ForkIndexTbl})
 }
 
 func ReadErc721Index(ctx context.Context, db kv.Reader) (index *field.BigInt, err error) {
 	var bytesRes []byte
-	bytesRes, err = db.Get(ctx, append(erc721IndexPrefix, append([]byte("/index"))...), &kv.ReadOption{Table: share.ForkTxTbl})
+	bytesRes, err = db.Get(ctx, append(erc721IndexPrefix, append([]byte("/index"))...), &kv.ReadOption{Table: share.ForkIndexTbl})
 	index = &field.BigInt{}
 	index.SetBytes(bytesRes)
 	return
 }
 
 func WriteErc721Index(ctx context.Context, db kv.Writer, index *field.BigInt) error {
-	return db.Put(ctx, append(erc721IndexPrefix, append([]byte("/index"))...), index.Bytes(), &kv.WriteOption{Table: share.ForkTxTbl})
+	return db.Put(ctx, append(erc721IndexPrefix, append([]byte("/index"))...), index.Bytes(), &kv.WriteOption{Table: share.ForkIndexTbl})
 }
 
 func ReadErc1155Index(ctx context.Context, db kv.Reader) (index *field.BigInt, err error) {
 	var bytesRes []byte
-	bytesRes, err = db.Get(ctx, append(erc1155IndexPrefix, append([]byte("/index"))...), &kv.ReadOption{Table: share.ForkTxTbl})
+	bytesRes, err = db.Get(ctx, append(erc1155IndexPrefix, append([]byte("/index"))...), &kv.ReadOption{Table: share.ForkIndexTbl})
 	index = &field.BigInt{}
 	index.SetBytes(bytesRes)
 	return
 }
 
 func WriteErc1155Index(ctx context.Context, db kv.Writer, index *field.BigInt) error {
-	return db.Put(ctx, append(erc1155IndexPrefix, append([]byte("/index"))...), index.Bytes(), &kv.WriteOption{Table: share.ForkTxTbl})
+	return db.Put(ctx, append(erc1155IndexPrefix, append([]byte("/index"))...), index.Bytes(), &kv.WriteOption{Table: share.ForkIndexTbl})
+}
+
+func ReadErc20ContractIndex(ctx context.Context, db kv.Reader, contract common.Address) (index *field.BigInt, err error) {
+	var bytesRes []byte
+	bytesRes, err = db.Get(ctx, append(append(erc20IndexPrefix, contract.Bytes()...), []byte("/index")...), &kv.ReadOption{Table: share.ForkIndexTbl})
+	index = &field.BigInt{}
+	index.SetBytes(bytesRes)
+	return
+}
+
+func WriteErc20ContractIndex(ctx context.Context, db kv.Writer, contract common.Address, index *field.BigInt) error {
+	return db.Put(ctx, append(append(erc20IndexPrefix, contract.Bytes()...), []byte("/index")...), index.Bytes(), &kv.WriteOption{Table: share.ForkIndexTbl})
+}
+
+func ReadErc721ContractIndex(ctx context.Context, db kv.Reader, contract common.Address) (index *field.BigInt, err error) {
+	var bytesRes []byte
+	bytesRes, err = db.Get(ctx, append(append(erc721IndexPrefix, contract.Bytes()...), []byte("/index")...), &kv.ReadOption{Table: share.ForkIndexTbl})
+	index = &field.BigInt{}
+	index.SetBytes(bytesRes)
+	return
+}
+
+func WriteErc721ContractIndex(ctx context.Context, db kv.Writer, contract common.Address, index *field.BigInt) error {
+	return db.Put(ctx, append(append(erc721IndexPrefix, contract.Bytes()...), []byte("/index")...), index.Bytes(), &kv.WriteOption{Table: share.ForkIndexTbl})
+}
+
+func ReadErc1155ContractIndex(ctx context.Context, db kv.Reader, contract common.Address) (index *field.BigInt, err error) {
+	var bytesRes []byte
+	bytesRes, err = db.Get(ctx, append(append(erc1155IndexPrefix, contract.Bytes()...), []byte("/index")...), &kv.ReadOption{Table: share.ForkIndexTbl})
+	index = &field.BigInt{}
+	index.SetBytes(bytesRes)
+	return
+}
+
+func WriteErc1155ContractIndex(ctx context.Context, db kv.Writer, contract common.Address, index *field.BigInt) error {
+	return db.Put(ctx, append(append(erc1155IndexPrefix, contract.Bytes()...), []byte("/index")...), index.Bytes(), &kv.WriteOption{Table: share.ForkIndexTbl})
 }
