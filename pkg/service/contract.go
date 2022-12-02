@@ -358,7 +358,7 @@ func GetValidateContract(address common.Address) (*types.ContractVerityInfoResp,
 }
 
 func ReadMetaData() (*types.ValidateContractMetadata, error) {
-	jsonFile, err := os.Open("app/pkg/files/metadata.json")
+	jsonFile, err := os.Open("/go/src/app/pkg/files/metadata.json")
 	if err != nil {
 		return nil, err
 	}
