@@ -230,7 +230,7 @@ func (n *Sync) handleJobs(jobs *Jobs) (blockNum uint64, err error) {
 			jobs.Main.CallFrames,
 			n.contractClient,
 			n.forkDb,
-		).handleDeleteFork(ctxMain); errMain != nil {
+		).handleDeleteFork(ctxFork); errMain != nil {
 			log.Errorf("handle delete fork event data: %d", blockNum)
 			return blockNum, errMain
 		}
