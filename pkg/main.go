@@ -18,9 +18,10 @@ package pkg
 
 import (
 	"context"
+	"os"
+
 	"github.com/Ankr-network/uscan/pkg/service"
 	"github.com/Ankr-network/uscan/pkg/storage"
-	"os"
 
 	"github.com/Ankr-network/uscan/pkg/contract"
 	"github.com/Ankr-network/uscan/pkg/core"
@@ -34,14 +35,13 @@ import (
 )
 
 func MainRun(cmd *cobra.Command, args []string) {
-	os.Remove(viper.GetString(share.MdbxPath + "/fork"))
-	//mdbx.NewDB(viper.GetString(share.MdbxPath), viper.GetString(share.MdbxForkPath))
-	storage.St = storage.NewStorage(viper.GetString(share.MdbxPath))
+	os.Remove(viper.GetString(share.MdbxPath) + "/fork")
+	storage := storage.NewStorage(viper.GetString(share.MdbxPath))
 	rpcMgr := rpcclient.NewRpcClient(viper.GetStringSlice(share.RpcUrls))
-	sync := core.NewSync(rpcMgr, contract.NewClient(rpcMgr), storage.St.FullDB, storage.St.ForkDB, viper.GetUint64(share.WorkChan))
+	sync := core.NewSync(rpcMgr, contract.NewClient(rpcMgr), viper.GetInt64(share.ForkBlockNum), storage.FullDB, storage.ForkDB, viper.GetUint64(share.WorkChan))
 	go sync.Execute(context.Background())
 
-	service.NewStore(storage.St)
+	service.NewStore(storage)
 	service.StartHandleContractVerity()
 	_, svc := grace.New(context.Background())
 	svc.RegisterService("web service", apis.Apis)

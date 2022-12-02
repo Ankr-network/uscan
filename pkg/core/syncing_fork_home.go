@@ -115,7 +115,7 @@ func (n *blockHandle) updateForkHome(ctx context.Context) (err error) {
 	return forkdb.WriteHome(ctx, n.db, home)
 }
 
-func (n *blockHandle) deleteForkHome(ctx context.Context) (err error) {
+func (n *blockHandle) deleteForkHome(ctx context.Context, forkBlockNumber *field.BigInt) (err error) {
 	home, err := forkdb.ReadHome(ctx, n.db)
 	if err != nil {
 		if errors.Is(err, kv.NotFound) {
@@ -124,11 +124,14 @@ func (n *blockHandle) deleteForkHome(ctx context.Context) (err error) {
 			return err
 		}
 	}
-	home.TxTotal.Sub(&HomeMap[n.blockData.Number].TxTotal)
-	home.AddressTotal.Sub(&HomeMap[n.blockData.Number].AddressTotal)
-	home.Erc20Total.Sub(&HomeMap[n.blockData.Number].Erc20Total)
-	home.Erc721Total.Sub(&HomeMap[n.blockData.Number].Erc721Total)
-	home.Erc1155Total.Sub(&HomeMap[n.blockData.Number].Erc1155Total)
+	if forkHome, ok := HomeMap[forkBlockNumber]; ok {
+		home.TxTotal.Sub(&forkHome.TxTotal)
+		home.AddressTotal.Sub(&forkHome.AddressTotal)
+		home.Erc20Total.Sub(&forkHome.Erc20Total)
+		home.Erc721Total.Sub(&forkHome.Erc721Total)
+		home.Erc1155Total.Sub(&forkHome.Erc1155Total)
+
+	}
 
 	return forkdb.WriteHome(ctx, n.db, home)
 }

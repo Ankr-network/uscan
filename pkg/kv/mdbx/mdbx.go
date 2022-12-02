@@ -18,6 +18,7 @@ package mdbx
 
 import (
 	"context"
+	"os"
 	"runtime"
 
 	"github.com/Ankr-network/uscan/pkg/kv"
@@ -52,15 +53,11 @@ var schemasSort = []string{
 	share.InventorySortTabl,
 }
 
-var DB *MdbxDB
-var ForkDB *MdbxDB
-
-func NewDB(path, forkPath string) {
-	DB = NewMdbx(path)
-	ForkDB = NewMdbx(forkPath)
-}
-
 func NewMdbx(path string) *MdbxDB {
+	_, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		os.MkdirAll(path, os.ModePerm)
+	}
 	env, err := mdbx.NewEnv()
 	if err != nil {
 		log.Fatal(err)

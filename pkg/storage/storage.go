@@ -3,6 +3,8 @@ package storage
 import (
 	"context"
 	"errors"
+	"math/big"
+
 	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/kv/mdbx"
@@ -11,7 +13,6 @@ import (
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/Ankr-network/uscan/share"
 	"github.com/ethereum/go-ethereum/common"
-	"math/big"
 )
 
 var (
@@ -28,8 +29,6 @@ var (
 	erc1155HolderPrefix = []byte("/erc1155/")
 )
 
-var St *StorageImpl
-
 var _ Storage = (*StorageImpl)(nil)
 
 type StorageImpl struct {
@@ -38,11 +37,9 @@ type StorageImpl struct {
 }
 
 func NewStorage(path string) *StorageImpl {
-	mdbx.ForkDB = mdbx.NewMdbx(path + "/fork")
-	mdbx.DB = mdbx.NewMdbx(path)
 	return &StorageImpl{
-		ForkDB: mdbx.ForkDB,
-		FullDB: mdbx.DB,
+		ForkDB: mdbx.NewMdbx(path + "/fork"),
+		FullDB: mdbx.NewMdbx(path),
 	}
 }
 

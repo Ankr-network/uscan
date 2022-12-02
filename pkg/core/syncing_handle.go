@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"strings"
+
 	"github.com/Ankr-network/uscan/pkg/contract"
 	"github.com/Ankr-network/uscan/pkg/contract/eip"
 	"github.com/Ankr-network/uscan/pkg/field"
@@ -14,7 +16,6 @@ import (
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/Ankr-network/uscan/share"
 	"github.com/ethereum/go-ethereum/common"
-	"strings"
 )
 
 var deleteMap = make(map[string][][]byte, 0)                            // table => key
@@ -138,15 +139,15 @@ func (n *blockHandle) handleMain(ctx context.Context) (err error) {
 	return nil
 }
 
-func (n *blockHandle) handleDeleteFork(ctx context.Context) (err error) {
+func (n *blockHandle) handleDeleteFork(ctx context.Context, blockNumber *field.BigInt) (err error) {
 
-	if err = n.deleteForkHome(ctx); err != nil {
+	if err = n.deleteForkHome(ctx, blockNumber); err != nil {
 		log.Errorf("delete fork home : %v", err)
 		return err
 	}
 
 	for k, v := range blockDeleteMap {
-		if k == n.blockData.Number {
+		if k == blockNumber {
 			for k1, v1 := range v {
 				for _, v2 := range v1 {
 					_, err = n.db.Get(ctx, v2, &kv.ReadOption{Table: k1})
@@ -164,7 +165,7 @@ func (n *blockHandle) handleDeleteFork(ctx context.Context) (err error) {
 	}
 
 	for k, v := range blockIndexMap {
-		if k == n.blockData.Number {
+		if k == blockNumber {
 			for k1, v1 := range v {
 				var i *field.BigInt
 				bytesRes, err := n.db.Get(ctx, []byte(k1), &kv.ReadOption{Table: share.ForkIndexTbl})
@@ -189,7 +190,7 @@ func (n *blockHandle) handleDeleteFork(ctx context.Context) (err error) {
 	}
 
 	for k, v := range blockTotalMap {
-		if k == n.blockData.Number {
+		if k == blockNumber {
 			for k1, v1 := range v {
 				arr := strings.Split(k1, ":")
 				tableName := arr[0]
