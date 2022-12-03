@@ -178,7 +178,7 @@ func (n *Sync) handleJobs(jobs *Jobs) (err error) {
 			n.forkDb,
 		)
 		if errFork = forkHandle.handleFork(ctxFork); errFork != nil {
-			log.Errorf("handle fork event data: %s", jobs.Fork.BlockData.Number.String())
+			log.Errorf("handle fork data: %s", jobs.Fork.BlockData.Number.String())
 			return errFork
 		}
 		delForkBlockNumber := field.NewInt(0)
@@ -192,7 +192,7 @@ func (n *Sync) handleJobs(jobs *Jobs) (err error) {
 	}
 
 	if jobs.Main != nil {
-		log.Infof("handle block: %s", jobs.Main.BlockData.Number.String())
+		log.Infof("handle main block: %s", jobs.Main.BlockData.Number.String())
 		mainHandle = newBlockHandle(
 			jobs.Main.BlockData,
 			jobs.Main.TransactionDatas,
@@ -218,9 +218,9 @@ func (n *Sync) handleJobs(jobs *Jobs) (err error) {
 			return errFork
 		}
 	} else if mainHandle != nil {
-		if errFork = mainHandle.handleContractData(ctxMain); errFork != nil {
+		if errMain = mainHandle.handleContractData(ctxMain); errMain != nil {
 			log.Errorf("handle contract data from main: %s", mainHandle.blockData.Number.String())
-			return errFork
+			return errMain
 		}
 	}
 
