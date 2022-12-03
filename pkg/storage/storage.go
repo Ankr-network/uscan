@@ -152,7 +152,8 @@ func (s *StorageImpl) ReadAccountTxTotal(ctx context.Context, addr common.Addres
 	} else {
 		totalFull.SetBytes(bytesRes)
 	}
-	total.Add(totalFork).Add(totalFull)
+	total.Add(totalFork)
+	total.Add(totalFull)
 	return
 }
 
@@ -258,7 +259,8 @@ func (s *StorageImpl) ReadAccountITxTotal(ctx context.Context, addr common.Addre
 	} else {
 		totalFull.SetBytes(bytesRes)
 	}
-	total.Add(totalFork).Add(totalFull)
+	total.Add(totalFork)
+	total.Add(totalFull)
 	return
 }
 
@@ -366,7 +368,8 @@ func (s *StorageImpl) ReadAccountErc20Total(ctx context.Context, addr common.Add
 	} else {
 		totalFull.SetBytes(bytesRes)
 	}
-	total.Add(totalFork).Add(totalFull)
+	total.Add(totalFork)
+	total.Add(totalFull)
 	return
 }
 
@@ -474,7 +477,8 @@ func (s *StorageImpl) ReadAccountErc721Total(ctx context.Context, addr common.Ad
 	} else {
 		totalFull.SetBytes(bytesRes)
 	}
-	total.Add(totalFork).Add(totalFull)
+	total.Add(totalFork)
+	total.Add(totalFull)
 	return
 }
 
@@ -582,7 +586,8 @@ func (s *StorageImpl) ReadAccountErc1155Total(ctx context.Context, addr common.A
 	} else {
 		totalFull.SetBytes(bytesRes)
 	}
-	total.Add(totalFork).Add(totalFull)
+	total.Add(totalFork)
+	total.Add(totalFull)
 	return
 }
 
@@ -1188,7 +1193,8 @@ func (s *StorageImpl) ReadITxTotal(ctx context.Context, hash common.Hash) (total
 	} else {
 		totalFull.SetBytes(bytesRes)
 	}
-	total.Add(totalFork).Add(totalFull)
+	total.Add(totalFork)
+	total.Add(totalFull)
 	return
 }
 
@@ -1316,7 +1322,8 @@ func (s *StorageImpl) ReadTxTotal(ctx context.Context) (total *field.BigInt, err
 	} else {
 		totalFull.SetBytes(bytesRes)
 	}
-	total.Add(totalFork).Add(totalFull)
+	total.Add(totalFork)
+	total.Add(totalFull)
 	return
 }
 
@@ -1369,7 +1376,8 @@ func (s *StorageImpl) ReadErc20Total(ctx context.Context) (total *field.BigInt, 
 	} else {
 		totalFull.SetBytes(bytesRes)
 	}
-	total.Add(totalFork).Add(totalFull)
+	total.Add(totalFork)
+	total.Add(totalFull)
 	return
 }
 
@@ -1401,7 +1409,8 @@ func (s *StorageImpl) ReadErc721Total(ctx context.Context) (total *field.BigInt,
 	} else {
 		totalFull.SetBytes(bytesRes)
 	}
-	total.Add(totalFork).Add(totalFull)
+	total.Add(totalFork)
+	total.Add(totalFull)
 	return
 }
 
@@ -1433,7 +1442,8 @@ func (s *StorageImpl) ReadErc1155Total(ctx context.Context) (total *field.BigInt
 	} else {
 		totalFull.SetBytes(bytesRes)
 	}
-	total.Add(totalFork).Add(totalFull)
+	total.Add(totalFork)
+	total.Add(totalFull)
 	return
 }
 
@@ -1576,7 +1586,8 @@ func (s *StorageImpl) ReadErc20ContractTotal(ctx context.Context, contract commo
 	} else {
 		totalFull.SetBytes(bytesRes)
 	}
-	total.Add(totalFork).Add(totalFull)
+	total.Add(totalFork)
+	total.Add(totalFull)
 	return
 }
 
@@ -1608,7 +1619,8 @@ func (s *StorageImpl) ReadErc721ContractTotal(ctx context.Context, contract comm
 	} else {
 		totalFull.SetBytes(bytesRes)
 	}
-	total.Add(totalFork).Add(totalFull)
+	total.Add(totalFork)
+	total.Add(totalFull)
 	return
 }
 
@@ -1640,7 +1652,8 @@ func (s *StorageImpl) ReadErc1155ContractTotal(ctx context.Context, contract com
 	} else {
 		totalFull.SetBytes(bytesRes)
 	}
-	total.Add(totalFork).Add(totalFull)
+	total.Add(totalFork)
+	total.Add(totalFull)
 	return
 }
 
