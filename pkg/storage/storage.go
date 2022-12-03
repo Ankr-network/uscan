@@ -69,6 +69,7 @@ func (s *StorageImpl) ReadAccount(ctx context.Context, addr common.Address) (acc
 	var bytesRes []byte
 	accFork := &types.Account{}
 	accFull := &types.Account{}
+	acc = &types.Account{}
 
 	bytesRes, err = s.ForkDB.Get(ctx, append([]byte("/fork/info/"), addr.Bytes()...), &kv.ReadOption{Table: share.ForkAccountsTbl})
 	if err != nil {
@@ -98,7 +99,7 @@ func (s *StorageImpl) ReadAccount(ctx context.Context, addr common.Address) (acc
 		}
 	}
 
-	if accFork.Owner.String() != "" && accFull.Owner.String() != "" {
+	if accFork.Owner.String() != "0x0000000000000000000000000000000000000000" && accFull.Owner.String() != "0x0000000000000000000000000000000000000000" {
 		acc = &types.Account{
 			Owner:            accFork.Owner,
 			Erc20:            accFork.Erc20,
@@ -116,7 +117,7 @@ func (s *StorageImpl) ReadAccount(ctx context.Context, addr common.Address) (acc
 			TxHash:           accFork.TxHash,
 			Retry:            accFork.Retry,
 		}
-	} else if accFork.Owner.String() != "" {
+	} else if accFork.Owner.String() != "0x0000000000000000000000000000000000000000" {
 		acc = accFork
 	} else {
 		acc = accFull
@@ -1058,6 +1059,7 @@ func (s *StorageImpl) ReadHome(ctx context.Context) (home *types.Home, err error
 	var txs []*types.TxSim
 	homeFork := &types.Home{}
 	homeFull := &types.Home{}
+	home = &types.Home{}
 
 	bytesRes, err = s.ForkDB.Get(ctx, []byte("/fork/home"), &kv.ReadOption{Table: share.ForkHomeTbl})
 	if err != nil {
