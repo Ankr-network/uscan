@@ -136,17 +136,3 @@ func (n *blockHandle) writeForkTxTotal(ctx context.Context) error {
 	}
 	return nil
 }
-
-func (n *blockHandle) deleteForkTxAndRt(ctx context.Context, tx *types.Tx, rt *types.Rt) (err error) {
-	if err = forkdb.DeleteTx(ctx, n.db, tx.Hash); err != nil {
-		log.Errorf("delete fork tx(%s): %v", tx.Hash.Hex(), err)
-		return err
-	}
-
-	if err = forkdb.DeleteRt(ctx, n.db, tx.Hash); err != nil {
-		log.Errorf("delete fork rt: %v", err)
-		return err
-	}
-
-	return nil
-}
