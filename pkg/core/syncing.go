@@ -212,13 +212,14 @@ func (n *Sync) handleJobs(jobs *Jobs) (err error) {
 	}
 
 	if forkHandle != nil {
+		forkHandle.db = n.db
 		if errFork = forkHandle.handleContractData(ctxFork); errFork != nil {
 			log.Errorf("handle contract data from fork: %s", forkHandle.blockData.Number.String())
 			return errFork
 		}
 	} else if mainHandle != nil {
 		if errFork = mainHandle.handleContractData(ctxMain); errFork != nil {
-			log.Errorf("handle contract data from fork: %s", mainHandle.blockData.Number.String())
+			log.Errorf("handle contract data from main: %s", mainHandle.blockData.Number.String())
 			return errFork
 		}
 	}
