@@ -23,10 +23,6 @@ var (
 	forkErc20TrasferAccountTotalMap   = utils.NewCache()
 	forkErc721TrasferAccountTotalMap  = utils.NewCache()
 	forkErc1155TrasferAccountTotalMap = utils.NewCache()
-
-	forkErc20ContractTransferTotal   *field.BigInt
-	forkErc721ContractTransferTotal  *field.BigInt
-	forkErc1155ContractTransferTotal *field.BigInt
 )
 
 // ------------------- erc20 transfer -----------------
@@ -90,39 +86,6 @@ func (n *blockHandle) writeForkErc20Transfer(ctx context.Context, data *types.Er
 			}
 		}
 	}
-
-	if forkErc20ContractTransferTotal == nil {
-		forkErc20ContractTransferTotal, err = forkdb.ReadErc20ContractTotal(ctx, n.db, data.Contract)
-		if err != nil {
-			if errors.Is(err, kv.NotFound) {
-				forkErc20ContractTransferTotal = field.NewInt(0)
-				err = nil
-			} else {
-				log.Errorf("get erc20 fork contract transfer total: %v", err)
-				return err
-			}
-		}
-	}
-	forkErc20ContractTransferTotal.Add(field.NewInt(1))
-	err = forkdb.WriteErc20ContractTransfer(ctx, n.db, data.Contract, forkErc20ContractTransferTotal, forkErc20TrasferTotal)
-	if err != nil {
-		log.Errorf("write erc20 fork contract transfer: %v", err)
-	}
-	deleteMap[share.ForkTransferTbl] = append(deleteMap[share.ForkTransferTbl], append(append([]byte("/fork/erc20/"), data.Contract.Bytes()...), append([]byte("/"), forkErc20ContractTransferTotal.Bytes()...)...))
-	if indexMap["/fork/erc20/"+data.Contract.String()+"/"+forkErc20ContractTransferTotal.String()] == nil {
-		indexMap["/fork/erc20/"+data.Contract.String()+"/"+forkErc20ContractTransferTotal.String()] = field.NewInt(0)
-	}
-	indexMap["/fork/erc20/"+data.Contract.String()+"/"+forkErc20ContractTransferTotal.String()].Add(field.NewInt(1))
-
-	err = forkdb.WriteErc20ContractTotal(ctx, n.db, data.Contract, forkErc20ContractTransferTotal)
-	if err != nil {
-		log.Errorf("write erc20 fork contract total: %v", err)
-	}
-	if totalMap[share.ForkTransferTbl+":"+"/fork/erc20/"+data.Contract.String()+"/total"] == nil {
-		totalMap[share.ForkTransferTbl+":"+"/fork/erc20/"+data.Contract.String()+"/total"] = field.NewInt(0)
-	}
-	totalMap[share.ForkTransferTbl+":"+"/fork/erc20/"+data.Contract.String()+"/total"].Add(field.NewInt(1))
-
 	return nil
 }
 
@@ -176,7 +139,7 @@ func (n *blockHandle) updateForkErc20Account(ctx context.Context, addr common.Ad
 		n.newErc20Total.Add(field.NewInt(1))
 	}
 
-	if acc.Retry.Cmp(field.NewInt(3)) < 0 {
+	if acc.Retry.Cmp(field.NewInt(6)) < 0 {
 		if acc.Name == "" {
 			if acc.Name, err = n.contractClient.GetContractName(addr.Hex()); err != nil {
 				acc.Retry.Add(field.NewInt(1))
@@ -189,7 +152,7 @@ func (n *blockHandle) updateForkErc20Account(ctx context.Context, addr common.Ad
 			}
 		}
 
-		if acc.Decimals.String() == "0" {
+		if acc.Decimals.String() == "0x0" {
 			var symbol *big.Int
 			symbol, err = n.contractClient.GetContractDecimals(addr.Hex())
 			if err == nil {
@@ -273,39 +236,6 @@ func (n *blockHandle) writeForkErc721Transfer(ctx context.Context, data *types.E
 			}
 		}
 	}
-
-	if forkErc721ContractTransferTotal == nil {
-		forkErc721ContractTransferTotal, err = forkdb.ReadErc721ContractTotal(ctx, n.db, data.Contract)
-		if err != nil {
-			if errors.Is(err, kv.NotFound) {
-				forkErc721ContractTransferTotal = field.NewInt(0)
-				err = nil
-			} else {
-				log.Errorf("get erc721 fork contract transfer total: %v", err)
-				return err
-			}
-		}
-	}
-	forkErc721ContractTransferTotal.Add(field.NewInt(1))
-	err = forkdb.WriteErc721ContractTransfer(ctx, n.db, data.Contract, forkErc721ContractTransferTotal, forkErc721TrasferTotal)
-	if err != nil {
-		log.Errorf("write erc721 fork contract transfer: %v", err)
-	}
-	deleteMap[share.ForkTransferTbl] = append(deleteMap[share.ForkTransferTbl], append(append([]byte("/fork/erc721/"), data.Contract.Bytes()...), append([]byte("/"), forkErc721ContractTransferTotal.Bytes()...)...))
-	if indexMap["/fork/erc721/"+data.Contract.String()+"/"+forkErc721ContractTransferTotal.String()] == nil {
-		indexMap["/fork/erc721/"+data.Contract.String()+"/"+forkErc721ContractTransferTotal.String()] = field.NewInt(0)
-	}
-	indexMap["/fork/erc721/"+data.Contract.String()+"/"+forkErc721ContractTransferTotal.String()].Add(field.NewInt(1))
-
-	err = forkdb.WriteErc721ContractTotal(ctx, n.db, data.Contract, forkErc721ContractTransferTotal)
-	if err != nil {
-		log.Errorf("write erc721 fork contract total: %v", err)
-	}
-	if totalMap[share.ForkTransferTbl+":"+"/fork/erc721/"+data.Contract.String()+"/total"] == nil {
-		totalMap[share.ForkTransferTbl+":"+"/fork/erc721/"+data.Contract.String()+"/total"] = field.NewInt(0)
-	}
-	totalMap[share.ForkTransferTbl+":"+"/fork/erc721/"+data.Contract.String()+"/total"].Add(field.NewInt(1))
-
 	return nil
 }
 
@@ -359,7 +289,7 @@ func (n *blockHandle) updateForkErc721Account(ctx context.Context, addr common.A
 		n.newErc721Total.Add(field.NewInt(1))
 	}
 
-	if acc.Retry.Cmp(field.NewInt(3)) < 0 {
+	if acc.Retry.Cmp(field.NewInt(6)) < 0 {
 		if acc.Name == "" {
 			acc.Name, err = n.contractClient.GetContractName(addr.Hex())
 			if err != nil {
@@ -446,39 +376,6 @@ func (n *blockHandle) writeForkErc1155Transfer(ctx context.Context, data *types.
 			return err
 		}
 	}
-
-	if forkErc1155ContractTransferTotal == nil {
-		forkErc1155ContractTransferTotal, err = forkdb.ReadErc1155ContractTotal(ctx, n.db, data.Contract)
-		if err != nil {
-			if errors.Is(err, kv.NotFound) {
-				forkErc1155ContractTransferTotal = field.NewInt(0)
-				err = nil
-			} else {
-				log.Errorf("get erc1155 fork contract transfer total: %v", err)
-				return err
-			}
-		}
-	}
-	forkErc1155ContractTransferTotal.Add(field.NewInt(1))
-	err = forkdb.WriteErc1155ContractTransfer(ctx, n.db, data.Contract, forkErc1155ContractTransferTotal, forkErc1155TrasferTotal)
-	if err != nil {
-		log.Errorf("write erc1155 fork contract transfer: %v", err)
-	}
-	deleteMap[share.ForkTransferTbl] = append(deleteMap[share.ForkTransferTbl], append(append([]byte("/fork/erc1155/"), data.Contract.Bytes()...), append([]byte("/"), forkErc1155ContractTransferTotal.Bytes()...)...))
-	if indexMap["/fork/erc1155/"+data.Contract.String()+"/"+forkErc1155ContractTransferTotal.String()] == nil {
-		indexMap["/fork/erc1155/"+data.Contract.String()+"/"+forkErc1155ContractTransferTotal.String()] = field.NewInt(0)
-	}
-	indexMap["/fork/erc1155/"+data.Contract.String()+"/"+forkErc1155ContractTransferTotal.String()].Add(field.NewInt(1))
-
-	err = forkdb.WriteErc1155ContractTotal(ctx, n.db, data.Contract, forkErc1155ContractTransferTotal)
-	if err != nil {
-		log.Errorf("write erc1155 fork contract total: %v", err)
-	}
-	if totalMap[share.ForkTransferTbl+":"+"/fork/erc1155/"+data.Contract.String()+"/total"] == nil {
-		totalMap[share.ForkTransferTbl+":"+"/fork/erc1155/"+data.Contract.String()+"/total"] = field.NewInt(0)
-	}
-	totalMap[share.ForkTransferTbl+":"+"/fork/erc1155/"+data.Contract.String()+"/total"].Add(field.NewInt(1))
-
 	return nil
 }
 
@@ -532,7 +429,7 @@ func (n *blockHandle) updateForkErc1155Account(ctx context.Context, addr common.
 		n.newErc1155Total.Add(field.NewInt(1))
 	}
 
-	if acc.Retry.Cmp(field.NewInt(3)) < 0 {
+	if acc.Retry.Cmp(field.NewInt(6)) < 0 {
 		if acc.Name == "" {
 			acc.Name, err = n.contractClient.GetContractName(addr.Hex())
 			if err != nil {

@@ -78,10 +78,4 @@ type Storage interface {
 	ReadErc20Transfer(ctx context.Context, index *field.BigInt) (data *types.Erc20Transfer, err error)
 	ReadErc721Transfer(ctx context.Context, index *field.BigInt) (data *types.Erc721Transfer, err error)
 	ReadErc1155Transfer(ctx context.Context, index *field.BigInt) (data *types.Erc1155Transfer, err error)
-	ReadErc20ContractTotal(ctx context.Context, contract common.Address) (total *field.BigInt, err error)
-	ReadErc721ContractTotal(ctx context.Context, contract common.Address) (total *field.BigInt, err error)
-	ReadErc1155ContractTotal(ctx context.Context, contract common.Address) (total *field.BigInt, err error)
-	ReadErc20ContractTransfer(ctx context.Context, contract common.Address, index *field.BigInt) (data *field.BigInt, err error)
-	ReadErc721ContractTransfer(ctx context.Context, contract common.Address, index *field.BigInt) (data *field.BigInt, err error)
-	ReadErc1155ContractTransfer(ctx context.Context, contract common.Address, index *field.BigInt) (data *field.BigInt, err error)
 }

@@ -27,10 +27,6 @@ var (
 	erc20TrasferAccountTotalMap   = utils.NewCache()
 	erc721TrasferAccountTotalMap  = utils.NewCache()
 	erc1155TrasferAccountTotalMap = utils.NewCache()
-
-	erc20ContractTransferTotal   *field.BigInt
-	erc721ContractTransferTotal  *field.BigInt
-	erc1155ContractTransferTotal *field.BigInt
 )
 
 // ------------------- erc20 transfer -----------------
@@ -89,29 +85,6 @@ func (n *blockHandle) writeErc20Transfer(ctx context.Context, data *types.Erc20T
 			}
 		}
 	}
-
-	if erc20ContractTransferTotal == nil {
-		erc20ContractTransferTotal, err = fulldb.ReadErc20ContractTotal(ctx, n.db, data.Contract)
-		if err != nil {
-			if errors.Is(err, kv.NotFound) {
-				erc20ContractTransferTotal = field.NewInt(0)
-				err = nil
-			} else {
-				log.Errorf("get erc20 contract transfer total: %v", err)
-				return err
-			}
-		}
-	}
-	erc20ContractTransferTotal.Add(field.NewInt(1))
-	err = fulldb.WriteErc20ContractTransfer(ctx, n.db, data.Contract, erc20ContractTransferTotal, erc20TrasferTotal)
-	if err != nil {
-		log.Errorf("write erc20 contract transfer: %v", err)
-	}
-	err = fulldb.WriteErc20ContractTotal(ctx, n.db, data.Contract, erc20ContractTransferTotal)
-	if err != nil {
-		log.Errorf("write erc20 contract total: %v", err)
-	}
-
 	return nil
 }
 
@@ -155,7 +128,7 @@ func (n *blockHandle) updateErc20Account(ctx context.Context, addr common.Addres
 		n.newErc20Total.Add(field.NewInt(1))
 	}
 
-	if acc.Retry.Cmp(field.NewInt(3)) < 0 {
+	if acc.Retry.Cmp(field.NewInt(6)) < 0 {
 		if acc.Name == "" {
 			if acc.Name, err = n.contractClient.GetContractName(addr.Hex()); err != nil {
 				acc.Retry.Add(field.NewInt(1))
@@ -168,7 +141,7 @@ func (n *blockHandle) updateErc20Account(ctx context.Context, addr common.Addres
 			}
 		}
 
-		if acc.Decimals.String() == "0" {
+		if acc.Decimals.String() == "0x0" {
 			var symbol *big.Int
 			symbol, err = n.contractClient.GetContractDecimals(addr.Hex())
 			if err == nil {
@@ -273,29 +246,6 @@ func (n *blockHandle) writeErc721Transfer(ctx context.Context, data *types.Erc72
 			}
 		}
 	}
-
-	if erc721ContractTransferTotal == nil {
-		erc721ContractTransferTotal, err = fulldb.ReadErc721ContractTotal(ctx, n.db, data.Contract)
-		if err != nil {
-			if errors.Is(err, kv.NotFound) {
-				erc721ContractTransferTotal = field.NewInt(0)
-				err = nil
-			} else {
-				log.Errorf("get erc721 contract transfer total: %v", err)
-				return err
-			}
-		}
-	}
-	erc721ContractTransferTotal.Add(field.NewInt(1))
-	err = fulldb.WriteErc721ContractTransfer(ctx, n.db, data.Contract, erc721ContractTransferTotal, erc721TrasferTotal)
-	if err != nil {
-		log.Errorf("write erc721 contract transfer: %v", err)
-	}
-	err = fulldb.WriteErc721ContractTotal(ctx, n.db, data.Contract, erc721ContractTransferTotal)
-	if err != nil {
-		log.Errorf("write erc721 contract total: %v", err)
-	}
-
 	return nil
 }
 
@@ -339,7 +289,7 @@ func (n *blockHandle) updateErc721Account(ctx context.Context, addr common.Addre
 		n.newErc721Total.Add(field.NewInt(1))
 	}
 
-	if acc.Retry.Cmp(field.NewInt(3)) < 0 {
+	if acc.Retry.Cmp(field.NewInt(6)) < 0 {
 		if acc.Name == "" {
 			acc.Name, err = n.contractClient.GetContractName(addr.Hex())
 			if err != nil {
@@ -453,29 +403,6 @@ func (n *blockHandle) writeErc1155Transfer(ctx context.Context, data *types.Erc1
 			return err
 		}
 	}
-
-	if erc1155ContractTransferTotal == nil {
-		erc1155ContractTransferTotal, err = fulldb.ReadErc1155ContractTotal(ctx, n.db, data.Contract)
-		if err != nil {
-			if errors.Is(err, kv.NotFound) {
-				erc1155ContractTransferTotal = field.NewInt(0)
-				err = nil
-			} else {
-				log.Errorf("get erc1155 contract transfer total: %v", err)
-				return err
-			}
-		}
-	}
-	erc1155ContractTransferTotal.Add(field.NewInt(1))
-	err = fulldb.WriteErc1155ContractTransfer(ctx, n.db, data.Contract, erc1155ContractTransferTotal, erc1155TrasferTotal)
-	if err != nil {
-		log.Errorf("write erc1155 contract transfer: %v", err)
-	}
-	err = fulldb.WriteErc1155ContractTotal(ctx, n.db, data.Contract, erc1155ContractTransferTotal)
-	if err != nil {
-		log.Errorf("write erc1155 contract total: %v", err)
-	}
-
 	return nil
 }
 
@@ -519,7 +446,7 @@ func (n *blockHandle) updateErc1155Account(ctx context.Context, addr common.Addr
 		n.newErc1155Total.Add(field.NewInt(1))
 	}
 
-	if acc.Retry.Cmp(field.NewInt(3)) < 0 {
+	if acc.Retry.Cmp(field.NewInt(6)) < 0 {
 		if acc.Name == "" {
 			acc.Name, err = n.contractClient.GetContractName(addr.Hex())
 			if err != nil {
