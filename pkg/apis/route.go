@@ -5,9 +5,11 @@ import (
 	"github.com/Ankr-network/uscan/pkg/response"
 	"github.com/Ankr-network/uscan/pkg/service"
 	"github.com/Ankr-network/uscan/pkg/types"
+	"github.com/Ankr-network/uscan/share"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gofiber/fiber/v2"
 	"github.com/mitchellh/mapstructure"
+	"github.com/spf13/viper"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
@@ -28,7 +30,6 @@ func SetupRouter(g fiber.Router) {
 	//g.Get("/txs/:txHash/internal", getInternalTx)
 
 	g.Get("/txs/:txHash/base", getTxBase)
-	//g.Get("/txs/:txHash/event-logs", getTxEventLogs) // 合并到/txs/:txHas
 
 	g.Get("/txs/:txHash/tracetx", getTraceTx)
 	g.Get("/txs/:txHash/tracetx2", getTraceTx2)
@@ -61,6 +62,19 @@ func SetupRouter(g fiber.Router) {
 	g.Get("/contracts/metadata", ReadValidateContractMetadata)
 	g.Post("/contracts/metadata", WriteValidateContractMetadata)
 	g.Get("/contracts/:address/content", getValidateContract)
+
+	g.Get("/custom-params", getCustomParameters)
+}
+
+func getCustomParameters(c *fiber.Ctx) error {
+	appTitle := viper.GetString(share.APPTitle)
+	unitDisplay := viper.GetString(share.UnitDisplay)
+	nodeUrl := viper.GetString(share.NodeUrl)
+	return c.Status(http.StatusOK).JSON(response.Ok(map[string]interface{}{
+		"appTitle":    appTitle,
+		"unitDisplay": unitDisplay,
+		"nodeUrl":     nodeUrl,
+	}))
 }
 
 func search(c *fiber.Ctx) error {

@@ -56,6 +56,10 @@ func init() {
 	rootCmd.Flags().StringP(share.MdbxPath, "", "uscandb", "mdbx path")
 	rootCmd.Flags().Uint64P(share.ForkBlockNum, "", 12, "fork block number")
 
+	rootCmd.Flags().StringP(share.APPTitle, "", "", "app_title is a user-defined browser title, such as Coq, which displays Coq Chain Scan")
+	rootCmd.Flags().StringP(share.UnitDisplay, "", "", "unit_display indicates the unit specified by the user, for example, Eth, Peel, Bnb")
+	rootCmd.Flags().StringP(share.NodeUrl, "", "", "The node_url is the node to be used when you need to interact with the contract")
+
 	// bind viper
 	viper.BindPFlag(share.HttpAddr, rootCmd.Flags().Lookup(share.HttpAddr))
 	viper.BindPFlag(share.HttpPort, rootCmd.Flags().Lookup(share.HttpPort))
@@ -63,6 +67,11 @@ func init() {
 	viper.BindPFlag(share.WorkChan, rootCmd.Flags().Lookup(share.WorkChan))
 	viper.BindPFlag(share.MdbxPath, rootCmd.Flags().Lookup(share.MdbxPath))
 	viper.BindPFlag(share.ForkBlockNum, rootCmd.Flags().Lookup(share.ForkBlockNum))
+
+	viper.BindPFlag(share.APPTitle, rootCmd.Flags().Lookup(share.APPTitle))
+	viper.BindPFlag(share.UnitDisplay, rootCmd.Flags().Lookup(share.UnitDisplay))
+	viper.BindPFlag(share.NodeUrl, rootCmd.Flags().Lookup(share.NodeUrl))
+
 }
 
 // initConfig reads in config file and ENV variables if set.
