@@ -34,24 +34,6 @@ race:
 start: compile
 	bin/uscan --config .uscan.yaml
 
-.PHONY: init
-init:
-	@echo "Init data dir...."
-	mkdir $(HOME)/uscan-deploy  &&  cp docker-compose.yaml $(HOME)/uscan-deploy/
-	@echo "build docker image..."
-	docker build -t uscan:latest .
-	docker image prune -f --filter label=stage=uscan-builder
-	@echo "init finish! Please go to $(HOME)/uscan-deploy"
-
-.PHONY: init
-init:
-	@echo "Init data dir...."
-	mkdir $(HOME)/uscan-deploy  &&  cp docker-compose.yaml $(HOME)/uscan-deploy/
-	@echo "build docker image..."
-	docker build -t uscan:latest .
-	docker image prune -f --filter label=stage=uscan-builder
-	@echo "init finish! Please go to $(HOME)/uscan-deploy"
-
 
 .PHONY: build
 build:
