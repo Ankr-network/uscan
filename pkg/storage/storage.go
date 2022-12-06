@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"errors"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"math/big"
 
 	"github.com/Ankr-network/uscan/pkg/field"
@@ -1768,4 +1769,139 @@ func (s *StorageImpl) ReadErc1155ContractTransfer(ctx context.Context, contract 
 	data = &field.BigInt{}
 	data.SetBytes(bytesRes)
 	return
+}
+
+func (s *StorageImpl) GetErc20ContractTransfer(ctx context.Context, contract common.Address, offset, limit int64) (data []*types.Erc20Transfer, total *field.BigInt, err error) {
+	transfer := &types.Erc20Transfer{}
+	index := &field.BigInt{}
+	data = make([]*types.Erc20Transfer, 0)
+	total, err = s.ReadErc20ContractTotal(ctx, contract)
+	if err != nil {
+		if err == kv.NotFound {
+			return data, field.NewInt(0), nil
+		}
+		return nil, field.NewInt(0), err
+	}
+	if total.Cmp(field.NewInt(0)) == 0 {
+		return data, field.NewInt(0), nil
+	}
+
+	begin, end := ParsePage(total, offset, limit)
+	p := begin
+
+	for {
+		index, err = s.ReadErc20ContractTransfer(ctx, contract, p)
+		if err != nil {
+			return nil, total, err
+		}
+		transfer, err = s.ReadErc20Transfer(ctx, index)
+		if err != nil {
+			return nil, total, err
+		}
+		data = append(data, transfer)
+		if p.String() == end.String() {
+			break
+		}
+		p.Add(field.NewInt(-1))
+	}
+	return data, total, nil
+}
+
+func (s *StorageImpl) GetErc721ContractTransfer(ctx context.Context, contract common.Address, offset, limit int64) (data []*types.Erc721Transfer, total *field.BigInt, err error) {
+	transfer := &types.Erc721Transfer{}
+	index := &field.BigInt{}
+	data = make([]*types.Erc721Transfer, 0)
+	total, err = s.ReadErc721ContractTotal(ctx, contract)
+	if err != nil {
+		if err == kv.NotFound {
+			return data, field.NewInt(0), nil
+		}
+		return nil, field.NewInt(0), err
+	}
+	if total.Cmp(field.NewInt(0)) == 0 {
+		return data, field.NewInt(0), nil
+	}
+
+	begin, end := ParsePage(total, offset, limit)
+	p := begin
+
+	for {
+		index, err = s.ReadErc721ContractTransfer(ctx, contract, p)
+		if err != nil {
+			return nil, total, err
+		}
+		transfer, err = s.ReadErc721Transfer(ctx, index)
+		if err != nil {
+			return nil, total, err
+		}
+		data = append(data, transfer)
+		if p.String() == end.String() {
+			break
+		}
+		p.Add(field.NewInt(-1))
+	}
+	return data, total, nil
+}
+
+func (s *StorageImpl) GetErc1155ContractTransfer(ctx context.Context, contract common.Address, offset, limit int64) (data []*types.Erc1155Transfer, total *field.BigInt, err error) {
+	transfer := &types.Erc1155Transfer{}
+	index := &field.BigInt{}
+	data = make([]*types.Erc1155Transfer, 0)
+	total, err = s.ReadErc1155ContractTotal(ctx, contract)
+	if err != nil {
+		if err == kv.NotFound {
+			return data, field.NewInt(0), nil
+		}
+		return nil, field.NewInt(0), err
+	}
+	if total.Cmp(field.NewInt(0)) == 0 {
+		return data, field.NewInt(0), nil
+	}
+
+	begin, end := ParsePage(total, offset, limit)
+	p := begin
+
+	for {
+		index, err = s.ReadErc1155ContractTransfer(ctx, contract, p)
+		if err != nil {
+			return nil, total, err
+		}
+		transfer, err = s.ReadErc1155Transfer(ctx, index)
+		if err != nil {
+			return nil, total, err
+		}
+		data = append(data, transfer)
+		if p.String() == end.String() {
+			break
+		}
+		p.Add(field.NewInt(-1))
+	}
+	return data, total, nil
+}
+
+func ParsePage(num *field.BigInt, offset, limit int64) (*field.BigInt, *field.BigInt) {
+	if uint64(offset) >= num.ToUint64() {
+		offset = 0
+	}
+
+	n := field.BigInt(*DecodeBig(num.String()))
+
+	n.Add(field.NewInt(-offset))
+	beginHex := n.String()
+
+	n.Add(field.NewInt(-(limit - 1)))
+	endHex := n.String()
+	if n.Cmp(field.NewInt(0)) <= 0 {
+		endHex = "0x1"
+	}
+
+	begin := field.BigInt(*DecodeBig(beginHex))
+	end := field.BigInt(*DecodeBig(endHex))
+
+	return &begin, &end
+}
+
+func DecodeBig(num string) *big.Int {
+	res, _ := hexutil.DecodeBig(num)
+	return res
 }
