@@ -257,24 +257,198 @@ func ListTokenTransfers(address common.Address, typ string, pager *types.Pager) 
 	var err error
 	switch typ {
 	case "erc20":
-		items, total, err = GetAccountErc20Txns(pager, address)
+		items, total, err = ListErc20Transfers(pager, address)
 		if err != nil {
 			return nil, err
 		}
 	case "erc721":
-		items, total, err = GetAccountErc721Txs(pager, address)
+		items, total, err = ListErc721Transfers(pager, address)
 		if err != nil {
 			return nil, err
 		}
 	case "erc1155":
-		items, total, err = GetAccountErc1155Txs(pager, address)
+		items, total, err = ListErc1155Transfers(pager, address)
 		if err != nil {
 			return nil, err
 		}
+	default:
+		items = make([]interface{}, 0)
 	}
 	resp := map[string]interface{}{"items": items, "total": total}
 	return resp, nil
 }
+
+func ListErc20Transfers(pager *types.Pager, address common.Address) ([]*types.Erc20TxResp, uint64, error) {
+	resp := make([]*types.Erc20TxResp, 0)
+	txs, total, err := store.GetErc20ContractTransfer(address, pager.Offset, pager.Limit)
+	if err != nil {
+		return nil, 0, err
+	}
+	if total.ToUint64() == 0 {
+		return resp, 0, nil
+	}
+	addresses := make(map[string]common.Address)
+	for _, tx := range txs {
+		t := &types.Erc20TxResp{
+			TransactionHash: tx.TransactionHash.String(),
+			BlockHash:       tx.TransactionHash.String(),
+			BlockNumber:     DecodeBig(tx.BlockNumber.String()).String(),
+			Contract:        tx.Contract.String(),
+			Method:          hexutil.Bytes(tx.Method).String(),
+			From:            tx.From.Hex(),
+			To:              tx.To.Hex(),
+			Value:           tx.Amount.String(),
+			CreatedTime:     tx.TimeStamp.ToUint64(),
+		}
+		resp = append(resp, t)
+
+		addresses[tx.From.String()] = tx.From
+		addresses[tx.To.String()] = tx.To
+		addresses[tx.Contract.String()] = tx.Contract
+	}
+
+	accounts, err := GetAccounts(addresses)
+	if err != nil {
+		return nil, 0, err
+	}
+	for _, t := range resp {
+		if from, ok := accounts[t.From]; ok {
+			t.FromName = from.Name
+			t.FromSymbol = from.Symbol
+			if from.Erc20 || from.Erc721 || from.Erc1155 {
+				t.FromContract = true
+			}
+		}
+		if to, ok := accounts[t.To]; ok {
+			t.ToName = to.Name
+			t.ToSymbol = to.Symbol
+			if to.Erc20 || to.Erc721 || to.Erc1155 {
+				t.ToContract = true
+			}
+		}
+		if c, ok := accounts[t.Contract]; ok {
+			t.ContractName = c.Name
+			t.ContractSymbol = c.Symbol
+		}
+	}
+
+	return resp, total.ToUint64(), nil
+}
+func ListErc721Transfers(pager *types.Pager, address common.Address) ([]*types.Erc721TxResp, uint64, error) {
+	resp := make([]*types.Erc721TxResp, 0)
+	txs, total, err := store.GetErc721ContractTransfer(address, pager.Offset, pager.Limit)
+	if err != nil {
+		return nil, 0, err
+	}
+	if total.ToUint64() == 0 {
+		return resp, 0, nil
+	}
+	addresses := make(map[string]common.Address)
+	for _, tx := range txs {
+		t := &types.Erc721TxResp{
+			TransactionHash: tx.TransactionHash.String(),
+			BlockHash:       tx.TransactionHash.String(),
+			BlockNumber:     DecodeBig(tx.BlockNumber.String()).String(),
+			Contract:        tx.Contract.String(),
+			Method:          hexutil.Bytes(tx.Method).String(),
+			From:            tx.From.Hex(),
+			To:              tx.To.Hex(),
+			TokenID:         tx.TokenId.ToUint64(),
+			CreatedTime:     tx.TimeStamp.ToUint64(),
+		}
+		resp = append(resp, t)
+
+		addresses[tx.From.String()] = tx.From
+		addresses[tx.To.String()] = tx.To
+		addresses[tx.Contract.String()] = tx.Contract
+	}
+
+	accounts, err := GetAccounts(addresses)
+	if err != nil {
+		return nil, 0, err
+	}
+	for _, t := range resp {
+		if from, ok := accounts[t.From]; ok {
+			t.FromName = from.Name
+			t.FromSymbol = from.Symbol
+			if from.Erc20 || from.Erc721 || from.Erc1155 {
+				t.FromContract = true
+			}
+		}
+		if to, ok := accounts[t.To]; ok {
+			t.ToName = to.Name
+			t.ToSymbol = to.Symbol
+			if to.Erc20 || to.Erc721 || to.Erc1155 {
+				t.ToContract = true
+			}
+		}
+		if c, ok := accounts[t.Contract]; ok {
+			t.ContractName = c.Name
+			t.ContractSymbol = c.Symbol
+		}
+	}
+
+	return resp, total.ToUint64(), nil
+}
+func ListErc1155Transfers(pager *types.Pager, address common.Address) ([]*types.Erc1155TxResp, uint64, error) {
+	resp := make([]*types.Erc1155TxResp, 0)
+	txs, total, err := store.GetErc1155ContractTransfer(address, pager.Offset, pager.Limit)
+	if err != nil {
+		return nil, 0, err
+	}
+	if total.ToUint64() == 0 {
+		return resp, 0, nil
+	}
+	addresses := make(map[string]common.Address)
+
+	for _, tx := range txs {
+		t := &types.Erc1155TxResp{
+			TransactionHash: tx.TransactionHash.String(),
+			BlockHash:       tx.TransactionHash.String(),
+			BlockNumber:     DecodeBig(tx.BlockNumber.String()).String(),
+			Contract:        tx.Contract.String(),
+			Method:          hexutil.Bytes(tx.Method).String(),
+			From:            tx.From.Hex(),
+			To:              tx.To.Hex(),
+			TokenID:         tx.TokenID.ToUint64(),
+			Value:           tx.Quantity.String(),
+			CreatedTime:     tx.TimeStamp.ToUint64(),
+		}
+		resp = append(resp, t)
+
+		addresses[tx.From.String()] = tx.From
+		addresses[tx.To.String()] = tx.To
+		addresses[tx.Contract.String()] = tx.Contract
+	}
+
+	accounts, err := GetAccounts(addresses)
+	if err != nil {
+		return nil, 0, err
+	}
+	for _, t := range resp {
+		if from, ok := accounts[t.From]; ok {
+			t.FromName = from.Name
+			t.FromSymbol = from.Symbol
+			if from.Erc20 || from.Erc721 || from.Erc1155 {
+				t.FromContract = true
+			}
+		}
+		if to, ok := accounts[t.To]; ok {
+			t.ToName = to.Name
+			t.ToSymbol = to.Symbol
+			if to.Erc20 || to.Erc721 || to.Erc1155 {
+				t.ToContract = true
+			}
+		}
+		if c, ok := accounts[t.Contract]; ok {
+			t.ContractName = c.Name
+			t.ContractSymbol = c.Symbol
+		}
+	}
+
+	return resp, total.ToUint64(), nil
+}
+
 func ListErc20Holders(pager *types.Pager, address common.Address) ([]*types.HolderResp, uint64, error) {
 	resp := make([]*types.HolderResp, 0)
 	holders, err := store.ListErc20Holders(address, pager.Offset, pager.Limit)
