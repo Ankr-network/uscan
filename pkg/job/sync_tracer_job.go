@@ -68,12 +68,8 @@ func (e *SyncTracerJob) Execute() {
 			e.Error = e.CallFrame.Output.String()
 		}
 	}
-	e.handleCall("0", e.CallFrame)
-
-	if !e.Status {
-		for _, v := range e.InternalTxs {
-			v.Status = e.Status
-		}
+	if e.Status {
+		e.handleCall("0", e.CallFrame)
 	}
 
 	e.Completed = true
