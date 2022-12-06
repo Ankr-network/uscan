@@ -60,6 +60,13 @@ func (n *blockHandle) writeTxAndRt(ctx context.Context, tx *types.Tx, rt *types.
 		}
 	}
 
+	if rt.ContractAddress != nil && rt.ContractAddress.Hex() != (common.Address{}).Hex() {
+		if err = n.writeAccountTx(ctx, *rt.ContractAddress, tx.Hash); err != nil {
+			log.Errorf("write account(%s) tx: %v", rt.ContractAddress.Hex(), err)
+			return err
+		}
+	}
+
 	return nil
 }
 

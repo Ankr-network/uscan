@@ -67,6 +67,13 @@ func (n *blockHandle) writeForkTxAndRt(ctx context.Context, tx *types.Tx, rt *ty
 		}
 	}
 
+	if rt.ContractAddress != nil && rt.ContractAddress.Hex() != (common.Address{}).Hex() {
+		if err = n.writeForkAccountTx(ctx, *rt.ContractAddress, tx.Hash); err != nil {
+			log.Errorf("write fork account(%s) tx: %v", rt.ContractAddress.Hex(), err)
+			return err
+		}
+	}
+
 	return nil
 }
 
