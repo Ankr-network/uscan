@@ -1086,11 +1086,16 @@ func (s *StorageImpl) ReadHome(ctx context.Context) (home *types.Home, err error
 
 	if len(homeFork.Blocks) == 0 {
 		blocks = homeFull.Blocks
+	} else if len(homeFork.Blocks) < 10 {
+		blocks = append(blocks, append(homeFork.Blocks, homeFull.Blocks...)...)
 	} else {
 		blocks = homeFork.Blocks
 	}
+
 	if len(homeFork.Txs) == 0 {
 		txs = homeFull.Txs
+	} else if len(homeFork.Txs) < 10 {
+		txs = append(txs, append(homeFork.Txs, homeFull.Txs...)...)
 	} else {
 		txs = homeFork.Txs
 	}
