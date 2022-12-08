@@ -70,7 +70,7 @@ func (n *blockHandle) writeForkITx(ctx context.Context, itxmap map[common.Hash][
 			totalMap[share.ForkTxTbl+":"+"/fork/iTx/"+k.String()+"/total"] = field.NewInt(0)
 		}
 		totalMap[share.ForkTxTbl+":"+"/fork/iTx/"+k.String()+"/total"].Add(newTotal)
-
+		newTotal.Add(oldTotal)
 	}
 	return nil
 }

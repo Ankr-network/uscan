@@ -140,6 +140,7 @@ func (n *blockHandle) writeForkTxTotal(ctx context.Context) error {
 			totalMap[share.ForkTxTbl+":"+"/fork/all/tx/total"] = field.NewInt(0)
 		}
 		totalMap[share.ForkTxTbl+":"+"/fork/all/tx/total"].Add(newTotal)
+		newTotal.Add(oldTotal)
 	}
 	return nil
 }
