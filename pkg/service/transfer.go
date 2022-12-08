@@ -211,37 +211,35 @@ func GetTraceTx(hash common.Hash) (*types.TraceTxResp, error) {
 }
 
 func GetTraceTx2(hash common.Hash) (*types.TraceTx2Resp, error) {
-	//t, err := rawdb.ReadTraceTx2(context.Background(), mdbx.DB, hash)
-	//if err != nil {
-	//	if err == kv.NotFound {
-	//		return nil, response.ErrRecordNotFind
-	//	}
-	//	return nil, err
-	//}
-	//resp := &types.TraceTx2Resp{
-	//	Res: t.Res,
-	//}
 	resp := &types.TraceTx2Resp{}
+	t, err := store.ReadTraceTx2(hash)
+	if err != nil {
+		if err == kv.NotFound {
+			return resp, nil
+		}
+		return nil, err
+	}
+	resp.Res = t.Res
 	return resp, nil
 }
 
 func GetTokenType(address common.Address) (interface{}, error) {
 	resp := map[string]uint64{"erc20": 0, "erc721": 0, "erc1155": 0}
-	erc20Count, err := store.GetAccountErc20Total(address)
+	erc20Count, err := store.ReadErc20ContractTotal(address)
 	if err != nil && err != kv.NotFound {
 		return nil, err
 	}
 	if erc20Count != nil {
 		resp["erc20"] = erc20Count.ToUint64()
 	}
-	erc721Count, err := store.GetAccountErc721Total(address)
+	erc721Count, err := store.ReadErc721ContractTotal(address)
 	if err != nil && err != kv.NotFound {
 		return nil, err
 	}
 	if erc721Count != nil {
 		resp["erc721"] = erc721Count.ToUint64()
 	}
-	erc1155Count, err := store.GetAccountErc1155Total(address)
+	erc1155Count, err := store.ReadErc1155ContractTotal(address)
 	if err != nil && err != kv.NotFound {
 		return nil, err
 	}
