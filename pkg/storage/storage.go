@@ -1066,8 +1066,8 @@ func (s *StorageImpl) ReadErc1155HolderTokenIdQuantity(ctx context.Context, cont
 
 func (s *StorageImpl) ReadHome(ctx context.Context) (home *types.Home, err error) {
 	var bytesRes []byte
-	var blocks []*types.BkSim
-	var txs []*types.TxSim
+	blocks := make([]*types.BkSim, 0, 10)
+	txs := make([]*types.TxSim, 0, 10)
 	homeFork := &types.Home{}
 	homeFull := &types.Home{}
 	home = &types.Home{}
@@ -1097,18 +1097,25 @@ func (s *StorageImpl) ReadHome(ctx context.Context) (home *types.Home, err error
 	if len(homeFork.Blocks) == 0 {
 		blocks = homeFull.Blocks
 	} else if len(homeFork.Blocks) < 10 {
-		blocks = append(blocks, append(homeFork.Blocks, homeFull.Blocks...)...)
+		blocks = append(blocks, append(homeFull.Blocks, homeFork.Blocks...)...)
 	} else {
 		blocks = homeFork.Blocks
+	}
+	if len(blocks) > 10 {
+		blocks = blocks[(len(home.Blocks) - 10):]
 	}
 
 	if len(homeFork.Txs) == 0 {
 		txs = homeFull.Txs
 	} else if len(homeFork.Txs) < 10 {
-		txs = append(txs, append(homeFork.Txs, homeFull.Txs...)...)
+		txs = append(txs, append(homeFull.Txs, homeFork.Txs...)...)
 	} else {
 		txs = homeFork.Txs
 	}
+	if len(home.Txs) > 10 {
+		home.Txs = home.Txs[(len(home.Txs) - 10):]
+	}
+
 	home = &types.Home{
 		BlockNumber:  *homeFull.BlockNumber.Add(&homeFork.BlockNumber),
 		TxTotal:      *homeFull.TxTotal.Add(&homeFork.TxTotal),
