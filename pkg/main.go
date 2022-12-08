@@ -35,7 +35,7 @@ import (
 )
 
 func MainRun(cmd *cobra.Command, args []string) {
-	os.Remove(viper.GetString(share.MdbxPath) + "/fork")
+	os.RemoveAll(viper.GetString(share.MdbxPath) + "/fork")
 	storage := storage.NewStorage(viper.GetString(share.MdbxPath))
 	rpcMgr := rpcclient.NewRpcClient(viper.GetStringSlice(share.RpcUrls))
 	sync := core.NewSync(rpcMgr, contract.NewClient(rpcMgr), viper.GetInt64(share.ForkBlockNum), storage.FullDB, storage.ForkDB, viper.GetUint64(share.WorkChan))
