@@ -85,6 +85,8 @@ type Storage interface {
 	GetErc20ContractTransfer(contract common.Address, offset, limit int64) (data []*types.Erc20Transfer, total *field.BigInt, err error)
 	GetErc721ContractTransfer(contract common.Address, offset, limit int64) (data []*types.Erc721Transfer, total *field.BigInt, err error)
 	GetErc1155ContractTransfer(contract common.Address, offset, limit int64) (data []*types.Erc1155Transfer, total *field.BigInt, err error)
+
+	ReadTraceTx2(address common.Hash) (res *types.TraceTx2, err error)
 }
 
 func (s *Store) GetBlock(blockNum *field.BigInt) (*types.Block, error) {
@@ -464,4 +466,8 @@ func (s *Store) GetErc721ContractTransfer(contract common.Address, offset, limit
 
 func (s *Store) GetErc1155ContractTransfer(contract common.Address, offset, limit int64) (data []*types.Erc1155Transfer, total *field.BigInt, err error) {
 	return s.St.GetErc1155ContractTransfer(s.ctx, contract, offset, limit)
+}
+
+func (s *Store) ReadTraceTx2(address common.Hash) (res *types.TraceTx2, err error) {
+	return s.St.ReadTraceTx2(s.ctx, address)
 }

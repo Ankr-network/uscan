@@ -211,17 +211,15 @@ func GetTraceTx(hash common.Hash) (*types.TraceTxResp, error) {
 }
 
 func GetTraceTx2(hash common.Hash) (*types.TraceTx2Resp, error) {
-	//t, err := rawdb.ReadTraceTx2(context.Background(), mdbx.DB, hash)
-	//if err != nil {
-	//	if err == kv.NotFound {
-	//		return nil, response.ErrRecordNotFind
-	//	}
-	//	return nil, err
-	//}
-	//resp := &types.TraceTx2Resp{
-	//	Res: t.Res,
-	//}
 	resp := &types.TraceTx2Resp{}
+	t, err := store.ReadTraceTx2(hash)
+	if err != nil {
+		if err == kv.NotFound {
+			return resp, nil
+		}
+		return nil, err
+	}
+	resp.Res = t.Res
 	return resp, nil
 }
 
