@@ -67,6 +67,7 @@ func ListErc20Txs(pager *types.Pager) ([]*types.Erc20TxResp, uint64, error) {
 		if c, ok := accounts[t.Contract]; ok {
 			t.ContractName = c.Name
 			t.ContractSymbol = c.Symbol
+			t.ContractDecimals = c.Decimals.ToUint64()
 		}
 	}
 	return resp, total.ToUint64(), nil
@@ -127,6 +128,7 @@ func ListErc721Txs(pager *types.Pager) ([]*types.Erc721TxResp, uint64, error) {
 		if c, ok := accounts[t.Contract]; ok {
 			t.ContractName = c.Name
 			t.ContractSymbol = c.Symbol
+			t.ContractDecimals = c.Decimals.ToUint64()
 		}
 	}
 	return resp, total.ToUint64(), nil
@@ -189,6 +191,7 @@ func ListErc1155Txs(pager *types.Pager) ([]*types.Erc1155TxResp, uint64, error) 
 		if c, ok := accounts[t.Contract]; ok {
 			t.ContractName = c.Name
 			t.ContractSymbol = c.Symbol
+			t.ContractDecimals = c.Decimals.ToUint64()
 		}
 	}
 	return resp, total.ToUint64(), nil
@@ -327,6 +330,7 @@ func ListErc20Transfers(pager *types.Pager, address common.Address) ([]*types.Er
 		if c, ok := accounts[t.Contract]; ok {
 			t.ContractName = c.Name
 			t.ContractSymbol = c.Symbol
+			t.ContractDecimals = c.Decimals.ToUint64()
 		}
 	}
 
@@ -383,6 +387,7 @@ func ListErc721Transfers(pager *types.Pager, address common.Address) ([]*types.E
 		if c, ok := accounts[t.Contract]; ok {
 			t.ContractName = c.Name
 			t.ContractSymbol = c.Symbol
+			t.ContractDecimals = c.Decimals.ToUint64()
 		}
 	}
 
@@ -441,6 +446,7 @@ func ListErc1155Transfers(pager *types.Pager, address common.Address) ([]*types.
 		if c, ok := accounts[t.Contract]; ok {
 			t.ContractName = c.Name
 			t.ContractSymbol = c.Symbol
+			t.ContractDecimals = c.Decimals.ToUint64()
 		}
 	}
 

@@ -257,6 +257,7 @@ func GetAccountErc20Txns(pager *types.Pager, address common.Address) ([]*types.E
 		if c, ok := accounts[t.Contract]; ok {
 			t.ContractName = c.Name
 			t.ContractSymbol = c.Symbol
+			t.ContractDecimals = c.Decimals.ToUint64()
 		}
 	}
 
@@ -319,6 +320,7 @@ func GetAccountErc721Txs(pager *types.Pager, address common.Address) ([]*types.E
 		if c, ok := accounts[t.Contract]; ok {
 			t.ContractName = c.Name
 			t.ContractSymbol = c.Symbol
+			t.ContractDecimals = c.Decimals.ToUint64()
 		}
 	}
 
@@ -383,6 +385,7 @@ func GetAccountErc1155Txs(pager *types.Pager, address common.Address) ([]*types.
 		if c, ok := accounts[t.Contract]; ok {
 			t.ContractName = c.Name
 			t.ContractSymbol = c.Symbol
+			t.ContractDecimals = c.Decimals.ToUint64()
 		}
 	}
 
