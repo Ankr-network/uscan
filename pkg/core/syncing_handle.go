@@ -140,6 +140,7 @@ func (n *blockHandle) handleMain(ctx context.Context) (err error) {
 }
 
 func (n *blockHandle) handleDeleteFork(ctx context.Context, blockNumber *field.BigInt) (err error) {
+	var i *field.BigInt
 
 	if err = n.deleteForkHome(ctx, blockNumber); err != nil {
 		log.Errorf("delete fork home : %v", err)
@@ -167,7 +168,6 @@ func (n *blockHandle) handleDeleteFork(ctx context.Context, blockNumber *field.B
 	for k, v := range blockIndexMap {
 		if k == blockNumber {
 			for k1, v1 := range v {
-				var i *field.BigInt
 				bytesRes, err := n.db.Get(ctx, []byte(k1), &kv.ReadOption{Table: share.ForkIndexTbl})
 				if err != nil {
 					if errors.Is(err, kv.NotFound) {
@@ -195,7 +195,6 @@ func (n *blockHandle) handleDeleteFork(ctx context.Context, blockNumber *field.B
 				arr := strings.Split(k1, ":")
 				tableName := arr[0]
 				key := []byte(arr[1])
-				var i *field.BigInt
 				bytesRes, err := n.db.Get(ctx, key, &kv.ReadOption{Table: tableName})
 				if err != nil {
 					return err
