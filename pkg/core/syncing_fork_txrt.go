@@ -105,7 +105,7 @@ func (n *blockHandle) writeForkAccountTx(ctx context.Context, addr common.Addres
 
 	err = forkdb.WriteAccountTxTotal(ctx, n.db, addr, total)
 	if err == nil {
-		forkAccountItxTotalMap.Add(addr, total.Bytes())
+		forkAccountTxTotalMap.Add(addr, total.Bytes())
 	}
 
 	if totalMap[share.ForkAccountsTbl+":"+"/fork/"+addr.String()+"/tx/total"] == nil {

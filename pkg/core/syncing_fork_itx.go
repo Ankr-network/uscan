@@ -19,6 +19,7 @@ var (
 
 func (n *blockHandle) writeForkITx(ctx context.Context, itxmap map[common.Hash][]*types.InternalTx, deleteMap map[string][][]byte, indexMap map[string]*field.BigInt, totalMap map[string]*field.BigInt) (err error) {
 	var itxTotal *field.BigInt
+	var i *field.BigInt
 
 	for k, itxs := range itxmap {
 		itxTotal, err = forkdb.ReadITxTotal(ctx, n.db, k)
@@ -35,7 +36,8 @@ func (n *blockHandle) writeForkITx(ctx context.Context, itxmap map[common.Hash][
 				log.Errorf("write fork itx(%s): %v", k.Hex(), err)
 				return err
 			}
-			deleteMap[share.ForkTxTbl] = append(deleteMap[share.ForkTxTbl], append(append([]byte("/fork/iTx/"), k.Bytes()...), append([]byte("/"), itxTotal.Add(field.NewInt(1)).Bytes()...)...))
+			i.Add(field.NewInt(1))
+			deleteMap[share.ForkTxTbl] = append(deleteMap[share.ForkTxTbl], append(append([]byte("/fork/iTx/"), k.Bytes()...), append([]byte("/"), itxTotal.Bytes()...)...))
 			if indexMap["/fork/iTx/"+k.String()+"/index"] == nil {
 				indexMap["/fork/iTx/"+k.String()+"/index"] = field.NewInt(0)
 			}
@@ -63,19 +65,13 @@ func (n *blockHandle) writeForkITx(ctx context.Context, itxmap map[common.Hash][
 			return err
 		}
 
-		oldTotal, err := forkdb.ReadITxTotal(ctx, n.db, k)
-		if errors.Is(err, kv.NotFound) {
-			oldTotal = field.NewInt(0)
-		} else {
-			log.Errorf("get fork itx total: %v", err)
-			return err
+		if itxTotal.Cmp(field.NewInt(0)) == 1 {
+			itxTotal.Sub(i)
+			if totalMap[share.ForkTxTbl+":"+"/fork/iTx/"+k.String()+"/total"] == nil {
+				totalMap[share.ForkTxTbl+":"+"/fork/iTx/"+k.String()+"/total"] = field.NewInt(0)
+			}
+			totalMap[share.ForkTxTbl+":"+"/fork/iTx/"+k.String()+"/total"].Add(itxTotal)
 		}
-
-		itxTotal.Sub(oldTotal)
-		if totalMap[share.ForkTxTbl+":"+"/fork/iTx/"+k.String()+"/total"] == nil {
-			totalMap[share.ForkTxTbl+":"+"/fork/iTx/"+k.String()+"/total"] = field.NewInt(0)
-		}
-		totalMap[share.ForkTxTbl+":"+"/fork/iTx/"+k.String()+"/total"].Add(itxTotal)
 	}
 	return nil
 }
