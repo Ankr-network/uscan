@@ -183,7 +183,6 @@ func (n *blockHandle) handleDeleteFork(ctx context.Context, blockNumber *field.B
 				if err != nil {
 					return err
 				}
-				delete(indexMap, k1)
 			}
 			delete(blockIndexMap, k)
 		}
@@ -205,7 +204,6 @@ func (n *blockHandle) handleDeleteFork(ctx context.Context, blockNumber *field.B
 				if err != nil {
 					return err
 				}
-				delete(totalMap, k1)
 			}
 			delete(blockTotalMap, k)
 		}
