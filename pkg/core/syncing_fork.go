@@ -12,7 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (n *blockHandle) writeForkTxAndRtLog(ctx context.Context, transactionData []*types.Tx, receiptData []*types.Rt) (err error) {
+func (n *blockHandle) writeForkTxAndRtLog(ctx context.Context, transactionData []*types.Tx, receiptData []*types.Rt, deleteMap map[string][][]byte, indexMap map[string]*field.BigInt, totalMap map[string]*field.BigInt) (err error) {
 
 	for i, v := range transactionData {
 		err = forkdb.WriteBlockIndex(ctx, n.db, n.blockData.Number, field.NewInt(int64(i)), v.Hash)
@@ -22,7 +22,7 @@ func (n *blockHandle) writeForkTxAndRtLog(ctx context.Context, transactionData [
 		}
 		deleteMap[share.ForkBlockTbl] = append(deleteMap[share.ForkBlockTbl], append(append([]byte("/fork/block/"), n.blockData.Number.Bytes()...), append([]byte("/"), field.NewInt(int64(i)).Bytes()...)...))
 
-		if err = n.writeForkTxAndRt(ctx, v, receiptData[i]); err != nil {
+		if err = n.writeForkTxAndRt(ctx, v, receiptData[i], deleteMap, indexMap, totalMap); err != nil {
 			log.Errorf("writeForkTxAndRt tx(%s): %v", v.Hash.Hex(), err)
 			return err
 		}
@@ -49,7 +49,7 @@ func (n *blockHandle) writeForkTxAndRtLog(ctx context.Context, transactionData [
 								To:              erc20Transfer.To,
 								Amount:          (field.BigInt)(*erc20Transfer.Value),
 								TimeStamp:       n.blockData.TimeStamp,
-							}); err != nil {
+							}, deleteMap, indexMap, totalMap); err != nil {
 								log.Errorf("write fork erc20Transfer: %v", err)
 								return err
 							}
@@ -66,7 +66,7 @@ func (n *blockHandle) writeForkTxAndRtLog(ctx context.Context, transactionData [
 								To:              erc721Transfer.To,
 								TokenId:         (field.BigInt)(*erc721Transfer.TokenId),
 								TimeStamp:       n.blockData.TimeStamp,
-							}); err != nil {
+							}, deleteMap, indexMap, totalMap); err != nil {
 								log.Errorf("write fork erc721Transfer: %v", err)
 								return err
 							}
@@ -86,7 +86,7 @@ func (n *blockHandle) writeForkTxAndRtLog(ctx context.Context, transactionData [
 							TokenID:         (field.BigInt)(*erc1155TransferSignle.Id),
 							Quantity:        (field.BigInt)(*erc1155TransferSignle.Value),
 							TimeStamp:       n.blockData.TimeStamp,
-						}); err != nil {
+						}, deleteMap, indexMap, totalMap); err != nil {
 							log.Errorf("write fork erc1155Transfer single: %v", err)
 							return err
 						}
@@ -105,7 +105,7 @@ func (n *blockHandle) writeForkTxAndRtLog(ctx context.Context, transactionData [
 								TokenID:         (field.BigInt)(*erc1155TransferBatch.Ids[i]),
 								Quantity:        (field.BigInt)(*erc1155TransferBatch.Values[i]),
 								TimeStamp:       n.blockData.TimeStamp,
-							}); err != nil {
+							}, deleteMap, indexMap, totalMap); err != nil {
 								log.Errorf("write fork erc1155Transfer batch: %v", err)
 								return err
 							}
@@ -115,24 +115,24 @@ func (n *blockHandle) writeForkTxAndRtLog(ctx context.Context, transactionData [
 			}
 		}
 
-		if err = n.updateForkErc20TrasferTotal(ctx); err != nil {
+		if err = n.updateForkErc20TrasferTotal(ctx, deleteMap, indexMap, totalMap); err != nil {
 			log.Errorf("update fork erc20 transfer total: %v", err)
 			return err
 		}
-		if err = n.updateForkErc721TrasferTotal(ctx); err != nil {
+		if err = n.updateForkErc721TrasferTotal(ctx, deleteMap, indexMap, totalMap); err != nil {
 			log.Errorf("update fork erc721 transfer total: %v", err)
 			return err
 		}
-		if err = n.updateForkErc1155TrasferTotal(ctx); err != nil {
+		if err = n.updateForkErc1155TrasferTotal(ctx, deleteMap, indexMap, totalMap); err != nil {
 			log.Errorf("update fork erc1155 transfer total: %v", err)
 			return err
 		}
 	}
 
-	return n.writeForkTxTotal(ctx)
+	return n.writeForkTxTotal(ctx, deleteMap, indexMap, totalMap)
 }
 
-func (n *blockHandle) writeForkTraceTx2(ctx context.Context, callFrames map[common.Hash]*types.CallFrame) (err error) {
+func (n *blockHandle) writeForkTraceTx2(ctx context.Context, callFrames map[common.Hash]*types.CallFrame, deleteMap map[string][][]byte, indexMap map[string]*field.BigInt, totalMap map[string]*field.BigInt) (err error) {
 	for k, v := range callFrames {
 		if err = forkdb.WriteTraceTx2(ctx, n.db, k, &types.TraceTx2{
 			Res: v.JsonToString(),

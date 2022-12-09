@@ -17,7 +17,7 @@ var (
 	forkAccountItxTotalMap = utils.NewCache()
 )
 
-func (n *blockHandle) writeForkITx(ctx context.Context, itxmap map[common.Hash][]*types.InternalTx) (err error) {
+func (n *blockHandle) writeForkITx(ctx context.Context, itxmap map[common.Hash][]*types.InternalTx, deleteMap map[string][][]byte, indexMap map[string]*field.BigInt, totalMap map[string]*field.BigInt) (err error) {
 	var itxTotal *field.BigInt
 
 	for k, itxs := range itxmap {
@@ -46,13 +46,13 @@ func (n *blockHandle) writeForkITx(ctx context.Context, itxmap map[common.Hash][
 				Index:           *itxTotal,
 			}
 			if v.From != (common.Address{}) {
-				if err = n.writeForkAccountItx(ctx, v.From, key); err != nil {
+				if err = n.writeForkAccountItx(ctx, v.From, key, deleteMap, indexMap, totalMap); err != nil {
 					log.Errorf("write fork account(from: %s) Itx: %v", v.From.Hex(), err)
 				}
 			}
 
 			if v.To != (common.Address{}) {
-				if err = n.writeForkAccountItx(ctx, v.To, key); err != nil {
+				if err = n.writeForkAccountItx(ctx, v.To, key, deleteMap, indexMap, totalMap); err != nil {
 					log.Errorf("write fork account(to: %s) Itx: %v", v.To.Hex(), err)
 				}
 			}
@@ -80,7 +80,7 @@ func (n *blockHandle) writeForkITx(ctx context.Context, itxmap map[common.Hash][
 	return nil
 }
 
-func (n *blockHandle) writeForkAccountItx(ctx context.Context, addr common.Address, data *types.InternalTxKey) (err error) {
+func (n *blockHandle) writeForkAccountItx(ctx context.Context, addr common.Address, data *types.InternalTxKey, deleteMap map[string][][]byte, indexMap map[string]*field.BigInt, totalMap map[string]*field.BigInt) (err error) {
 	var total = &field.BigInt{}
 	if bytesRes, ok := forkAccountItxTotalMap.Get(addr); ok {
 		total.SetBytes(bytesRes.([]byte))

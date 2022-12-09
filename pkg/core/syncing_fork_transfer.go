@@ -30,7 +30,7 @@ var (
 )
 
 // ------------------- erc20 transfer -----------------
-func (n *blockHandle) writeForkErc20Transfer(ctx context.Context, data *types.Erc20Transfer) (err error) {
+func (n *blockHandle) writeForkErc20Transfer(ctx context.Context, data *types.Erc20Transfer, deleteMap map[string][][]byte, indexMap map[string]*field.BigInt, totalMap map[string]*field.BigInt) (err error) {
 	if forkErc20TrasferTotal == nil {
 		forkErc20TrasferTotal, err = forkdb.ReadErc20Total(ctx, n.db)
 		if err != nil {
@@ -55,7 +55,7 @@ func (n *blockHandle) writeForkErc20Transfer(ctx context.Context, data *types.Er
 	indexMap["/fork/erc20/index"].Add(field.NewInt(1))
 
 	if data.From != (common.Address{}) {
-		if err = n.writeForkAccountErc20TransferIndex(ctx, data.From, forkErc20TrasferTotal); err != nil {
+		if err = n.writeForkAccountErc20TransferIndex(ctx, data.From, forkErc20TrasferTotal, deleteMap, indexMap, totalMap); err != nil {
 			log.Errorf("write fork account(From: %v) erc20 transfer index:%v", data.From.Hex(), err)
 			return err
 		}
@@ -74,7 +74,7 @@ func (n *blockHandle) writeForkErc20Transfer(ctx context.Context, data *types.Er
 	}
 
 	if data.To != (common.Address{}) {
-		if err = n.writeForkAccountErc20TransferIndex(ctx, data.To, forkErc20TrasferTotal); err != nil {
+		if err = n.writeForkAccountErc20TransferIndex(ctx, data.To, forkErc20TrasferTotal, deleteMap, indexMap, totalMap); err != nil {
 			log.Errorf("write fork account(to: %v) erc20 transfer index:%v", data.To.Hex(), err)
 			return err
 		}
@@ -91,7 +91,7 @@ func (n *blockHandle) writeForkErc20Transfer(ctx context.Context, data *types.Er
 		}
 	}
 
-	if err = n.writeForkErc20ContractTransferIndex(ctx, data.Contract, forkErc20TrasferTotal); err != nil {
+	if err = n.writeForkErc20ContractTransferIndex(ctx, data.Contract, forkErc20TrasferTotal, deleteMap, indexMap, totalMap); err != nil {
 		log.Errorf("write fork erc20 contract transfer index:%v", data.Contract.Hex(), err)
 		return err
 	}
@@ -99,7 +99,7 @@ func (n *blockHandle) writeForkErc20Transfer(ctx context.Context, data *types.Er
 	return nil
 }
 
-func (n *blockHandle) writeForkErc20ContractTransferIndex(ctx context.Context, contract common.Address, transfer20Index *field.BigInt) (err error) {
+func (n *blockHandle) writeForkErc20ContractTransferIndex(ctx context.Context, contract common.Address, transfer20Index *field.BigInt, deleteMap map[string][][]byte, indexMap map[string]*field.BigInt, totalMap map[string]*field.BigInt) (err error) {
 	var total = &field.BigInt{}
 	if BytesRes, ok := forkErc20TransferContractTotalMap.Get(contract); ok {
 		total.SetBytes(BytesRes.([]byte))
@@ -138,7 +138,7 @@ func (n *blockHandle) writeForkErc20ContractTransferIndex(ctx context.Context, c
 	return err
 }
 
-func (n *blockHandle) writeForkAccountErc20TransferIndex(ctx context.Context, addr common.Address, transfer20Index *field.BigInt) (err error) {
+func (n *blockHandle) writeForkAccountErc20TransferIndex(ctx context.Context, addr common.Address, transfer20Index *field.BigInt, deleteMap map[string][][]byte, indexMap map[string]*field.BigInt, totalMap map[string]*field.BigInt) (err error) {
 	var total = &field.BigInt{}
 	if BytesRes, ok := forkErc20TrasferAccountTotalMap.Get(addr); ok {
 		total.SetBytes(BytesRes.([]byte))
@@ -226,7 +226,7 @@ func (n *blockHandle) updateForkErc20Account(ctx context.Context, addr common.Ad
 }
 
 // ------------------- erc721 transfer -----------------
-func (n *blockHandle) writeForkErc721Transfer(ctx context.Context, data *types.Erc721Transfer) (err error) {
+func (n *blockHandle) writeForkErc721Transfer(ctx context.Context, data *types.Erc721Transfer, deleteMap map[string][][]byte, indexMap map[string]*field.BigInt, totalMap map[string]*field.BigInt) (err error) {
 	if forkErc721TrasferTotal == nil {
 		forkErc721TrasferTotal, err = forkdb.ReadErc721Total(ctx, n.db)
 		if err != nil {
@@ -251,7 +251,7 @@ func (n *blockHandle) writeForkErc721Transfer(ctx context.Context, data *types.E
 	indexMap["/fork/erc721/index"].Add(field.NewInt(1))
 
 	if data.From != (common.Address{}) {
-		if err = n.writeForkAccountErc721TransferIndex(ctx, data.From, forkErc721TrasferTotal); err != nil {
+		if err = n.writeForkAccountErc721TransferIndex(ctx, data.From, forkErc721TrasferTotal, deleteMap, indexMap, totalMap); err != nil {
 			log.Errorf("write fork account(From: %v) erc721 transfer index:%v", data.From.Hex(), err)
 			return err
 		}
@@ -269,7 +269,7 @@ func (n *blockHandle) writeForkErc721Transfer(ctx context.Context, data *types.E
 	}
 
 	if data.To != (common.Address{}) {
-		if err = n.writeForkAccountErc721TransferIndex(ctx, data.To, forkErc721TrasferTotal); err != nil {
+		if err = n.writeForkAccountErc721TransferIndex(ctx, data.To, forkErc721TrasferTotal, deleteMap, indexMap, totalMap); err != nil {
 			log.Errorf("write fork account(to: %v) erc721 transfer index:%v", data.To.Hex(), err)
 			return err
 		}
@@ -286,7 +286,7 @@ func (n *blockHandle) writeForkErc721Transfer(ctx context.Context, data *types.E
 		}
 	}
 
-	if err = n.writeForkErc721ContractTransferIndex(ctx, data.Contract, forkErc721TrasferTotal); err != nil {
+	if err = n.writeForkErc721ContractTransferIndex(ctx, data.Contract, forkErc721TrasferTotal, deleteMap, indexMap, totalMap); err != nil {
 		log.Errorf("write fork erc721 contract transfer index:%v", data.Contract.Hex(), err)
 		return err
 	}
@@ -294,7 +294,7 @@ func (n *blockHandle) writeForkErc721Transfer(ctx context.Context, data *types.E
 	return nil
 }
 
-func (n *blockHandle) writeForkErc721ContractTransferIndex(ctx context.Context, contract common.Address, transfer721Index *field.BigInt) (err error) {
+func (n *blockHandle) writeForkErc721ContractTransferIndex(ctx context.Context, contract common.Address, transfer721Index *field.BigInt, deleteMap map[string][][]byte, indexMap map[string]*field.BigInt, totalMap map[string]*field.BigInt) (err error) {
 	var total = &field.BigInt{}
 	if BytesRes, ok := forkErc721TransferContractTotalMap.Get(contract); ok {
 		total.SetBytes(BytesRes.([]byte))
@@ -333,7 +333,7 @@ func (n *blockHandle) writeForkErc721ContractTransferIndex(ctx context.Context, 
 	return err
 }
 
-func (n *blockHandle) writeForkAccountErc721TransferIndex(ctx context.Context, addr common.Address, transfer721Index *field.BigInt) (err error) {
+func (n *blockHandle) writeForkAccountErc721TransferIndex(ctx context.Context, addr common.Address, transfer721Index *field.BigInt, deleteMap map[string][][]byte, indexMap map[string]*field.BigInt, totalMap map[string]*field.BigInt) (err error) {
 	var total = &field.BigInt{}
 	if BytesRes, ok := forkErc721TrasferAccountTotalMap.Get(addr); ok {
 		total.SetBytes(BytesRes.([]byte))
@@ -415,7 +415,7 @@ func (n *blockHandle) updateForkErc721Account(ctx context.Context, addr common.A
 }
 
 // ------------------- erc1155 transfer -----------------
-func (n *blockHandle) writeForkErc1155Transfer(ctx context.Context, data *types.Erc1155Transfer) (err error) {
+func (n *blockHandle) writeForkErc1155Transfer(ctx context.Context, data *types.Erc1155Transfer, deleteMap map[string][][]byte, indexMap map[string]*field.BigInt, totalMap map[string]*field.BigInt) (err error) {
 	if forkErc1155TrasferTotal == nil {
 		forkErc1155TrasferTotal, err = forkdb.ReadErc1155Total(ctx, n.db)
 		if err != nil {
@@ -440,7 +440,7 @@ func (n *blockHandle) writeForkErc1155Transfer(ctx context.Context, data *types.
 	indexMap["/fork/erc1155/index"].Add(field.NewInt(1))
 
 	if data.From != (common.Address{}) {
-		if err = n.writeForkAccountErc1155TransferIndex(ctx, data.From, forkErc1155TrasferTotal); err != nil {
+		if err = n.writeForkAccountErc1155TransferIndex(ctx, data.From, forkErc1155TrasferTotal, deleteMap, indexMap, totalMap); err != nil {
 			log.Errorf("write fork account(From: %v) erc1155 transfer index:%v", data.From.Hex(), err)
 			return err
 		}
@@ -456,7 +456,7 @@ func (n *blockHandle) writeForkErc1155Transfer(ctx context.Context, data *types.
 	}
 
 	if data.To != (common.Address{}) {
-		if err = n.writeForkAccountErc1155TransferIndex(ctx, data.To, forkErc1155TrasferTotal); err != nil {
+		if err = n.writeForkAccountErc1155TransferIndex(ctx, data.To, forkErc1155TrasferTotal, deleteMap, indexMap, totalMap); err != nil {
 			log.Errorf("write fork account(to: %v) erc1155 transfer index:%v", data.To.Hex(), err)
 			return err
 		}
@@ -471,7 +471,7 @@ func (n *blockHandle) writeForkErc1155Transfer(ctx context.Context, data *types.
 		}
 	}
 
-	if err = n.writeForkErc1155ContractTransferIndex(ctx, data.Contract, forkErc1155TrasferTotal); err != nil {
+	if err = n.writeForkErc1155ContractTransferIndex(ctx, data.Contract, forkErc1155TrasferTotal, deleteMap, indexMap, totalMap); err != nil {
 		log.Errorf("write fork erc1155 contract transfer index:%v", data.Contract.Hex(), err)
 		return err
 	}
@@ -479,7 +479,7 @@ func (n *blockHandle) writeForkErc1155Transfer(ctx context.Context, data *types.
 	return nil
 }
 
-func (n *blockHandle) writeForkErc1155ContractTransferIndex(ctx context.Context, contract common.Address, transfer1155Index *field.BigInt) (err error) {
+func (n *blockHandle) writeForkErc1155ContractTransferIndex(ctx context.Context, contract common.Address, transfer1155Index *field.BigInt, deleteMap map[string][][]byte, indexMap map[string]*field.BigInt, totalMap map[string]*field.BigInt) (err error) {
 	var total = &field.BigInt{}
 	if BytesRes, ok := forkErc1155TransferContractTotalMap.Get(contract); ok {
 		total.SetBytes(BytesRes.([]byte))
@@ -518,7 +518,7 @@ func (n *blockHandle) writeForkErc1155ContractTransferIndex(ctx context.Context,
 	return err
 }
 
-func (n *blockHandle) writeForkAccountErc1155TransferIndex(ctx context.Context, addr common.Address, transfer1155Index *field.BigInt) (err error) {
+func (n *blockHandle) writeForkAccountErc1155TransferIndex(ctx context.Context, addr common.Address, transfer1155Index *field.BigInt, deleteMap map[string][][]byte, indexMap map[string]*field.BigInt, totalMap map[string]*field.BigInt) (err error) {
 	var total = &field.BigInt{}
 	if BytesRes, ok := forkErc1155TrasferAccountTotalMap.Get(addr); ok {
 		total.SetBytes(BytesRes.([]byte))
@@ -600,7 +600,7 @@ func (n *blockHandle) updateForkErc1155Account(ctx context.Context, addr common.
 }
 
 // write total for erc20
-func (n *blockHandle) updateForkErc20TrasferTotal(ctx context.Context) error {
+func (n *blockHandle) updateForkErc20TrasferTotal(ctx context.Context, deleteMap map[string][][]byte, indexMap map[string]*field.BigInt, totalMap map[string]*field.BigInt) error {
 	if forkErc20TrasferTotal != nil {
 		oldTotal, err := forkdb.ReadErc20Total(ctx, n.db)
 		if err != nil {
@@ -628,7 +628,7 @@ func (n *blockHandle) updateForkErc20TrasferTotal(ctx context.Context) error {
 }
 
 // write total for erc721
-func (n *blockHandle) updateForkErc721TrasferTotal(ctx context.Context) error {
+func (n *blockHandle) updateForkErc721TrasferTotal(ctx context.Context, deleteMap map[string][][]byte, indexMap map[string]*field.BigInt, totalMap map[string]*field.BigInt) error {
 	if forkErc721TrasferTotal != nil {
 		oldTotal, err := forkdb.ReadErc721Total(ctx, n.db)
 		if err != nil {
@@ -656,7 +656,7 @@ func (n *blockHandle) updateForkErc721TrasferTotal(ctx context.Context) error {
 }
 
 // write total for erc155
-func (n *blockHandle) updateForkErc1155TrasferTotal(ctx context.Context) error {
+func (n *blockHandle) updateForkErc1155TrasferTotal(ctx context.Context, deleteMap map[string][][]byte, indexMap map[string]*field.BigInt, totalMap map[string]*field.BigInt) error {
 	if forkErc1155TrasferTotal != nil {
 		oldTotal, err := forkdb.ReadErc1155Total(ctx, n.db)
 		if err != nil {

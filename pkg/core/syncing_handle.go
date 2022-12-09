@@ -18,11 +18,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-var deleteMap = make(map[string][][]byte, 0)                            // table => key
-var blockDeleteMap = make(map[*field.BigInt]map[string][][]byte, 0)     // block number => table/key
-var indexMap = make(map[string]*field.BigInt, 0)                        // key => index
+// var deleteMap = make(map[string][][]byte, 0)                            // table => key
+var blockDeleteMap = make(map[*field.BigInt]map[string][][]byte, 0) // block number => table/key
+// var indexMap = make(map[string]*field.BigInt, 0)                        // key => index
 var blockIndexMap = make(map[*field.BigInt]map[string]*field.BigInt, 0) // block number => key/index
-var totalMap = make(map[string]*field.BigInt, 0)                        // table:key => total
+// var totalMap = make(map[string]*field.BigInt, 0)                        // table:key => total
 var blockTotalMap = make(map[*field.BigInt]map[string]*field.BigInt, 0) // block number => table:key/total
 var HomeMap = make(map[*field.BigInt]*Home, 0)                          // block number => home
 
@@ -152,7 +152,7 @@ func (n *blockHandle) handleDeleteFork(ctx context.Context, blockNumber *field.B
 			for k1, v1 := range v {
 				for _, v2 := range v1 {
 					_, err = n.db.Get(ctx, v2, &kv.ReadOption{Table: k1})
-					if err != nil {
+					if err == nil {
 						err = n.db.Del(ctx, v2, &kv.WriteOption{Table: k1})
 						if err != nil {
 							return err
@@ -213,6 +213,10 @@ func (n *blockHandle) handleDeleteFork(ctx context.Context, blockNumber *field.B
 
 func (n *blockHandle) handleFork(ctx context.Context) (err error) {
 
+	var deleteMap = make(map[string][][]byte, 0)     // table => key
+	var indexMap = make(map[string]*field.BigInt, 0) // key => index
+	var totalMap = make(map[string]*field.BigInt, 0) // table:key => total
+
 	err = forkdb.WriteBlock(ctx, n.db, n.blockData.Number, n.blockData)
 	if err != nil {
 		log.Errorf("write fork block : %v, block: %s", err, n.blockData.Number.String())
@@ -240,17 +244,17 @@ func (n *blockHandle) handleFork(ctx context.Context) (err error) {
 	//}
 
 	if len(n.transactionData) > 0 {
-		if err = n.writeForkTxAndRtLog(ctx, n.transactionData, n.receiptData); err != nil {
+		if err = n.writeForkTxAndRtLog(ctx, n.transactionData, n.receiptData, deleteMap, indexMap, totalMap); err != nil {
 			log.Errorf("write fork tx and rt: %v", err)
 			return err
 		}
 
-		if err = n.writeForkITx(ctx, n.internalTxs); err != nil {
+		if err = n.writeForkITx(ctx, n.internalTxs, deleteMap, indexMap, totalMap); err != nil {
 			log.Errorf("write fork itxs: %v", err)
 			return err
 		}
 
-		if err = n.writeForkTraceTx2(ctx, n.callFrames); err != nil {
+		if err = n.writeForkTraceTx2(ctx, n.callFrames, deleteMap, indexMap, totalMap); err != nil {
 			log.Errorf("write fork callFrames: %v", err)
 			return err
 		}
