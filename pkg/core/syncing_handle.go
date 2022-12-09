@@ -159,7 +159,6 @@ func (n *blockHandle) handleDeleteFork(ctx context.Context, blockNumber *field.B
 						}
 					}
 				}
-				delete(deleteMap, k1)
 			}
 			delete(blockDeleteMap, k)
 		}
