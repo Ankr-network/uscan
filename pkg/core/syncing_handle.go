@@ -198,12 +198,7 @@ func (n *blockHandle) handleDeleteFork(ctx context.Context, blockNumber *field.B
 				var i *field.BigInt
 				bytesRes, err := n.db.Get(ctx, key, &kv.ReadOption{Table: tableName})
 				if err != nil {
-					if errors.Is(err, kv.NotFound) {
-						i = field.NewInt(0)
-						err = nil
-					} else {
-						return err
-					}
+					return err
 				}
 				i.SetBytes(bytesRes)
 				i.Sub(v1)
