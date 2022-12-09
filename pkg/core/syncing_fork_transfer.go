@@ -618,13 +618,11 @@ func (n *blockHandle) updateForkErc20TrasferTotal(ctx context.Context) error {
 			return err
 		}
 
-		newTotal := forkErc20TrasferTotal
-		newTotal.Sub(oldTotal)
+		forkErc20TrasferTotal.Sub(oldTotal)
 		if totalMap[share.ForkTransferTbl+":"+"/fork/erc20/total"] == nil {
 			totalMap[share.ForkTransferTbl+":"+"/fork/erc20/total"] = field.NewInt(0)
 		}
-		totalMap[share.ForkTransferTbl+":"+"/fork/erc20/total"].Add(newTotal)
-		newTotal.Add(oldTotal)
+		totalMap[share.ForkTransferTbl+":"+"/fork/erc20/total"].Add(forkErc20TrasferTotal)
 	}
 	return nil
 }
@@ -648,13 +646,11 @@ func (n *blockHandle) updateForkErc721TrasferTotal(ctx context.Context) error {
 			return err
 		}
 
-		newTotal := forkErc721TrasferTotal
-		newTotal.Sub(oldTotal)
+		forkErc721TrasferTotal.Sub(oldTotal)
 		if totalMap[share.ForkTransferTbl+":"+"/fork/erc721/total"] == nil {
 			totalMap[share.ForkTransferTbl+":"+"/fork/erc721/total"] = field.NewInt(0)
 		}
-		totalMap[share.ForkTransferTbl+":"+"/fork/erc721/total"].Add(newTotal)
-		newTotal.Add(oldTotal)
+		totalMap[share.ForkTransferTbl+":"+"/fork/erc721/total"].Add(forkErc721TrasferTotal)
 	}
 	return nil
 }
@@ -678,13 +674,11 @@ func (n *blockHandle) updateForkErc1155TrasferTotal(ctx context.Context) error {
 			return err
 		}
 
-		newTotal := forkErc1155TrasferTotal
-		newTotal.Sub(oldTotal)
+		forkErc1155TrasferTotal.Sub(oldTotal)
 		if totalMap[share.ForkTransferTbl+":"+"/fork/erc1155/total"] == nil {
 			totalMap[share.ForkTransferTbl+":"+"/fork/erc1155/total"] = field.NewInt(0)
 		}
-		totalMap[share.ForkTransferTbl+":"+"/fork/erc1155/total"].Add(newTotal)
-		newTotal.Add(oldTotal)
+		totalMap[share.ForkTransferTbl+":"+"/fork/erc1155/total"].Add(forkErc1155TrasferTotal)
 	}
 	return nil
 }

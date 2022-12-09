@@ -28,7 +28,6 @@ func (n *blockHandle) writeForkITx(ctx context.Context, itxmap map[common.Hash][
 			log.Errorf("get fork itx total: %v", err)
 			return err
 		}
-		oldTotal := itxTotal
 
 		for _, v := range itxs {
 			v.TimeStamp = n.blockData.TimeStamp
@@ -64,13 +63,19 @@ func (n *blockHandle) writeForkITx(ctx context.Context, itxmap map[common.Hash][
 			return err
 		}
 
-		newTotal := itxTotal
-		newTotal.Sub(oldTotal)
+		oldTotal, err := forkdb.ReadITxTotal(ctx, n.db, k)
+		if errors.Is(err, kv.NotFound) {
+			oldTotal = field.NewInt(0)
+		} else {
+			log.Errorf("get fork itx total: %v", err)
+			return err
+		}
+
+		itxTotal.Sub(oldTotal)
 		if totalMap[share.ForkTxTbl+":"+"/fork/iTx/"+k.String()+"/total"] == nil {
 			totalMap[share.ForkTxTbl+":"+"/fork/iTx/"+k.String()+"/total"] = field.NewInt(0)
 		}
-		totalMap[share.ForkTxTbl+":"+"/fork/iTx/"+k.String()+"/total"].Add(newTotal)
-		newTotal.Add(oldTotal)
+		totalMap[share.ForkTxTbl+":"+"/fork/iTx/"+k.String()+"/total"].Add(itxTotal)
 	}
 	return nil
 }
