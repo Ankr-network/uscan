@@ -1117,7 +1117,7 @@ func (s *StorageImpl) ReadHome(ctx context.Context) (home *types.Home, err error
 	}
 
 	home = &types.Home{
-		BlockNumber:  *homeFull.BlockNumber.Add(&homeFork.BlockNumber),
+		BlockNumber:  homeFork.BlockNumber,
 		TxTotal:      *homeFull.TxTotal.Add(&homeFork.TxTotal),
 		AddressTotal: *homeFull.AddressTotal.Add(&homeFork.AddressTotal),
 		Erc20Total:   *homeFull.Erc20Total.Add(&homeFork.Erc20Total),

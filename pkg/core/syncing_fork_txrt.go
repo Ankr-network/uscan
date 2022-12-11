@@ -42,10 +42,11 @@ func (n *blockHandle) writeForkTxAndRt(ctx context.Context, tx *types.Tx, rt *ty
 		return err
 	}
 	deleteMap[share.ForkTxTbl] = append(deleteMap[share.ForkTxTbl], append([]byte("/fork/all/tx/"), forkTxTotal.Bytes()...))
-	if indexMap["/fork/all/tx/index"] == nil {
-		indexMap["/fork/all/tx/index"] = field.NewInt(0)
+	key := []byte("/fork/all/tx/index")
+	if indexMap[string(key)] == nil {
+		indexMap[string(key)] = field.NewInt(0)
 	}
-	indexMap["/fork/all/tx/index"].Add(field.NewInt(1))
+	indexMap[string(key)].Add(field.NewInt(1))
 
 	if err = forkdb.WriteRt(ctx, n.db, tx.Hash, rt); err != nil {
 		log.Errorf("write fork rt: %v", err)
@@ -98,20 +99,22 @@ func (n *blockHandle) writeForkAccountTx(ctx context.Context, addr common.Addres
 		return err
 	}
 	deleteMap[share.ForkAccountsTbl] = append(deleteMap[share.ForkAccountsTbl], append(append([]byte("/fork/"), addr.Bytes()...), append([]byte("/tx/"), total.Bytes()...)...))
-	if indexMap["/fork/"+addr.String()+"/tx/index"] == nil {
-		indexMap["/fork/"+addr.String()+"/tx/index"] = field.NewInt(0)
+	key := append(append([]byte("/fork/"), addr.Bytes()...), []byte("/tx/index")...)
+	if indexMap[string(key)] == nil {
+		indexMap[string(key)] = field.NewInt(0)
 	}
-	indexMap["/fork/"+addr.String()+"/tx/index"].Add(field.NewInt(1))
+	indexMap[string(key)].Add(field.NewInt(1))
 
 	err = forkdb.WriteAccountTxTotal(ctx, n.db, addr, total)
 	if err == nil {
 		forkAccountTxTotalMap.Add(addr, total.Bytes())
 	}
 
-	if totalMap[share.ForkAccountsTbl+":"+"/fork/"+addr.String()+"/tx/total"] == nil {
-		totalMap[share.ForkAccountsTbl+":"+"/fork/"+addr.String()+"/tx/total"] = field.NewInt(0)
+	key2 := append(append([]byte("/fork/"), addr.Bytes()...), []byte("/tx/total")...)
+	if totalMap[share.ForkAccountsTbl+":"+string(key2)] == nil {
+		totalMap[share.ForkAccountsTbl+":"+string(key2)] = field.NewInt(0)
 	}
-	totalMap[share.ForkAccountsTbl+":"+"/fork/"+addr.String()+"/tx/total"].Add(field.NewInt(1))
+	totalMap[share.ForkAccountsTbl+":"+string(key2)].Add(field.NewInt(1))
 
 	return
 }
@@ -135,10 +138,11 @@ func (n *blockHandle) writeForkTxTotal(ctx context.Context, deleteMap map[string
 		}
 
 		forkTxTotal.Sub(oldTotal)
-		if totalMap[share.ForkTxTbl+":"+"/fork/all/tx/total"] == nil {
-			totalMap[share.ForkTxTbl+":"+"/fork/all/tx/total"] = field.NewInt(0)
+		key := []byte("/fork/all/tx/total")
+		if totalMap[share.ForkTxTbl+":"+string(key)] == nil {
+			totalMap[share.ForkTxTbl+":"+string(key)] = field.NewInt(0)
 		}
-		totalMap[share.ForkTxTbl+":"+"/fork/all/tx/total"].Add(forkTxTotal)
+		totalMap[share.ForkTxTbl+":"+string(key)].Add(forkTxTotal)
 	}
 	return nil
 }

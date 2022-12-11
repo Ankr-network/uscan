@@ -3,9 +3,6 @@ package core
 import (
 	"context"
 	"errors"
-
-	"strings"
-
 	"github.com/Ankr-network/uscan/pkg/contract"
 	"github.com/Ankr-network/uscan/pkg/contract/eip"
 	"github.com/Ankr-network/uscan/pkg/field"
@@ -16,6 +13,7 @@ import (
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/Ankr-network/uscan/share"
 	"github.com/ethereum/go-ethereum/common"
+	"strings"
 )
 
 // var deleteMap = make(map[string][][]byte, 0)                            // table => key
@@ -24,15 +22,7 @@ var blockDeleteMap = make(map[*field.BigInt]map[string][][]byte, 0) // block num
 var blockIndexMap = make(map[*field.BigInt]map[string]*field.BigInt, 0) // block number => key/index
 // var totalMap = make(map[string]*field.BigInt, 0)                        // table:key => total
 var blockTotalMap = make(map[*field.BigInt]map[string]*field.BigInt, 0) // block number => table:key/total
-var HomeMap = make(map[*field.BigInt]*Home, 0)                          // block number => home
-
-type Home struct {
-	TxTotal      field.BigInt
-	AddressTotal field.BigInt
-	Erc20Total   field.BigInt
-	Erc721Total  field.BigInt
-	Erc1155Total field.BigInt
-}
+var HomeMap = make(map[*field.BigInt]*types.Home, 0)                    // block number => home
 
 type blockHandle struct {
 	blockData            *types.Block
@@ -140,7 +130,6 @@ func (n *blockHandle) handleMain(ctx context.Context) (err error) {
 }
 
 func (n *blockHandle) handleDeleteFork(ctx context.Context, blockNumber *field.BigInt) (err error) {
-	var i *field.BigInt
 
 	if err = n.deleteForkHome(ctx, blockNumber); err != nil {
 		log.Errorf("delete fork home : %v", err)
@@ -148,7 +137,7 @@ func (n *blockHandle) handleDeleteFork(ctx context.Context, blockNumber *field.B
 	}
 
 	for k, v := range blockDeleteMap {
-		if k == blockNumber {
+		if k.Cmp(blockNumber) == 0 {
 			for k1, v1 := range v {
 				for _, v2 := range v1 {
 					_, err = n.db.Get(ctx, v2, &kv.ReadOption{Table: k1})
@@ -165,8 +154,9 @@ func (n *blockHandle) handleDeleteFork(ctx context.Context, blockNumber *field.B
 	}
 
 	for k, v := range blockIndexMap {
-		if k == blockNumber {
+		if k.Cmp(blockNumber) == 0 {
 			for k1, v1 := range v {
+				i := &field.BigInt{}
 				bytesRes, err := n.db.Get(ctx, []byte(k1), &kv.ReadOption{Table: share.ForkIndexTbl})
 				if err != nil {
 					if errors.Is(err, kv.NotFound) {
@@ -188,8 +178,9 @@ func (n *blockHandle) handleDeleteFork(ctx context.Context, blockNumber *field.B
 	}
 
 	for k, v := range blockTotalMap {
-		if k == blockNumber {
+		if k.Cmp(blockNumber) == 0 {
 			for k1, v1 := range v {
+				i := &field.BigInt{}
 				arr := strings.Split(k1, ":")
 				tableName := arr[0]
 				key := []byte(arr[1])
