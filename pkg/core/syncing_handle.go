@@ -16,11 +16,8 @@ import (
 	"strings"
 )
 
-// var deleteMap = make(map[string][][]byte, 0)                            // table => key
-var blockDeleteMap = make(map[*field.BigInt]map[string][][]byte, 0) // block number => table/key
-// var indexMap = make(map[string]*field.BigInt, 0)                        // key => index
+var blockDeleteMap = make(map[*field.BigInt]map[string][][]byte, 0)     // block number => table/key
 var blockIndexMap = make(map[*field.BigInt]map[string]*field.BigInt, 0) // block number => key/index
-// var totalMap = make(map[string]*field.BigInt, 0)                        // table:key => total
 var blockTotalMap = make(map[*field.BigInt]map[string]*field.BigInt, 0) // block number => table:key/total
 var HomeMap = make(map[*field.BigInt]*types.Home, 0)                    // block number => home
 
