@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Ankr-network/uscan/pkg/kv"
+	"github.com/Ankr-network/uscan/pkg/log"
 	"github.com/Ankr-network/uscan/pkg/response"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -167,6 +168,7 @@ func validateContract(param *types.ContractVerityTmp) error {
 	if len(contractFileName) != 2 {
 		return fmt.Errorf("validateContract strings.Split contractName error. contractName: %s", param.ContractName)
 	}
+	log.Infof("contractFileName:%+v\n", out.Contracts)
 	contract, ok := out.Contracts[contractFileName[0]]
 	if !ok {
 		return fmt.Errorf("out.Contracts get %+v  error.", contractFileName[0])
@@ -260,7 +262,7 @@ func validateContract(param *types.ContractVerityTmp) error {
 }
 
 func getSolcFile(compilerFileName string) string {
-	return fmt.Sprintf("%s%s", "/go/src/app/pkg/files/", compilerFileName)
+	return fmt.Sprintf("%s%s", "/Users/johnson/goWork/Ankr-network/uscan/pkg/files/", compilerFileName)
 }
 
 var ContractVerityChain = make(chan *types.ContractVerityTmp, 100)
