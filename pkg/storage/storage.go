@@ -217,13 +217,14 @@ func (s *StorageImpl) ReadAccountTxByIndex(ctx context.Context, addr common.Addr
 		i, err = forkdb.ReadAddressTxIndex(ctx, s.ForkDB, addr)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
-				i = field.NewInt(1)
+				i = field.NewInt(0)
 				err = nil
 			} else {
 				return
 			}
 		}
-		return forkdb.ReadAccountTxByIndex(ctx, s.ForkDB, addr, i.Add(totalFork).Sub(field.NewInt(1)))
+		totalAll.Add(totalFork)
+		return forkdb.ReadAccountTxByIndex(ctx, s.ForkDB, addr, i.Add(totalAll).Sub(index))
 	} else {
 		return fulldb.ReadAccountTxByIndex(ctx, s.FullDB, addr, index)
 	}
