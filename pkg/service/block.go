@@ -2,15 +2,16 @@ package service
 
 import (
 	"errors"
+	"math/big"
+	"sort"
+	"unicode"
+
 	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/response"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"math/big"
-	"sort"
-	"unicode"
 )
 
 const (
@@ -215,7 +216,7 @@ func GetBlock(blockNum string) (*types.BlockResp, error) {
 	resp := &types.BlockResp{
 		BaseFeePerGas:     block.BaseFee.StringPointer(),
 		Difficulty:        block.Difficulty.String(),
-		ExtraData:         hexutil.Encode(block.Extra),
+		ExtraData:         block.Extra,
 		GasLimit:          block.GasLimit.String(),
 		GasUsed:           block.GasUsed.String(),
 		Hash:              block.Hash.Hex(),

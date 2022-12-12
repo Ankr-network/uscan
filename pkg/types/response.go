@@ -20,7 +20,7 @@ type HomeTx struct {
 type BlockResp struct {
 	BaseFeePerGas     *string  `json:"baseFeePerGas"`
 	Difficulty        string   `json:"difficulty"`
-	ExtraData         string   `json:"extraData"`
+	ExtraData         []byte   `json:"extraData"`
 	GasLimit          string   `json:"gasLimit"` // int64 改成string
 	GasUsed           string   `json:"gasUsed"`  // int64 改成string
 	Hash              string   `json:"hash"`
