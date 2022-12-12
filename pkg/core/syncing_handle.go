@@ -162,8 +162,9 @@ func (n *blockHandle) handleDeleteFork(ctx context.Context, blockNumber *field.B
 					} else {
 						return err
 					}
+				} else {
+					i.SetBytes(bytesRes)
 				}
-				i.SetBytes(bytesRes)
 				i.Add(v1)
 				err = n.db.Put(ctx, []byte(k1), i.Bytes(), &kv.WriteOption{Table: share.ForkIndexTbl})
 				if err != nil {
