@@ -197,18 +197,20 @@ func validateContract(param *types.ContractVerityTmp) error {
 		if err != nil {
 			return err
 		}
-		log.Infof("\"0x\" + object: %+v\n", "0x"+object)
-		decodeObject2, err := hexutil.Decode("0x" + object[:len("0x"+object)-86])
+
+		objectHash := "0x" + object
+		log.Infof("objectHash: %+v\n", objectHash)
+		decodeObject2, err := hexutil.Decode(objectHash[:len(objectHash)-86])
 		if err != nil {
 			return err
 		}
 		hashCode := crypto.Keccak256Hash(decodeObject)
 		hashCode2 := crypto.Keccak256Hash(decodeObject2)
-		if hashCode == hashCode2 {
+		if hashCode.Hex() == hashCode2.Hex() {
 			codeHash = account.ByteCodeHash.Hex()
 		}
-		log.Infof("hashCode: %+v\n", hashCode)
-		log.Infof("hashCode2: %+v\n", hashCode2)
+		log.Infof("hashCode: %+v\n", hashCode.Hex())
+		log.Infof("hashCode2: %+v\n", hashCode2.Hex())
 	case types.SolidityStandardJsonInput:
 		inputTmp := &solc.Input{}
 		if err := json.Unmarshal([]byte(param.SourceCode), &inputTmp); err != nil {
