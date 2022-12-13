@@ -62,6 +62,7 @@ func SetupRouter(g fiber.Router) {
 	g.Get("/contracts/metadata", ReadValidateContractMetadata)
 	g.Post("/contracts/metadata", WriteValidateContractMetadata)
 	g.Get("/contracts/:address/content", getValidateContract)
+	g.Get("/contracts/:address/abi", getContractABI)
 
 	g.Get("/custom-params", getCustomParameters)
 }
@@ -562,5 +563,16 @@ func getValidateContract(c *fiber.Ctx) error {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}
 	return c.Status(http.StatusOK).JSON(response.Ok(resp))
+}
 
+func getContractABI(c *fiber.Ctx) error {
+	address := c.Params("address")
+	if address == "" {
+		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
+	}
+	resp, err := service.GetContractABI(common.HexToAddress(address))
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
+	}
+	return c.Status(http.StatusOK).JSON(response.Ok(resp))
 }

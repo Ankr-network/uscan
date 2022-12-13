@@ -393,6 +393,17 @@ func GetValidateContract(address common.Address) (*types.ContractVerityInfoResp,
 	return resp, nil
 }
 
+func GetContractABI(address common.Address) (string, error) {
+	contract, err := store.GetValidateContract(address)
+	if err != nil && err != kv.NotFound {
+		return "", err
+	}
+	if contract == nil {
+		return "", nil
+	}
+	return contract.ABI, nil
+}
+
 func ReadMetaData() (*types.ValidateContractMetadata, error) {
 	jsonFile, err := os.Open(filePath + "metadata.json")
 	if err != nil {
