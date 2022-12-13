@@ -262,7 +262,7 @@ func validateContract(param *types.ContractVerityTmp) error {
 }
 
 func getSolcFile(compilerFileName string) string {
-	return fmt.Sprintf("%s%s", "/Users/johnson/goWork/Ankr-network/uscan/pkg/files/", compilerFileName)
+	return fmt.Sprintf("%s%s", "/go/src/app/pkg/files/", compilerFileName)
 }
 
 var ContractVerityChain = make(chan *types.ContractVerityTmp, 100)
