@@ -128,6 +128,7 @@ func validateContract(param *types.ContractVerityTmp) error {
 					"*": []string{
 						"abi",
 						"evm.deployedBytecode",
+						"evm.bytecode",
 						"evm.methodIdentifiers",
 						"metadata",
 					},
