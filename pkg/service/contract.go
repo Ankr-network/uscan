@@ -162,22 +162,25 @@ func validateContract(param *types.ContractVerityTmp) error {
 	}
 	abi := make([]json.RawMessage, 0)
 	object := ""
-
+	log.Infof("contractFileName:%+v\n", out.Contracts)
+	log.Infof("param.ContractName:%+v\n", param.ContractName)
 	metadata := make(map[string]string)
 	contractFileName := strings.Split(param.ContractName, ":")
 	if len(contractFileName) != 2 {
 		return fmt.Errorf("validateContract strings.Split contractName error. contractName: %s", param.ContractName)
 	}
-	log.Infof("contractFileName:%+v\n", out.Contracts)
 	contract, ok := out.Contracts[contractFileName[0]]
 	if !ok {
 		return fmt.Errorf("out.Contracts get %+v  error.", contractFileName[0])
 	}
+	log.Infof("out.Contracts[contractFileName[0]]:%+v\n", contractFileName[0])
+	log.Infof("out.Contracts[contractFileName[0]].contract:%+v\n", contract)
 	v, ok := contract[contractFileName[1]]
+	log.Infof("contractFileName[1]:%+v\n", contractFileName[1])
+	log.Infof("contractFileName[1].v:%+v\n", v)
 	if !ok {
 		return fmt.Errorf("contract get %+v  error.", contractFileName[1])
 	}
-
 	abi = v.ABI
 	object = v.EVM.Bytecode.Object
 
@@ -185,10 +188,15 @@ func validateContract(param *types.ContractVerityTmp) error {
 	if err != nil {
 		return err
 	}
+	log.Infof("v.EVM.Bytecode.Object:%+v\n", v.EVM.Bytecode.Object)
+	log.Infof("v.EVM.Bytecode.Object.bytecodeObject:%+v\n", bytecodeObject)
+	log.Infof("v.EVM.Bytecode.Object.bytecodeObject:%+v\n", bytecodeObject)
 	deployedBytecodeObject, err := hexutil.Decode("0x" + v.EVM.DeployedBytecode.Object)
 	if err != nil {
 		return err
 	}
+	log.Infof("v.EVM.DeployedBytecode.Object:%+v\n", v.EVM.DeployedBytecode.Object)
+	log.Infof("v.EVM.DeployedBytecode.Object.deployedBytecodeObject:%+v\n", deployedBytecodeObject)
 
 	splitOp := deployedBytecodeObject[len(deployedBytecodeObject)-32:]
 	var objectByte []byte
@@ -228,7 +236,8 @@ func validateContract(param *types.ContractVerityTmp) error {
 	if err != nil {
 		return err
 	}
-
+	log.Infof("crypto.Keccak256Hash(objectByte).Hex():%+v\n", crypto.Keccak256Hash(objectByte).Hex())
+	log.Infof("account.ByteCodeHash.Hex():%+v\n", account.ByteCodeHash.Hex())
 	codeHash := ""
 	if crypto.Keccak256Hash(objectByte).Hex() == account.ByteCodeHash.Hex() {
 		codeHash = hexutil.Encode(account.ByteCode)
