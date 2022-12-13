@@ -15,9 +15,12 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/xiaobaiskill/solc-go"
 	"io/ioutil"
-	"math/big"
 	"os"
 	"strings"
+)
+
+const (
+	filePath = "/go/src/app/pkg/files/"
 )
 
 func WriteValidateContractMetadata(metadata *types.ValidateContractMetadata) error {
@@ -100,7 +103,10 @@ func ValidateContract(req *types.ValidateContractReq) (map[string]string, error)
 		return nil, response.ErrVerityContract
 	}
 
-	if err := store.WriteValidateContractStatus(common.HexToAddress(req.ContractAddress), big.NewInt(0)); err != nil {
+	if err := store.WriteValidateContractStatus(common.HexToAddress(req.ContractAddress), &types.ContractStatus{
+		Status:    0,
+		ErrReason: "",
+	}); err != nil {
 		return nil, err
 	}
 
@@ -152,31 +158,34 @@ func validateContract(param *types.ContractVerityTmp) error {
 	}
 
 	filePath := getSolcFile(param.CompilerFileName)
-	logrus.Infof("getSolcFile:%s", filePath)
+	log.Infof("getSolcFilePath:%s\n", filePath)
 	newSolc := solc.NewSolc(filePath)
 	out, err := newSolc.Compile(input)
 	if err != nil {
-		return errors.New(fmt.Sprintf("validateContract err: %+v, filePath: %+v", err, filePath))
+		return errors.New(fmt.Sprintf("contract verification failure. error: %s", err))
 	}
 	if out != nil && out.Errors != nil {
-		return errors.New(fmt.Sprintf("validateContract out.Errors: %+v, filePath: %+v", out.Errors, filePath))
+		return errors.New(fmt.Sprintf("contract verification failure. error: %+v", out.Errors))
 	}
 	abi := make([]json.RawMessage, 0)
 	object := ""
-	log.Infof("contractFileName:%+v\n", out.Contracts)
+	log.Infof("contract content: 【%+v】\n", out.Contracts)
 	metadata := make(map[string]string)
 	contractFileName := strings.Split(param.ContractName, ":")
 	if len(contractFileName) != 2 {
-		return fmt.Errorf("validateContract strings.Split contractName error. contractName: %s", param.ContractName)
+		log.Errorf("contractFileName: %+v", contractFileName)
+		return fmt.Errorf("contract error. contract name:【%s】", param.ContractName)
 	}
 	contract, ok := out.Contracts[contractFileName[0]]
 	if !ok {
-		return fmt.Errorf("out.Contracts get %+v  error.", contractFileName[0])
+		log.Errorf("contractFileName[0]: %+v", contractFileName[0])
+		return fmt.Errorf("contract error. contract name:【%s】", param.ContractName)
 	}
 
 	v, ok := contract[contractFileName[1]]
 	if !ok {
-		return fmt.Errorf("contract get %+v  error.", contractFileName[1])
+		log.Errorf("contractFileName[1]: %+v", contractFileName[1])
+		return fmt.Errorf("contract error. contract name:【%s】", param.ContractName)
 	}
 	abi = v.ABI
 	object = v.EVM.Bytecode.Object
@@ -192,14 +201,14 @@ func validateContract(param *types.ContractVerityTmp) error {
 	case types.SoliditySingleFile:
 		metadata[contractFileName[0]] = param.SourceCode
 		accountBC := hexutil.Encode(account.ByteCode)
-		log.Infof("hexutil.Encode(account.ByteCode): %+v\n", accountBC)
+		log.Infof("solidity-single-file, hexutil.Encode(account.ByteCode): %+v\n", accountBC)
 		decodeObject, err := hexutil.Decode(accountBC[:len(accountBC)-86])
 		if err != nil {
 			return err
 		}
 
 		objectHash := "0x" + object
-		log.Infof("objectHash: %+v\n", objectHash)
+		log.Infof("solidity-single-file, objectHash: %+v\n", objectHash)
 		decodeObject2, err := hexutil.Decode(objectHash[:len(objectHash)-86])
 		if err != nil {
 			return err
@@ -209,8 +218,6 @@ func validateContract(param *types.ContractVerityTmp) error {
 		if hashCode.Hex() == hashCode2.Hex() {
 			codeHash = account.ByteCodeHash.Hex()
 		}
-		log.Infof("hashCode: %+v\n", hashCode.Hex())
-		log.Infof("hashCode2: %+v\n", hashCode2.Hex())
 	case types.SolidityStandardJsonInput:
 		inputTmp := &solc.Input{}
 		if err := json.Unmarshal([]byte(param.SourceCode), &inputTmp); err != nil {
@@ -279,11 +286,11 @@ func validateContract(param *types.ContractVerityTmp) error {
 		return nil
 	}
 
-	return fmt.Errorf("varity contract failed")
+	return fmt.Errorf("varity contract failed, Bytecode is :%s", "0x"+object)
 }
 
 func getSolcFile(compilerFileName string) string {
-	return fmt.Sprintf("%s%s", "/go/src/app/pkg/files/", compilerFileName)
+	return fmt.Sprintf("%s%s", filePath, compilerFileName)
 }
 
 var ContractVerityChain = make(chan *types.ContractVerityTmp, 100)
@@ -300,12 +307,18 @@ func StartHandleContractVerity() {
 				err := validateContract(contractVerityTmp)
 				if err != nil {
 					logrus.Errorf("StartHandleContractVerity validateContract error. err: %+v, contract verity id:%s", err, contractVerityTmp.Address)
-					if err := store.WriteValidateContractStatus(common.HexToAddress(contractVerityTmp.Address), big.NewInt(2)); err != nil {
+					if err := store.WriteValidateContractStatus(common.HexToAddress(contractVerityTmp.Address), &types.ContractStatus{
+						Status:    2,
+						ErrReason: err.Error(),
+					}); err != nil {
 						logrus.Errorf("StartHandleContractVerity UpdateContractVerityTmpStatus error. err: %+v, contract verity id:%s", err, contractVerityTmp.Address)
 					}
 				} else {
-					logrus.Errorf("StartHandleContractVerity validateContract error. err: %+v, contract verity id:%s", err, contractVerityTmp.Address)
-					if err := store.WriteValidateContractStatus(common.HexToAddress(contractVerityTmp.Address), big.NewInt(1)); err != nil {
+					log.Infof("StartHandleContractVerity validateContract error. err: %+v, contract verity id:%s\n", err, contractVerityTmp.Address)
+					if err := store.WriteValidateContractStatus(common.HexToAddress(contractVerityTmp.Address), &types.ContractStatus{
+						Status:    1,
+						ErrReason: "",
+					}); err != nil {
 						logrus.Errorf("StartHandleContractVerity UpdateContractVerityTmpStatus error. err: %+v, contract verity id:%s", err, contractVerityTmp.Address)
 					}
 				}
@@ -314,12 +327,12 @@ func StartHandleContractVerity() {
 	}()
 }
 
-func GetValidateContractStatus(address string) (int64, error) {
-	status, err := store.GetValidateContractStatus(common.HexToAddress(address))
+func GetValidateContractStatus(address string) (status *types.ContractStatus, err error) {
+	status, err = store.GetValidateContractStatus(common.HexToAddress(address))
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	return status.Int64(), nil
+	return
 }
 
 func GetValidateContract(address common.Address) (*types.ContractVerityInfoResp, error) {
@@ -381,7 +394,7 @@ func GetValidateContract(address common.Address) (*types.ContractVerityInfoResp,
 }
 
 func ReadMetaData() (*types.ValidateContractMetadata, error) {
-	jsonFile, err := os.Open("/go/src/app/pkg/files/metadata.json")
+	jsonFile, err := os.Open(filePath + "metadata.json")
 	if err != nil {
 		return nil, err
 	}

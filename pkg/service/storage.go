@@ -7,7 +7,6 @@ import (
 	"github.com/Ankr-network/uscan/pkg/storage"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/ethereum/go-ethereum/common"
-	"math/big"
 )
 
 var store Storage
@@ -76,8 +75,8 @@ type Storage interface {
 	WriteValidateContractMetadata(metadata *types.ValidateContractMetadata) error
 	GetValidateContractMetadata() (data *types.ValidateContractMetadata, err error)
 	GetValidateContract(address common.Address) (data *types.ContractVerity, err error)
-	WriteValidateContractStatus(address common.Address, status *big.Int) error
-	GetValidateContractStatus(address common.Address) (status *big.Int, err error)
+	WriteValidateContractStatus(address common.Address, status *types.ContractStatus) error
+	GetValidateContractStatus(address common.Address) (status *types.ContractStatus, err error)
 	WriteMethodName(id, name string) error
 	WriteValidateContract(address common.Address, data *types.ContractVerity) error
 	GetProxyContract(address common.Address) (logic common.Address, err error)
@@ -440,11 +439,11 @@ func (s *Store) GetValidateContract(address common.Address) (data *types.Contrac
 	return s.St.ReadValidateContract(s.ctx, address)
 }
 
-func (s *Store) WriteValidateContractStatus(address common.Address, status *big.Int) error {
+func (s *Store) WriteValidateContractStatus(address common.Address, status *types.ContractStatus) error {
 	return s.St.WriteValidateContractStatus(s.ctx, address, status)
 }
 
-func (s *Store) GetValidateContractStatus(address common.Address) (status *big.Int, err error) {
+func (s *Store) GetValidateContractStatus(address common.Address) (status *types.ContractStatus, err error) {
 	return s.St.ReadValidateContractStatus(s.ctx, address)
 }
 

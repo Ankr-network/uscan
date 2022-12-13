@@ -5,7 +5,6 @@ import (
 	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/ethereum/go-ethereum/common"
-	"math/big"
 )
 
 type Storage interface {
@@ -32,8 +31,8 @@ type Storage interface {
 
 	WriteValidateContractMetadata(ctx context.Context, data *types.ValidateContractMetadata) error
 	ReadValidateContractMetadata(ctx context.Context) (acc *types.ValidateContractMetadata, err error)
-	WriteValidateContractStatus(ctx context.Context, address common.Address, status *big.Int) error
-	ReadValidateContractStatus(ctx context.Context, address common.Address) (status *big.Int, err error)
+	WriteValidateContractStatus(ctx context.Context, address common.Address, status *types.ContractStatus) error
+	ReadValidateContractStatus(ctx context.Context, address common.Address) (status *types.ContractStatus, err error)
 	WriteValidateContract(ctx context.Context, address common.Address, data *types.ContractVerity) error
 	ReadValidateContract(ctx context.Context, address common.Address) (data *types.ContractVerity, err error)
 	WriteMethodName(ctx context.Context, methodID, methodName string) error

@@ -744,17 +744,21 @@ func (s *StorageImpl) ReadValidateContractMetadata(ctx context.Context) (acc *ty
 	return
 }
 
-func (s *StorageImpl) WriteValidateContractStatus(ctx context.Context, address common.Address, status *big.Int) error {
-	return s.FullDB.Put(ctx, append(ContractVerityTmpPrefix, address.Bytes()...), status.Bytes(), &kv.WriteOption{Table: share.ValidateContractTbl})
+func (s *StorageImpl) WriteValidateContractStatus(ctx context.Context, address common.Address, status *types.ContractStatus) error {
+	marshal, err := status.Marshal()
+	if err != nil {
+		return err
+	}
+	return s.FullDB.Put(ctx, append(ContractVerityTmpPrefix, address.Bytes()...), marshal, &kv.WriteOption{Table: share.ValidateContractTbl})
 }
 
-func (s *StorageImpl) ReadValidateContractStatus(ctx context.Context, address common.Address) (status *big.Int, err error) {
+func (s *StorageImpl) ReadValidateContractStatus(ctx context.Context, address common.Address) (status *types.ContractStatus, err error) {
 	rs, err := s.FullDB.Get(ctx, append(ContractVerityTmpPrefix, address.Bytes()...), &kv.ReadOption{Table: share.ValidateContractTbl})
 	if err != nil {
 		return nil, err
 	}
-	status = &big.Int{}
-	status.SetBytes(rs)
+	status = &types.ContractStatus{}
+	err = status.Unmarshal(rs)
 	return
 }
 
