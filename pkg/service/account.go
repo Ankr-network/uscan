@@ -41,8 +41,8 @@ func GetAccountInfo(address common.Address) (*types.AccountResp, error) {
 		return nil, err
 	}
 	if c != nil {
-		if c.ByteCode != nil {
-			code := hexutil.Encode(c.ByteCode)
+		if c.DeployedCode != nil {
+			code := hexutil.Encode(c.DeployedCode)
 			resp.Code = &code
 		}
 	}
