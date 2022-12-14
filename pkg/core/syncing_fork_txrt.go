@@ -14,11 +14,12 @@ import (
 )
 
 var (
-	forkTxTotal           *field.BigInt
-	forkAccountTxTotalMap = utils.NewCache()
+	forkTxTotal              *field.BigInt
+	forkAccountTxTotalMap    = utils.NewCache()
+	forkOldAccountTxTotalMap = utils.NewCache()
 )
 
-func (n *blockHandle) writeForkTxAndRt(ctx context.Context, tx *types.Tx, rt *types.Rt, deleteMap map[string][][]byte, indexMap map[string]*field.BigInt, totalMap map[string]*field.BigInt) (err error) {
+func (n *blockHandle) writeForkTxAndRt(ctx context.Context, tx *types.Tx, rt *types.Rt, deleteMap map[string][][]byte, indexMap, totalMap, accountTotalMap map[string]*field.BigInt) (err error) {
 	if forkTxTotal == nil {
 		forkTxTotal, err = forkdb.ReadTxTotal(ctx, n.db)
 		if err != nil {
@@ -55,21 +56,21 @@ func (n *blockHandle) writeForkTxAndRt(ctx context.Context, tx *types.Tx, rt *ty
 	deleteMap[share.ForkTxTbl] = append(deleteMap[share.ForkTxTbl], append([]byte("/fork/rt/"), tx.Hash.Bytes()...))
 
 	if tx.From != (common.Address{}) {
-		if err = n.writeForkAccountTx(ctx, tx.From, tx.Hash, deleteMap, indexMap, totalMap); err != nil {
+		if err = n.writeForkAccountTx(ctx, tx.From, tx.Hash, deleteMap, indexMap, totalMap, accountTotalMap); err != nil {
 			log.Errorf("write fork account(%s) tx: %v", tx.From, err)
 			return err
 		}
 	}
 
 	if tx.To != nil && tx.To.Hex() != (common.Address{}).Hex() {
-		if err = n.writeForkAccountTx(ctx, *tx.To, tx.Hash, deleteMap, indexMap, totalMap); err != nil {
+		if err = n.writeForkAccountTx(ctx, *tx.To, tx.Hash, deleteMap, indexMap, totalMap, accountTotalMap); err != nil {
 			log.Errorf("write fork account(%s) tx: %v", tx.To.Hex(), err)
 			return err
 		}
 	}
 
 	if rt.ContractAddress != nil && rt.ContractAddress.Hex() != (common.Address{}).Hex() {
-		if err = n.writeForkAccountTx(ctx, *rt.ContractAddress, tx.Hash, deleteMap, indexMap, totalMap); err != nil {
+		if err = n.writeForkAccountTx(ctx, *rt.ContractAddress, tx.Hash, deleteMap, indexMap, totalMap, accountTotalMap); err != nil {
 			log.Errorf("write fork account(%s) tx: %v", rt.ContractAddress.Hex(), err)
 			return err
 		}
@@ -78,7 +79,7 @@ func (n *blockHandle) writeForkTxAndRt(ctx context.Context, tx *types.Tx, rt *ty
 	return nil
 }
 
-func (n *blockHandle) writeForkAccountTx(ctx context.Context, addr common.Address, hash common.Hash, deleteMap map[string][][]byte, indexMap map[string]*field.BigInt, totalMap map[string]*field.BigInt) (err error) {
+func (n *blockHandle) writeForkAccountTx(ctx context.Context, addr common.Address, hash common.Hash, deleteMap map[string][][]byte, indexMap, totalMap, accountTotalMap map[string]*field.BigInt) (err error) {
 	var total = &field.BigInt{}
 	if bytesRes, ok := forkAccountTxTotalMap.Get(addr); ok {
 		total.SetBytes(bytesRes.([]byte))
@@ -105,10 +106,18 @@ func (n *blockHandle) writeForkAccountTx(ctx context.Context, addr common.Addres
 	}
 	indexMap[string(key)].Add(field.NewInt(1))
 
-	err = forkdb.WriteAccountTxTotal(ctx, n.db, addr, total)
-	if err == nil {
-		forkAccountTxTotalMap.Add(addr, total.Bytes())
+	var oldTotal = &field.BigInt{}
+	if bytesRes, ok := forkOldAccountTxTotalMap.Get(addr.String()); ok {
+		oldTotal.SetBytes(bytesRes.([]byte))
+	} else {
+		oldTotal = field.NewInt(0)
 	}
+	total.Sub(oldTotal)
+
+	err = forkdb.WriteAccountTxTotal(ctx, n.db, addr, total)
+	//if err == nil {
+	//	forkAccountTxTotalMap.Add(addr, total.Bytes())
+	//}
 
 	key2 := append(append([]byte("/fork/"), addr.Bytes()...), []byte("/tx/total")...)
 	if totalMap[share.ForkAccountsTbl+":"+string(key2)] == nil {
@@ -116,33 +125,56 @@ func (n *blockHandle) writeForkAccountTx(ctx context.Context, addr common.Addres
 	}
 	totalMap[share.ForkAccountsTbl+":"+string(key2)].Add(field.NewInt(1))
 
+	total.Add(oldTotal)
+	if accountTotalMap[addr.String()] == nil {
+		accountTotalMap[addr.String()] = field.NewInt(0)
+	}
+	accountTotalMap[addr.String()] = total
+
+	if err == nil {
+		forkAccountTxTotalMap.Add(addr, total.Bytes())
+	}
+
 	return
 }
 
-func (n *blockHandle) writeForkTxTotal(ctx context.Context, deleteMap map[string][][]byte, indexMap map[string]*field.BigInt, totalMap map[string]*field.BigInt) error {
+func (n *blockHandle) writeForkTxTotal(ctx context.Context, totalMap map[string]*field.BigInt, accountTotalMap map[string]*field.BigInt) error {
 	if forkTxTotal != nil {
-		oldTotal, err := forkdb.ReadTxTotal(ctx, n.db)
-		if err != nil {
-			if errors.Is(err, kv.NotFound) {
-				oldTotal = field.NewInt(0)
-				err = nil
-			} else {
-				log.Errorf("get fork tx total: %v", err)
-				return err
-			}
-		}
+		//oldTotal, err := forkdb.ReadTxTotal(ctx, n.db)
+		//if err != nil {
+		//	if errors.Is(err, kv.NotFound) {
+		//		oldTotal = field.NewInt(0)
+		//		err = nil
+		//	} else {
+		//		log.Errorf("get fork tx total: %v", err)
+		//		return err
+		//	}
+		//}
 
-		err = forkdb.WriteTxTotal(ctx, n.db, forkTxTotal)
+		var oldTotal = &field.BigInt{}
+		if bytesRes, ok := forkOldAccountTxTotalMap.Get("txTotal"); ok {
+			oldTotal.SetBytes(bytesRes.([]byte))
+		} else {
+			oldTotal = field.NewInt(0)
+		}
+		forkTxTotal.Sub(oldTotal)
+
+		err := forkdb.WriteTxTotal(ctx, n.db, forkTxTotal)
 		if err != nil {
 			return err
 		}
 
-		forkTxTotal.Sub(oldTotal)
 		key := []byte("/fork/all/tx/total")
 		if totalMap[share.ForkTxTbl+":"+string(key)] == nil {
 			totalMap[share.ForkTxTbl+":"+string(key)] = field.NewInt(0)
 		}
 		totalMap[share.ForkTxTbl+":"+string(key)].Add(forkTxTotal)
+
+		forkTxTotal.Add(oldTotal)
+		if accountTotalMap["txTotal"] == nil {
+			accountTotalMap["txTotal"] = field.NewInt(0)
+		}
+		accountTotalMap["txTotal"] = forkTxTotal
 	}
 	return nil
 }

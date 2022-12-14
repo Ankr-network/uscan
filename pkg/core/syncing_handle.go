@@ -16,10 +16,18 @@ import (
 	"strings"
 )
 
-var blockDeleteMap = make(map[*field.BigInt]map[string][][]byte, 0)     // block number => table/key
-var blockIndexMap = make(map[*field.BigInt]map[string]*field.BigInt, 0) // block number => key/index
-var blockTotalMap = make(map[*field.BigInt]map[string]*field.BigInt, 0) // block number => table:key/total
-var HomeMap = make(map[*field.BigInt]*types.Home, 0)                    // block number => home
+var blockDeleteMap = make(map[*field.BigInt]map[string][][]byte, 0)               // block number => table/key
+var blockIndexMap = make(map[*field.BigInt]map[string]*field.BigInt, 0)           // block number => key/index
+var blockTotalMap = make(map[*field.BigInt]map[string]*field.BigInt, 0)           // block number => table:key/total
+var blockAccountMap = make(map[*field.BigInt]map[string]*field.BigInt, 0)         // block number => account, total tx/total
+var blockItxMap = make(map[*field.BigInt]map[string]*field.BigInt, 0)             // block number => account, total itx/total
+var blockErc20Map = make(map[*field.BigInt]map[string]*field.BigInt, 0)           // block number => erc20 account, total tx/total
+var blockErc721Map = make(map[*field.BigInt]map[string]*field.BigInt, 0)          // block number => erc721 account, total tx/total
+var blockErc1155Map = make(map[*field.BigInt]map[string]*field.BigInt, 0)         // block number => erc1155 account, total tx/total
+var blockErc20ContractMap = make(map[*field.BigInt]map[string]*field.BigInt, 0)   // block number => erc20 contract account, total tx/total
+var blockErc721ContractMap = make(map[*field.BigInt]map[string]*field.BigInt, 0)  // block number => erc721 contract account, total tx/total
+var blockErc1155ContractMap = make(map[*field.BigInt]map[string]*field.BigInt, 0) // block number => erc1155 contract account, total tx/total
+var HomeMap = make(map[*field.BigInt]*types.Home, 0)                              // block number => home
 
 type blockHandle struct {
 	blockData            *types.Block
@@ -197,14 +205,94 @@ func (n *blockHandle) handleDeleteFork(ctx context.Context, blockNumber *field.B
 		}
 	}
 
+	for k, v := range blockAccountMap {
+		if k.Cmp(blockNumber) == 0 {
+			for k1, v1 := range v {
+				forkOldAccountTxTotalMap.Add(k1, v1.Bytes())
+			}
+			delete(blockAccountMap, k)
+		}
+	}
+
+	for k, v := range blockItxMap {
+		if k.Cmp(blockNumber) == 0 {
+			for k1, v1 := range v {
+				forkOldAccountITxTotalMap.Add(k1, v1.Bytes())
+			}
+			delete(blockItxMap, k)
+		}
+	}
+
+	for k, v := range blockErc20Map {
+		if k.Cmp(blockNumber) == 0 {
+			for k1, v1 := range v {
+				forkOldErc20TransferAccountTotalMap.Add(k1, v1.Bytes())
+			}
+			delete(blockErc20Map, k)
+		}
+	}
+
+	for k, v := range blockErc721Map {
+		if k.Cmp(blockNumber) == 0 {
+			for k1, v1 := range v {
+				forkOldErc721TransferAccountTotalMap.Add(k1, v1.Bytes())
+			}
+			delete(blockErc721Map, k)
+		}
+	}
+
+	for k, v := range blockErc1155Map {
+		if k.Cmp(blockNumber) == 0 {
+			for k1, v1 := range v {
+				forkOldErc1155TransferAccountTotalMap.Add(k1, v1.Bytes())
+			}
+			delete(blockErc1155Map, k)
+		}
+	}
+
+	for k, v := range blockErc20ContractMap {
+		if k.Cmp(blockNumber) == 0 {
+			for k1, v1 := range v {
+				forkOldErc20TransferContractTotalMap.Add(k1, v1.Bytes())
+			}
+			delete(blockErc20ContractMap, k)
+		}
+	}
+
+	for k, v := range blockErc721ContractMap {
+		if k.Cmp(blockNumber) == 0 {
+			for k1, v1 := range v {
+				forkOldErc721TransferContractTotalMap.Add(k1, v1.Bytes())
+			}
+			delete(blockErc721ContractMap, k)
+		}
+	}
+
+	for k, v := range blockErc1155ContractMap {
+		if k.Cmp(blockNumber) == 0 {
+			for k1, v1 := range v {
+				forkOldErc1155TransferContractTotalMap.Add(k1, v1.Bytes())
+			}
+			delete(blockErc1155ContractMap, k)
+		}
+	}
+
 	return nil
 }
 
 func (n *blockHandle) handleFork(ctx context.Context) (err error) {
 
-	var deleteMap = make(map[string][][]byte, 0)     // table => key
-	var indexMap = make(map[string]*field.BigInt, 0) // key => index
-	var totalMap = make(map[string]*field.BigInt, 0) // table:key => total
+	var deleteMap = make(map[string][][]byte, 0)                    // table => key
+	var indexMap = make(map[string]*field.BigInt, 0)                // key => index
+	var totalMap = make(map[string]*field.BigInt, 0)                // table:key => total
+	var accountTotalMap = make(map[string]*field.BigInt, 0)         // account/total tx => total
+	var iTxTotalMap = make(map[string]*field.BigInt, 0)             // account/total itx  => total
+	var erc20TotalMap = make(map[string]*field.BigInt, 0)           // erc20 transfer tx  => total
+	var erc721TotalMap = make(map[string]*field.BigInt, 0)          // erc721 transfer tx  => total
+	var erc1155TotalMap = make(map[string]*field.BigInt, 0)         // erc1155 transfer tx  => total
+	var erc20ContractTotalMap = make(map[string]*field.BigInt, 0)   // erc20 transfer contract tx  => total
+	var erc721ContractTotalMap = make(map[string]*field.BigInt, 0)  // erc20 transfer contract tx  => total
+	var erc1155ContractTotalMap = make(map[string]*field.BigInt, 0) // erc20 transfer contract tx  => total
 
 	err = forkdb.WriteBlock(ctx, n.db, n.blockData.Number, n.blockData)
 	if err != nil {
@@ -233,17 +321,17 @@ func (n *blockHandle) handleFork(ctx context.Context) (err error) {
 	//}
 
 	if len(n.transactionData) > 0 {
-		if err = n.writeForkTxAndRtLog(ctx, n.transactionData, n.receiptData, deleteMap, indexMap, totalMap); err != nil {
+		if err = n.writeForkTxAndRtLog(ctx, n.transactionData, n.receiptData, deleteMap, indexMap, totalMap, accountTotalMap, erc20TotalMap, erc721TotalMap, erc1155TotalMap, erc20ContractTotalMap, erc721ContractTotalMap, erc1155ContractTotalMap); err != nil {
 			log.Errorf("write fork tx and rt: %v", err)
 			return err
 		}
 
-		if err = n.writeForkITx(ctx, n.internalTxs, deleteMap, indexMap, totalMap); err != nil {
+		if err = n.writeForkITx(ctx, n.internalTxs, deleteMap, indexMap, totalMap, iTxTotalMap); err != nil {
 			log.Errorf("write fork itxs: %v", err)
 			return err
 		}
 
-		if err = n.writeForkTraceTx2(ctx, n.callFrames, deleteMap, indexMap, totalMap); err != nil {
+		if err = n.writeForkTraceTx2(ctx, n.callFrames, deleteMap); err != nil {
 			log.Errorf("write fork callFrames: %v", err)
 			return err
 		}
@@ -263,6 +351,14 @@ func (n *blockHandle) handleFork(ctx context.Context) (err error) {
 	blockDeleteMap[n.blockData.Number] = deleteMap
 	blockIndexMap[n.blockData.Number] = indexMap
 	blockTotalMap[n.blockData.Number] = totalMap
+	blockAccountMap[n.blockData.Number] = accountTotalMap
+	blockItxMap[n.blockData.Number] = iTxTotalMap
+	blockErc20Map[n.blockData.Number] = erc20TotalMap
+	blockErc721Map[n.blockData.Number] = erc721TotalMap
+	blockErc1155Map[n.blockData.Number] = erc1155TotalMap
+	blockErc20ContractMap[n.blockData.Number] = erc20ContractTotalMap
+	blockErc721ContractMap[n.blockData.Number] = erc721ContractTotalMap
+	blockErc1155ContractMap[n.blockData.Number] = erc1155ContractTotalMap
 
 	return nil
 }
