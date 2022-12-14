@@ -1038,7 +1038,7 @@ func (s *StorageImpl) ReadHome(ctx context.Context) (home *types.Home, err error
 		blocks = homeFork.Blocks
 	}
 	if len(blocks) > 10 {
-		blocks = blocks[(len(home.Blocks) - 10):]
+		blocks = blocks[(len(blocks) - 10):]
 	}
 
 	if len(homeFork.Txs) == 0 {
@@ -1048,8 +1048,8 @@ func (s *StorageImpl) ReadHome(ctx context.Context) (home *types.Home, err error
 	} else {
 		txs = homeFork.Txs
 	}
-	if len(home.Txs) > 10 {
-		home.Txs = home.Txs[(len(home.Txs) - 10):]
+	if len(txs) > 10 {
+		txs = txs[(len(txs) - 10):]
 	}
 
 	home = &types.Home{
