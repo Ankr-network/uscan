@@ -294,10 +294,11 @@ func (s *Store) ListTxs(total *field.BigInt, offset, limit int64) ([]*types.Tx, 
 	}
 	begin, end := ParsePage(total, offset, limit)
 	p := begin
-
+	log.Infof("ListTxs: total: %d, begin: %d, end: %d\n", total.ToUint64(), begin.ToUint64(), end.ToUint64())
 	for {
 		tx, err := s.St.ReadTxByIndex(s.ctx, p)
 		if err != nil {
+			log.Errorf("ListTxs: total: %d, p: %d\n", total.ToUint64(), p.ToUint64())
 			return nil, err
 		}
 		txs = append(txs, tx)
