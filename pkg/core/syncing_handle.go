@@ -27,7 +27,6 @@ var blockErc1155Map = make(map[*field.BigInt]map[string]*field.BigInt, 0)       
 var blockErc20ContractMap = make(map[*field.BigInt]map[string]*field.BigInt, 0)   // block number => erc20 contract account, total tx/total
 var blockErc721ContractMap = make(map[*field.BigInt]map[string]*field.BigInt, 0)  // block number => erc721 contract account, total tx/total
 var blockErc1155ContractMap = make(map[*field.BigInt]map[string]*field.BigInt, 0) // block number => erc1155 contract account, total tx/total
-var HomeMap = make(map[*field.BigInt]*types.Home, 0)                              // block number => home
 
 type blockHandle struct {
 	blockData            *types.Block
@@ -135,11 +134,6 @@ func (n *blockHandle) handleMain(ctx context.Context) (err error) {
 }
 
 func (n *blockHandle) handleDeleteFork(ctx context.Context, blockNumber *field.BigInt) (err error) {
-
-	if err = n.deleteForkHome(ctx, blockNumber); err != nil {
-		log.Errorf("delete fork home : %v", err)
-		return err
-	}
 
 	for k, v := range blockDeleteMap {
 		if k.Cmp(blockNumber) == 0 {
