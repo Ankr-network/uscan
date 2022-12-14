@@ -9,9 +9,10 @@ import (
 )
 
 type Log struct {
-	Address common.Address `json:"address"`
-	Topics  []common.Hash  `json:"topics"`
-	Data    hexutil.Bytes  `json:"data"`
+	Address  common.Address `json:"address"`
+	Topics   []common.Hash  `json:"topics"`
+	Data     hexutil.Bytes  `json:"data"`
+	LogIndex field.BigInt   `json:"logIndex"`
 }
 
 func (l *Log) ToEthLog() ethTypes.Log {
