@@ -100,7 +100,7 @@ func (s *StorageImpl) ReadAccount(ctx context.Context, addr common.Address) (acc
 		}
 	}
 
-	if accFork.Owner.String() != "0x0000000000000000000000000000000000000000" && accFull.Owner.String() != "0x0000000000000000000000000000000000000000" {
+	if accFork != (&types.Account{}) && accFull != (&types.Account{}) {
 		acc = &types.Account{
 			Owner:            accFork.Owner,
 			Erc20:            accFork.Erc20,
@@ -118,7 +118,7 @@ func (s *StorageImpl) ReadAccount(ctx context.Context, addr common.Address) (acc
 			TxHash:           accFork.TxHash,
 			Retry:            accFork.Retry,
 		}
-	} else if accFork.Owner.String() != "0x0000000000000000000000000000000000000000" {
+	} else if accFork != (&types.Account{}) {
 		acc = accFork
 	} else {
 		acc = accFull
@@ -163,57 +163,17 @@ func (s *StorageImpl) ReadAccountTxIndex(ctx context.Context, addr common.Addres
 	i := &field.BigInt{}
 	hash = common.Hash{}
 
-	totalAll, err := s.ReadAccountTxTotal(ctx, addr)
-	if err != nil {
-		return
-	}
-
-	totalFork, err := forkdb.ReadAccountTxTotal(ctx, s.ForkDB, addr)
+	totalFull, err := fulldb.ReadAccountTxTotal(ctx, s.FullDB, addr)
 	if err != nil {
 		if errors.Is(err, kv.NotFound) {
-			totalFork = field.NewInt(0)
+			totalFull = field.NewInt(0)
 			err = nil
 		} else {
 			return
 		}
 	}
 
-	if totalAll.Sub(totalFork).Cmp(index) == -1 {
-		i, err = forkdb.ReadAddressTxIndex(ctx, s.ForkDB, addr)
-		if err != nil {
-			if errors.Is(err, kv.NotFound) {
-				i = field.NewInt(1)
-				err = nil
-			} else {
-				return
-			}
-		}
-		return forkdb.ReadAccountTxIndex(ctx, s.ForkDB, addr, i.Add(totalFork).Sub(field.NewInt(1)))
-	} else {
-		return fulldb.ReadAccountTxIndex(ctx, s.FullDB, addr, index)
-	}
-}
-
-func (s *StorageImpl) ReadAccountTxByIndex(ctx context.Context, addr common.Address, index *field.BigInt) (tx *types.Tx, err error) {
-	i := &field.BigInt{}
-	tx = &types.Tx{}
-
-	totalAll, err := s.ReadAccountTxTotal(ctx, addr)
-	if err != nil {
-		return
-	}
-
-	totalFork, err := forkdb.ReadAccountTxTotal(ctx, s.ForkDB, addr)
-	if err != nil {
-		if errors.Is(err, kv.NotFound) {
-			totalFork = field.NewInt(0)
-			err = nil
-		} else {
-			return
-		}
-	}
-
-	if totalAll.Sub(totalFork).Cmp(index) == -1 {
+	if index.Sub(totalFull).Cmp(field.NewInt(0)) == 1 {
 		i, err = forkdb.ReadAddressTxIndex(ctx, s.ForkDB, addr)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
@@ -223,9 +183,42 @@ func (s *StorageImpl) ReadAccountTxByIndex(ctx context.Context, addr common.Addr
 				return
 			}
 		}
-		totalAll.Add(totalFork)
-		return forkdb.ReadAccountTxByIndex(ctx, s.ForkDB, addr, i.Add(totalAll).Sub(index))
+		index.Add(totalFull)
+		return forkdb.ReadAccountTxIndex(ctx, s.ForkDB, addr, i.Add(index).Sub(totalFull))
 	} else {
+		index.Add(totalFull)
+		return fulldb.ReadAccountTxIndex(ctx, s.FullDB, addr, index)
+	}
+}
+
+func (s *StorageImpl) ReadAccountTxByIndex(ctx context.Context, addr common.Address, index *field.BigInt) (tx *types.Tx, err error) {
+	i := &field.BigInt{}
+	tx = &types.Tx{}
+
+	totalFull, err := fulldb.ReadAccountTxTotal(ctx, s.FullDB, addr)
+	if err != nil {
+		if errors.Is(err, kv.NotFound) {
+			totalFull = field.NewInt(0)
+			err = nil
+		} else {
+			return
+		}
+	}
+
+	if index.Sub(totalFull).Cmp(field.NewInt(0)) == 1 {
+		i, err = forkdb.ReadAddressTxIndex(ctx, s.ForkDB, addr)
+		if err != nil {
+			if errors.Is(err, kv.NotFound) {
+				i = field.NewInt(0)
+				err = nil
+			} else {
+				return
+			}
+		}
+		index.Add(totalFull)
+		return forkdb.ReadAccountTxByIndex(ctx, s.ForkDB, addr, i.Add(index).Sub(totalFull))
+	} else {
+		index.Add(totalFull)
 		return fulldb.ReadAccountTxByIndex(ctx, s.FullDB, addr, index)
 	}
 }
@@ -267,33 +260,30 @@ func (s *StorageImpl) ReadAccountITxIndex(ctx context.Context, addr common.Addre
 	i := &field.BigInt{}
 	data = &types.InternalTxKey{}
 
-	totalAll, err := s.ReadAccountITxTotal(ctx, addr)
-	if err != nil {
-		return
-	}
-
-	totalFork, err := forkdb.ReadAccountITxTotal(ctx, s.ForkDB, addr)
+	totalFull, err := fulldb.ReadAccountITxTotal(ctx, s.FullDB, addr)
 	if err != nil {
 		if errors.Is(err, kv.NotFound) {
-			totalFork = field.NewInt(0)
+			totalFull = field.NewInt(0)
 			err = nil
 		} else {
 			return
 		}
 	}
 
-	if totalAll.Sub(totalFork).Cmp(index) == -1 {
+	if index.Sub(totalFull).Cmp(field.NewInt(0)) == 1 {
 		i, err = forkdb.ReadAddressITxIndex(ctx, s.ForkDB, addr)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
-				i = field.NewInt(1)
+				i = field.NewInt(0)
 				err = nil
 			} else {
 				return
 			}
 		}
-		return forkdb.ReadAccountITxIndex(ctx, s.ForkDB, addr, i.Add(totalFork).Sub(field.NewInt(1)))
+		index.Add(totalFull)
+		return forkdb.ReadAccountITxIndex(ctx, s.ForkDB, addr, i.Add(index).Sub(totalFull))
 	} else {
+		index.Add(totalFull)
 		return fulldb.ReadAccountITxIndex(ctx, s.FullDB, addr, index)
 	}
 }
@@ -302,33 +292,30 @@ func (s *StorageImpl) ReadAccountITxByIndex(ctx context.Context, addr common.Add
 	i := &field.BigInt{}
 	itx = &types.InternalTx{}
 
-	totalAll, err := s.ReadAccountITxTotal(ctx, addr)
-	if err != nil {
-		return
-	}
-
-	totalFork, err := forkdb.ReadAccountITxTotal(ctx, s.ForkDB, addr)
+	totalFull, err := fulldb.ReadAccountITxTotal(ctx, s.FullDB, addr)
 	if err != nil {
 		if errors.Is(err, kv.NotFound) {
-			totalFork = field.NewInt(0)
+			totalFull = field.NewInt(0)
 			err = nil
 		} else {
 			return
 		}
 	}
 
-	if totalAll.Sub(totalFork).Cmp(index) == -1 {
+	if index.Sub(totalFull).Cmp(field.NewInt(0)) == 1 {
 		i, err = forkdb.ReadAddressITxIndex(ctx, s.ForkDB, addr)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
-				i = field.NewInt(1)
+				i = field.NewInt(0)
 				err = nil
 			} else {
 				return
 			}
 		}
-		return forkdb.ReadAccountITxByIndex(ctx, s.ForkDB, addr, i.Add(totalFork).Sub(field.NewInt(1)))
+		index.Add(totalFull)
+		return forkdb.ReadAccountITxByIndex(ctx, s.ForkDB, addr, i.Add(index).Sub(totalFull))
 	} else {
+		index.Add(totalFull)
 		return fulldb.ReadAccountITxByIndex(ctx, s.FullDB, addr, index)
 	}
 }
@@ -370,33 +357,30 @@ func (s *StorageImpl) ReadAccountErc20Index(ctx context.Context, addr common.Add
 	i := &field.BigInt{}
 	erc20TransferIndex = &field.BigInt{}
 
-	totalAll, err := s.ReadAccountErc20Total(ctx, addr)
-	if err != nil {
-		return
-	}
-
-	totalFork, err := forkdb.ReadAccountErc20Total(ctx, s.ForkDB, addr)
+	totalFull, err := fulldb.ReadAccountErc20Total(ctx, s.FullDB, addr)
 	if err != nil {
 		if errors.Is(err, kv.NotFound) {
-			totalFork = field.NewInt(0)
+			totalFull = field.NewInt(0)
 			err = nil
 		} else {
 			return
 		}
 	}
 
-	if totalAll.Sub(totalFork).Cmp(index) == -1 {
+	if index.Sub(totalFull).Cmp(field.NewInt(0)) == 1 {
 		i, err = forkdb.ReadAddressErc20Index(ctx, s.ForkDB, addr)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
-				i = field.NewInt(1)
+				i = field.NewInt(0)
 				err = nil
 			} else {
 				return
 			}
 		}
-		return forkdb.ReadAccountErc20Index(ctx, s.ForkDB, addr, i.Add(totalFork).Sub(field.NewInt(1)))
+		index.Add(totalFull)
+		return forkdb.ReadAccountErc20Index(ctx, s.ForkDB, addr, i.Add(index).Sub(totalFull))
 	} else {
+		index.Add(totalFull)
 		return fulldb.ReadAccountErc20Index(ctx, s.FullDB, addr, index)
 	}
 }
@@ -405,33 +389,30 @@ func (s *StorageImpl) ReadAccountErc20ByIndex(ctx context.Context, addr common.A
 	i := &field.BigInt{}
 	data = &types.Erc20Transfer{}
 
-	totalAll, err := s.ReadAccountErc20Total(ctx, addr)
-	if err != nil {
-		return
-	}
-
-	totalFork, err := forkdb.ReadAccountErc20Total(ctx, s.ForkDB, addr)
+	totalFull, err := fulldb.ReadAccountErc20Total(ctx, s.FullDB, addr)
 	if err != nil {
 		if errors.Is(err, kv.NotFound) {
-			totalFork = field.NewInt(0)
+			totalFull = field.NewInt(0)
 			err = nil
 		} else {
 			return
 		}
 	}
 
-	if totalAll.Sub(totalFork).Cmp(index) == -1 {
+	if index.Sub(totalFull).Cmp(field.NewInt(0)) == 1 {
 		i, err = forkdb.ReadAddressErc20Index(ctx, s.ForkDB, addr)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
-				i = field.NewInt(1)
+				i = field.NewInt(0)
 				err = nil
 			} else {
 				return
 			}
 		}
-		return forkdb.ReadAccountErc20ByIndex(ctx, s.ForkDB, addr, i.Add(totalFork).Sub(field.NewInt(1)))
+		index.Add(totalFull)
+		return forkdb.ReadAccountErc20ByIndex(ctx, s.ForkDB, addr, i.Add(index).Sub(totalFull))
 	} else {
+		index.Add(totalFull)
 		return fulldb.ReadAccountErc20ByIndex(ctx, s.FullDB, addr, index)
 	}
 }
@@ -473,33 +454,30 @@ func (s *StorageImpl) ReadAccountErc721Index(ctx context.Context, addr common.Ad
 	i := &field.BigInt{}
 	erc721TransferIndex = &field.BigInt{}
 
-	totalAll, err := s.ReadAccountErc721Total(ctx, addr)
-	if err != nil {
-		return
-	}
-
-	totalFork, err := forkdb.ReadAccountErc721Total(ctx, s.ForkDB, addr)
+	totalFull, err := fulldb.ReadAccountErc721Total(ctx, s.FullDB, addr)
 	if err != nil {
 		if errors.Is(err, kv.NotFound) {
-			totalFork = field.NewInt(0)
+			totalFull = field.NewInt(0)
 			err = nil
 		} else {
 			return
 		}
 	}
 
-	if totalAll.Sub(totalFork).Cmp(index) == -1 {
+	if index.Sub(totalFull).Cmp(field.NewInt(0)) == 1 {
 		i, err = forkdb.ReadAddressErc721Index(ctx, s.ForkDB, addr)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
-				i = field.NewInt(1)
+				i = field.NewInt(0)
 				err = nil
 			} else {
 				return
 			}
 		}
-		return forkdb.ReadAccountErc721Index(ctx, s.ForkDB, addr, i.Add(totalFork).Sub(field.NewInt(1)))
+		index.Add(totalFull)
+		return forkdb.ReadAccountErc721Index(ctx, s.ForkDB, addr, i.Add(index).Sub(totalFull))
 	} else {
+		index.Add(totalFull)
 		return fulldb.ReadAccountErc721Index(ctx, s.FullDB, addr, index)
 	}
 }
@@ -508,33 +486,30 @@ func (s *StorageImpl) ReadAccountErc721ByIndex(ctx context.Context, addr common.
 	i := &field.BigInt{}
 	data = &types.Erc721Transfer{}
 
-	totalAll, err := s.ReadAccountErc721Total(ctx, addr)
-	if err != nil {
-		return
-	}
-
-	totalFork, err := forkdb.ReadAccountErc721Total(ctx, s.ForkDB, addr)
+	totalFull, err := fulldb.ReadAccountErc721Total(ctx, s.FullDB, addr)
 	if err != nil {
 		if errors.Is(err, kv.NotFound) {
-			totalFork = field.NewInt(0)
+			totalFull = field.NewInt(0)
 			err = nil
 		} else {
 			return
 		}
 	}
 
-	if totalAll.Sub(totalFork).Cmp(index) == -1 {
+	if index.Sub(totalFull).Cmp(field.NewInt(0)) == 1 {
 		i, err = forkdb.ReadAddressErc721Index(ctx, s.ForkDB, addr)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
-				i = field.NewInt(1)
+				i = field.NewInt(0)
 				err = nil
 			} else {
 				return
 			}
 		}
-		return forkdb.ReadAccountErc721ByIndex(ctx, s.ForkDB, addr, i.Add(totalFork).Sub(field.NewInt(1)))
+		index.Add(totalFull)
+		return forkdb.ReadAccountErc721ByIndex(ctx, s.ForkDB, addr, i.Add(index).Sub(totalFull))
 	} else {
+		index.Add(totalFull)
 		return fulldb.ReadAccountErc721ByIndex(ctx, s.FullDB, addr, index)
 	}
 }
@@ -576,33 +551,30 @@ func (s *StorageImpl) ReadAccountErc1155Index(ctx context.Context, addr common.A
 	i := &field.BigInt{}
 	erc1155TransferIndex = &field.BigInt{}
 
-	totalAll, err := s.ReadAccountErc1155Total(ctx, addr)
-	if err != nil {
-		return
-	}
-
-	totalFork, err := forkdb.ReadAccountErc1155Total(ctx, s.ForkDB, addr)
+	totalFull, err := fulldb.ReadAccountErc1155Total(ctx, s.FullDB, addr)
 	if err != nil {
 		if errors.Is(err, kv.NotFound) {
-			totalFork = field.NewInt(0)
+			totalFull = field.NewInt(0)
 			err = nil
 		} else {
 			return
 		}
 	}
 
-	if totalAll.Sub(totalFork).Cmp(index) == -1 {
+	if index.Sub(totalFull).Cmp(field.NewInt(0)) == 1 {
 		i, err = forkdb.ReadAddressErc1155Index(ctx, s.ForkDB, addr)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
-				i = field.NewInt(1)
+				i = field.NewInt(0)
 				err = nil
 			} else {
 				return
 			}
 		}
-		return forkdb.ReadAccountErc1155Index(ctx, s.ForkDB, addr, i.Add(totalFork).Sub(field.NewInt(1)))
+		index.Add(totalFull)
+		return forkdb.ReadAccountErc1155Index(ctx, s.ForkDB, addr, i.Add(index).Sub(totalFull))
 	} else {
+		index.Add(totalFull)
 		return fulldb.ReadAccountErc1155Index(ctx, s.FullDB, addr, index)
 	}
 }
@@ -611,33 +583,30 @@ func (s *StorageImpl) ReadAccountErc1155ByIndex(ctx context.Context, addr common
 	i := &field.BigInt{}
 	data = &types.Erc1155Transfer{}
 
-	totalAll, err := s.ReadAccountErc1155Total(ctx, addr)
-	if err != nil {
-		return
-	}
-
-	totalFork, err := forkdb.ReadAccountErc1155Total(ctx, s.ForkDB, addr)
+	totalFull, err := fulldb.ReadAccountErc1155Total(ctx, s.FullDB, addr)
 	if err != nil {
 		if errors.Is(err, kv.NotFound) {
-			totalFork = field.NewInt(0)
+			totalFull = field.NewInt(0)
 			err = nil
 		} else {
 			return
 		}
 	}
 
-	if totalAll.Sub(totalFork).Cmp(index) == -1 {
+	if index.Sub(totalFull).Cmp(field.NewInt(0)) == 1 {
 		i, err = forkdb.ReadAddressErc1155Index(ctx, s.ForkDB, addr)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
-				i = field.NewInt(1)
+				i = field.NewInt(0)
 				err = nil
 			} else {
 				return
 			}
 		}
-		return forkdb.ReadAccountErc1155ByIndex(ctx, s.ForkDB, addr, i.Add(totalFork).Sub(field.NewInt(1)))
+		index.Add(totalFull)
+		return forkdb.ReadAccountErc1155ByIndex(ctx, s.ForkDB, addr, i.Add(index).Sub(totalFull))
 	} else {
+		index.Add(totalFull)
 		return fulldb.ReadAccountErc1155ByIndex(ctx, s.FullDB, addr, index)
 	}
 }
@@ -1069,7 +1038,7 @@ func (s *StorageImpl) ReadHome(ctx context.Context) (home *types.Home, err error
 		blocks = homeFork.Blocks
 	}
 	if len(blocks) > 10 {
-		blocks = blocks[(len(home.Blocks) - 10):]
+		blocks = blocks[(len(blocks) - 10):]
 	}
 
 	if len(homeFork.Txs) == 0 {
@@ -1079,8 +1048,8 @@ func (s *StorageImpl) ReadHome(ctx context.Context) (home *types.Home, err error
 	} else {
 		txs = homeFork.Txs
 	}
-	if len(home.Txs) > 10 {
-		home.Txs = home.Txs[(len(home.Txs) - 10):]
+	if len(txs) > 10 {
+		txs = txs[(len(txs) - 10):]
 	}
 
 	home = &types.Home{
@@ -1121,33 +1090,30 @@ func (s *StorageImpl) ReadITx(ctx context.Context, hash common.Hash, index *fiel
 	i := &field.BigInt{}
 	data = &types.InternalTx{}
 
-	totalAll, err := s.ReadITxTotal(ctx, hash)
-	if err != nil {
-		return
-	}
-
-	totalFork, err := forkdb.ReadITxTotal(ctx, s.ForkDB, hash)
+	totalFull, err := fulldb.ReadITxTotal(ctx, s.FullDB, hash)
 	if err != nil {
 		if errors.Is(err, kv.NotFound) {
-			totalFork = field.NewInt(0)
+			totalFull = field.NewInt(0)
 			err = nil
 		} else {
 			return
 		}
 	}
 
-	if totalAll.Sub(totalFork).Cmp(index) == -1 {
+	if index.Sub(totalFull).Cmp(field.NewInt(0)) == 1 {
 		i, err = forkdb.ReadITxIndex(ctx, s.ForkDB, hash)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
-				i = field.NewInt(1)
+				i = field.NewInt(0)
 				err = nil
 			} else {
 				return
 			}
 		}
-		return forkdb.ReadITx(ctx, s.ForkDB, hash, i.Add(totalFork).Sub(field.NewInt(1)))
+		index.Add(totalFull)
+		return forkdb.ReadITx(ctx, s.ForkDB, hash, i.Add(index).Sub(totalFull))
 	} else {
+		index.Add(totalFull)
 		return fulldb.ReadITx(ctx, s.FullDB, hash, index)
 	}
 }
@@ -1247,33 +1213,30 @@ func (s *StorageImpl) ReadTxByIndex(ctx context.Context, index *field.BigInt) (d
 	i := &field.BigInt{}
 	data = &types.Tx{}
 
-	totalAll, err := s.ReadTxTotal(ctx)
-	if err != nil {
-		return
-	}
-
-	totalFork, err := forkdb.ReadTxTotal(ctx, s.ForkDB)
+	totalFull, err := fulldb.ReadTxTotal(ctx, s.FullDB)
 	if err != nil {
 		if errors.Is(err, kv.NotFound) {
-			totalFork = field.NewInt(0)
+			totalFull = field.NewInt(0)
 			err = nil
 		} else {
 			return
 		}
 	}
 
-	if totalAll.Sub(totalFork).Cmp(index) == -1 {
+	if index.Sub(totalFull).Cmp(field.NewInt(0)) == 1 {
 		i, err = forkdb.ReadTxTotalIndex(ctx, s.ForkDB)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
-				i = field.NewInt(1)
+				i = field.NewInt(0)
 				err = nil
 			} else {
 				return
 			}
 		}
-		return forkdb.ReadTxByIndex(ctx, s.ForkDB, i.Add(totalFork).Sub(field.NewInt(1)))
+		index.Add(totalFull)
+		return forkdb.ReadTxByIndex(ctx, s.ForkDB, i.Add(index).Sub(totalFull))
 	} else {
+		index.Add(totalFull)
 		return fulldb.ReadTxByIndex(ctx, s.FullDB, index)
 	}
 }
@@ -1435,33 +1398,30 @@ func (s *StorageImpl) ReadErc20Transfer(ctx context.Context, index *field.BigInt
 	i := &field.BigInt{}
 	data = &types.Erc20Transfer{}
 
-	totalAll, err := s.ReadErc20Total(ctx)
-	if err != nil {
-		return
-	}
-
-	totalFork, err := forkdb.ReadErc20Total(ctx, s.ForkDB)
+	totalFull, err := fulldb.ReadErc20Total(ctx, s.FullDB)
 	if err != nil {
 		if errors.Is(err, kv.NotFound) {
-			totalFork = field.NewInt(0)
+			totalFull = field.NewInt(0)
 			err = nil
 		} else {
 			return
 		}
 	}
 
-	if totalAll.Sub(totalFork).Cmp(index) == -1 {
+	if index.Sub(totalFull).Cmp(field.NewInt(0)) == 1 {
 		i, err = forkdb.ReadErc20Index(ctx, s.ForkDB)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
-				i = field.NewInt(1)
+				i = field.NewInt(0)
 				err = nil
 			} else {
 				return
 			}
 		}
-		return forkdb.ReadErc20Transfer(ctx, s.ForkDB, i.Add(totalFork).Sub(field.NewInt(1)))
+		index.Add(totalFull)
+		return forkdb.ReadErc20Transfer(ctx, s.ForkDB, i.Add(index).Sub(totalFull))
 	} else {
+		index.Add(totalFull)
 		return fulldb.ReadErc20Transfer(ctx, s.FullDB, index)
 	}
 }
@@ -1470,33 +1430,30 @@ func (s *StorageImpl) ReadErc721Transfer(ctx context.Context, index *field.BigIn
 	i := &field.BigInt{}
 	data = &types.Erc721Transfer{}
 
-	totalAll, err := s.ReadErc721Total(ctx)
-	if err != nil {
-		return
-	}
-
-	totalFork, err := forkdb.ReadErc721Total(ctx, s.ForkDB)
+	totalFull, err := fulldb.ReadErc721Total(ctx, s.FullDB)
 	if err != nil {
 		if errors.Is(err, kv.NotFound) {
-			totalFork = field.NewInt(0)
+			totalFull = field.NewInt(0)
 			err = nil
 		} else {
 			return
 		}
 	}
 
-	if totalAll.Sub(totalFork).Cmp(index) == -1 {
+	if index.Sub(totalFull).Cmp(field.NewInt(0)) == 1 {
 		i, err = forkdb.ReadErc721Index(ctx, s.ForkDB)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
-				i = field.NewInt(1)
+				i = field.NewInt(0)
 				err = nil
 			} else {
 				return
 			}
 		}
-		return forkdb.ReadErc721Transfer(ctx, s.ForkDB, i.Add(totalFork).Sub(field.NewInt(1)))
+		index.Add(totalFull)
+		return forkdb.ReadErc721Transfer(ctx, s.ForkDB, i.Add(index).Sub(totalFull))
 	} else {
+		index.Add(totalFull)
 		return fulldb.ReadErc721Transfer(ctx, s.FullDB, index)
 	}
 }
@@ -1505,33 +1462,30 @@ func (s *StorageImpl) ReadErc1155Transfer(ctx context.Context, index *field.BigI
 	i := &field.BigInt{}
 	data = &types.Erc1155Transfer{}
 
-	totalAll, err := s.ReadErc1155Total(ctx)
-	if err != nil {
-		return
-	}
-
-	totalFork, err := forkdb.ReadErc1155Total(ctx, s.ForkDB)
+	totalFull, err := fulldb.ReadErc1155Total(ctx, s.FullDB)
 	if err != nil {
 		if errors.Is(err, kv.NotFound) {
-			totalFork = field.NewInt(0)
+			totalFull = field.NewInt(0)
 			err = nil
 		} else {
 			return
 		}
 	}
 
-	if totalAll.Sub(totalFork).Cmp(index) == -1 {
+	if index.Sub(totalFull).Cmp(field.NewInt(0)) == 1 {
 		i, err = forkdb.ReadErc1155Index(ctx, s.ForkDB)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
-				i = field.NewInt(1)
+				i = field.NewInt(0)
 				err = nil
 			} else {
 				return
 			}
 		}
-		return forkdb.ReadErc1155Transfer(ctx, s.ForkDB, i.Add(totalFork).Sub(field.NewInt(1)))
+		index.Add(totalFull)
+		return forkdb.ReadErc1155Transfer(ctx, s.ForkDB, i.Add(index).Sub(totalFull))
 	} else {
+		index.Add(totalFull)
 		return fulldb.ReadErc1155Transfer(ctx, s.FullDB, index)
 	}
 }
@@ -1639,33 +1593,30 @@ func (s *StorageImpl) ReadErc20ContractTransfer(ctx context.Context, contract co
 	i := &field.BigInt{}
 	data = &field.BigInt{}
 
-	totalAll, err := s.ReadErc20ContractTotal(ctx, contract)
-	if err != nil {
-		return
-	}
-
-	totalFork, err := forkdb.ReadErc20ContractTotal(ctx, s.ForkDB, contract)
+	totalFull, err := fulldb.ReadErc20ContractTotal(ctx, s.FullDB, contract)
 	if err != nil {
 		if errors.Is(err, kv.NotFound) {
-			totalFork = field.NewInt(0)
+			totalFull = field.NewInt(0)
 			err = nil
 		} else {
 			return
 		}
 	}
 
-	if totalAll.Sub(totalFork).Cmp(index) == -1 {
+	if index.Sub(totalFull).Cmp(field.NewInt(0)) == 1 {
 		i, err = forkdb.ReadErc20ContractIndex(ctx, s.ForkDB, contract)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
-				i = field.NewInt(1)
+				i = field.NewInt(0)
 				err = nil
 			} else {
 				return
 			}
 		}
-		return forkdb.ReadErc20ContractTransfer(ctx, s.ForkDB, contract, i.Add(totalFork).Sub(field.NewInt(1)))
+		index.Add(totalFull)
+		return forkdb.ReadErc20ContractTransfer(ctx, s.ForkDB, contract, i.Add(index).Sub(totalFull))
 	} else {
+		index.Add(totalFull)
 		return fulldb.ReadErc20ContractTransfer(ctx, s.FullDB, contract, index)
 	}
 }
@@ -1674,33 +1625,30 @@ func (s *StorageImpl) ReadErc721ContractTransfer(ctx context.Context, contract c
 	i := &field.BigInt{}
 	data = &field.BigInt{}
 
-	totalAll, err := s.ReadErc721ContractTotal(ctx, contract)
-	if err != nil {
-		return
-	}
-
-	totalFork, err := forkdb.ReadErc721ContractTotal(ctx, s.ForkDB, contract)
+	totalFull, err := fulldb.ReadErc721ContractTotal(ctx, s.FullDB, contract)
 	if err != nil {
 		if errors.Is(err, kv.NotFound) {
-			totalFork = field.NewInt(0)
+			totalFull = field.NewInt(0)
 			err = nil
 		} else {
 			return
 		}
 	}
 
-	if totalAll.Sub(totalFork).Cmp(index) == -1 {
+	if index.Sub(totalFull).Cmp(field.NewInt(0)) == 1 {
 		i, err = forkdb.ReadErc721ContractIndex(ctx, s.ForkDB, contract)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
-				i = field.NewInt(1)
+				i = field.NewInt(0)
 				err = nil
 			} else {
 				return
 			}
 		}
-		return forkdb.ReadErc721ContractTransfer(ctx, s.ForkDB, contract, i.Add(totalFork).Sub(field.NewInt(1)))
+		index.Add(totalFull)
+		return forkdb.ReadErc721ContractTransfer(ctx, s.ForkDB, contract, i.Add(index).Sub(totalFull))
 	} else {
+		index.Add(totalFull)
 		return fulldb.ReadErc721ContractTransfer(ctx, s.FullDB, contract, index)
 	}
 }
@@ -1709,33 +1657,30 @@ func (s *StorageImpl) ReadErc1155ContractTransfer(ctx context.Context, contract 
 	i := &field.BigInt{}
 	data = &field.BigInt{}
 
-	totalAll, err := s.ReadErc1155ContractTotal(ctx, contract)
-	if err != nil {
-		return
-	}
-
-	totalFork, err := forkdb.ReadErc1155ContractTotal(ctx, s.ForkDB, contract)
+	totalFull, err := fulldb.ReadErc1155ContractTotal(ctx, s.FullDB, contract)
 	if err != nil {
 		if errors.Is(err, kv.NotFound) {
-			totalFork = field.NewInt(0)
+			totalFull = field.NewInt(0)
 			err = nil
 		} else {
 			return
 		}
 	}
 
-	if totalAll.Sub(totalFork).Cmp(index) == -1 {
+	if index.Sub(totalFull).Cmp(field.NewInt(0)) == 1 {
 		i, err = forkdb.ReadErc1155ContractIndex(ctx, s.ForkDB, contract)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
-				i = field.NewInt(1)
+				i = field.NewInt(0)
 				err = nil
 			} else {
 				return
 			}
 		}
-		return forkdb.ReadErc1155ContractTransfer(ctx, s.ForkDB, contract, i.Add(totalFork).Sub(field.NewInt(1)))
+		index.Add(totalFull)
+		return forkdb.ReadErc1155ContractTransfer(ctx, s.ForkDB, contract, i.Add(index).Sub(totalFull))
 	} else {
+		index.Add(totalFull)
 		return fulldb.ReadErc1155ContractTransfer(ctx, s.FullDB, contract, index)
 	}
 }
