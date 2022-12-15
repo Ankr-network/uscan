@@ -251,6 +251,11 @@ func validateContract(param *types.ContractVerityTmp) error {
 		if crypto.Keccak256Hash(objectByte).Hex() == account.ByteCodeHash.Hex() {
 			codeHash = hexutil.Encode(account.ByteCode)
 		}
+		param.Optimization = 0
+		if inputTmp.Settings.Optimizer.Enabled {
+			param.Optimization = 1
+		}
+		param.Runs = uint64(input.Settings.Optimizer.Runs)
 	}
 	metadataMarshal, err := json.Marshal(metadata)
 	if err != nil {
@@ -377,15 +382,15 @@ func GetValidateContract(address common.Address) (*types.ContractVerityInfoResp,
 				return nil, err
 			}
 			resp.ProxyContract = &types.ContractVerityInfo{
-				ContractName:    contract.ContractName,
-				CompilerVersion: contract.CompilerVersion,
-				Optimization:    contract.Optimization,
-				Runs:            contract.Runs,
-				EVMVersion:      contract.EVMVersion,
-				LicenseType:     contract.LicenseType,
-				ABI:             contract.ABI,
+				ContractName:    proxyContract.ContractName,
+				CompilerVersion: proxyContract.CompilerVersion,
+				Optimization:    proxyContract.Optimization,
+				Runs:            proxyContract.Runs,
+				EVMVersion:      proxyContract.EVMVersion,
+				LicenseType:     proxyContract.LicenseType,
+				ABI:             proxyContract.ABI,
 				Metadata:        metadata,
-				Object:          contract.Object,
+				Object:          proxyContract.Object,
 			}
 		}
 	}
