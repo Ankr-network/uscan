@@ -558,7 +558,7 @@ func ListTokenHolders(typ string, pager *types.Pager, address common.Address) (m
 
 func ListInventory(typ string, pager *types.Pager, address common.Address) (map[string]interface{}, error) {
 	var items interface{}
-	var total int64
+	var total uint64
 	var err error
 	switch typ {
 	case "erc721":
@@ -576,7 +576,7 @@ func ListInventory(typ string, pager *types.Pager, address common.Address) (map[
 	return resp, nil
 }
 
-func ListErc721Inventory(pager *types.Pager, address common.Address) ([]*types.InventoryResp, int64, error) {
+func ListErc721Inventory(pager *types.Pager, address common.Address) ([]*types.InventoryResp, uint64, error) {
 	resp := make([]*types.InventoryResp, 0)
 	holders, err := store.ListErc721Inventories(address, pager.Offset, pager.Limit)
 	if err != nil {
@@ -597,13 +597,13 @@ func ListErc721Inventory(pager *types.Pager, address common.Address) ([]*types.I
 		if err != nil {
 			return nil, 0, err
 		}
-		return resp, int64(count), nil
+		return resp, count, nil
 	}
 	return resp, 0, nil
 }
 
-func ListErc1155Inventory(pager *types.Pager, address common.Address) ([]string, int64, error) {
-	resp := make([]string, 0)
+func ListErc1155Inventory(pager *types.Pager, address common.Address) ([]*types.InventoryResp, uint64, error) {
+	resp := make([]*types.InventoryResp, 0)
 	tokenIDs, err := store.ListErc1155Inventories(address, pager.Offset, pager.Limit)
 	if err != nil {
 		if err == kv.NotFound {
@@ -613,14 +613,16 @@ func ListErc1155Inventory(pager *types.Pager, address common.Address) ([]string,
 	}
 
 	for _, tokenID := range tokenIDs {
-		resp = append(resp, tokenID.String())
+		resp = append(resp, &types.InventoryResp{
+			TokenID: tokenID.String(),
+		})
 	}
 	if len(tokenIDs) > 0 {
 		count, err := store.GetErc1155InventoryCount(address)
 		if err != nil {
 			return nil, 0, err
 		}
-		return resp, int64(count), nil
+		return resp, count, nil
 	}
 	return resp, 0, nil
 }
