@@ -589,7 +589,7 @@ func ListErc721Inventory(pager *types.Pager, address common.Address) ([]*types.I
 	for _, holder := range holders {
 		resp = append(resp, &types.InventoryResp{
 			Address: holder.Addr.String(),
-			TokenID: holder.TokenID.ToUint64(),
+			TokenID: holder.TokenID.String(),
 		})
 	}
 	if len(holders) > 0 {
@@ -602,8 +602,8 @@ func ListErc721Inventory(pager *types.Pager, address common.Address) ([]*types.I
 	return resp, 0, nil
 }
 
-func ListErc1155Inventory(pager *types.Pager, address common.Address) ([]uint64, int64, error) {
-	resp := make([]uint64, 0)
+func ListErc1155Inventory(pager *types.Pager, address common.Address) ([]string, int64, error) {
+	resp := make([]string, 0)
 	tokenIDs, err := store.ListErc1155Inventories(address, pager.Offset, pager.Limit)
 	if err != nil {
 		if err == kv.NotFound {
@@ -613,7 +613,7 @@ func ListErc1155Inventory(pager *types.Pager, address common.Address) ([]uint64,
 	}
 
 	for _, tokenID := range tokenIDs {
-		resp = append(resp, tokenID.ToUint64())
+		resp = append(resp, tokenID.String())
 	}
 	if len(tokenIDs) > 0 {
 		count, err := store.GetErc1155InventoryCount(address)

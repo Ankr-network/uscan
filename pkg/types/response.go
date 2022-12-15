@@ -249,7 +249,7 @@ type HolderResp struct {
 
 type InventoryResp struct {
 	Address string
-	TokenID uint64
+	TokenID string
 }
 
 type ContractVerityInfo struct {
