@@ -100,28 +100,89 @@ func (s *StorageImpl) ReadAccount(ctx context.Context, addr common.Address) (acc
 		}
 	}
 
-	if accFork != (&types.Account{}) && accFull != (&types.Account{}) {
-		acc = &types.Account{
-			Owner:            accFork.Owner,
-			Erc20:            accFork.Erc20,
-			Erc721:           accFork.Erc721,
-			Erc1155:          accFork.Erc1155,
-			ErcFlag:          accFork.ErcFlag,
-			BlockNumber:      accFork.BlockNumber,
-			Balance:          accFork.Balance,
-			Name:             accFork.Name,
-			Symbol:           accFork.Symbol,
-			TokenTotalSupply: accFull.TokenTotalSupply,
-			NftTotalSupply:   accFull.NftTotalSupply,
-			Decimals:         accFork.Decimals,
-			Creator:          accFork.Creator,
-			TxHash:           accFork.TxHash,
-			Retry:            accFork.Retry,
-		}
-	} else if accFork != (&types.Account{}) {
-		acc = accFork
-	} else {
-		acc = accFull
+	var (
+		erc20, erc721, erc1155         bool
+		blockNumber, balance, decimals field.BigInt
+		name, symbol                   string
+		creator                        common.Address
+		txHash                         common.Hash
+	)
+	if accFork.Erc20 {
+		erc20 = accFork.Erc20
+	} else if accFull.Erc20 {
+		erc20 = accFull.Erc20
+	}
+
+	if accFork.Erc721 {
+		erc721 = accFork.Erc721
+	} else if accFull.Erc721 {
+		erc721 = accFull.Erc721
+	}
+
+	if accFork.Erc1155 {
+		erc1155 = accFork.Erc1155
+	} else if accFull.Erc1155 {
+		erc1155 = accFull.Erc1155
+	}
+
+	if accFork.BlockNumber.Cmp(field.NewInt(0)) == 1 {
+		blockNumber = accFork.BlockNumber
+	} else if accFull.BlockNumber.Cmp(field.NewInt(0)) == 1 {
+		blockNumber = accFull.BlockNumber
+	}
+
+	if accFork.Balance.Cmp(field.NewInt(0)) == 1 {
+		balance = accFork.Balance
+	} else if accFull.Balance.Cmp(field.NewInt(0)) == 1 {
+		balance = accFull.Balance
+	}
+
+	if accFork.Name != "" {
+		name = accFork.Name
+	} else if accFull.Name != "" {
+		name = accFull.Name
+	}
+
+	if accFork.Symbol != "" {
+		symbol = accFork.Symbol
+	} else if accFull.Symbol != "" {
+		symbol = accFull.Symbol
+	}
+
+	if accFork.Decimals.Cmp(field.NewInt(0)) == 1 {
+		decimals = accFork.Decimals
+	} else if accFull.Decimals.Cmp(field.NewInt(0)) == 1 {
+		decimals = accFull.Decimals
+	}
+
+	if accFork.Creator != (common.Address{}) {
+		creator = accFork.Creator
+	} else if accFull.Creator != (common.Address{}) {
+		creator = accFull.Creator
+	}
+
+	if accFork.TxHash != (common.Hash{}) {
+		txHash = accFork.TxHash
+	} else if accFull.TxHash != (common.Hash{}) {
+		txHash = accFull.TxHash
+	}
+
+	acc = &types.Account{
+		Owner:   addr,
+		Erc20:   erc20,
+		Erc721:  erc721,
+		Erc1155: erc1155,
+		//ErcFlag:          0,
+		BlockNumber:      blockNumber,
+		Balance:          balance,
+		Name:             name,
+		Symbol:           symbol,
+		TokenTotalSupply: accFull.TokenTotalSupply,
+		NftTotalSupply:   accFull.NftTotalSupply,
+		Decimals:         decimals,
+		Creator:          creator,
+		TxHash:           txHash,
+		//Retry:            field.BigInt{},
 	}
 	return
 }
