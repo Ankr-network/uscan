@@ -288,7 +288,7 @@ func GetAccountErc721Txs(pager *types.Pager, address common.Address) ([]*types.E
 			Method:          hexutil.Bytes(tx.Method).String(),
 			From:            tx.From.Hex(),
 			To:              tx.To.Hex(),
-			TokenID:         tx.TokenId.ToUint64(),
+			TokenID:         tx.TokenId.String(),
 			CreatedTime:     tx.TimeStamp.ToUint64(),
 		}
 		resp = append(resp, t)
@@ -352,7 +352,7 @@ func GetAccountErc1155Txs(pager *types.Pager, address common.Address) ([]*types.
 			Method:          hexutil.Bytes(tx.Method).String(),
 			From:            tx.From.Hex(),
 			To:              tx.To.Hex(),
-			TokenID:         tx.TokenID.ToUint64(),
+			TokenID:         tx.TokenID.String(),
 			Value:           tx.Quantity.String(),
 			CreatedTime:     tx.TimeStamp.ToUint64(),
 		}

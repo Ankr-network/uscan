@@ -208,7 +208,7 @@ type Erc721TxResp struct {
 	ToName           string `json:"toName"`
 	ToSymbol         string `json:"toSymbol"`
 	ToContract       bool   `json:"toContract"`
-	TokenID          uint64 `json:"tokenID"`
+	TokenID          string `json:"tokenID"`
 	CreatedTime      uint64 `json:"createdTime"`
 }
 
@@ -229,7 +229,7 @@ type Erc1155TxResp struct {
 	ToName           string `json:"toName"`
 	ToSymbol         string `json:"toSymbol"`
 	ToContract       bool   `json:"toContract"`
-	TokenID          uint64 `json:"tokenID"`
+	TokenID          string `json:"tokenID"`
 	Value            string `json:"value"`
 	CreatedTime      uint64 `json:"createdTime"`
 }
