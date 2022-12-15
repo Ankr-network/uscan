@@ -212,9 +212,10 @@ func GetTx(tx string) (*types.TxResp, error) {
 				topics = append(topics, topic.Hex())
 			}
 			resp.Logs[i] = &types.RtLogResp{
-				Address: log.Address.Hex(),
-				Topics:  topics,
-				Data:    log.Data.String(),
+				Address:  log.Address.Hex(),
+				Topics:   topics,
+				Data:     log.Data.String(),
+				LogIndex: log.LogIndex.ToUint64(),
 			}
 			addresses[log.Address.Hex()] = log.Address
 			for _, topic := range TokenTopics {

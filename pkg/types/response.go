@@ -86,9 +86,10 @@ type TxResp struct {
 }
 
 type RtLogResp struct {
-	Address string   `json:"address"`
-	Topics  []string `json:"topics"`
-	Data    string   `json:"data"`
+	Address  string   `json:"address"`
+	Topics   []string `json:"topics"`
+	Data     string   `json:"data"`
+	LogIndex uint64   `json:"logIndex"`
 }
 
 type RtResp struct {
