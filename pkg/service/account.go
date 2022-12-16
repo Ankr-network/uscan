@@ -72,9 +72,9 @@ func GetAccountTxs(pager *types.Pager, address common.Address) (map[string]inter
 	addresses := make(map[string]common.Address)
 	for _, tx := range txs {
 		t := &types.ListTransactionResp{
-			Hash:        tx.Hash.Hex(),
-			Method:      tx.Method.String(),
-			BlockHash:   tx.BlockNum.String(),
+			Hash:   tx.Hash.Hex(),
+			Method: tx.Method.String(),
+			//BlockHash:   tx.BlockNum.String(),
 			BlockNumber: DecodeBig(tx.BlockNum.String()).String(),
 			From:        tx.From.Hex(),
 			To:          tx.To.Hex(),
