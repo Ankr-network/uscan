@@ -27,6 +27,9 @@ func GetAccountInfo(address common.Address) (*types.AccountResp, error) {
 		TokenTotalSupply: account.TokenTotalSupply.StringPointer(),
 		NftTotalSupply:   account.NftTotalSupply.StringPointer(),
 		Decimals:         account.Decimals.ToUint64(),
+		Erc20:            account.Erc20,
+		Erc721:           account.Erc721,
+		Erc1155:          account.Erc1155,
 	}
 	if account.Creator != (common.Address{}) {
 		creator := account.Creator.Hex()

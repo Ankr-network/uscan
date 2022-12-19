@@ -155,6 +155,9 @@ type AccountResp struct {
 	NftTotalSupply   *string `json:"nftTotalSupply"`
 	Decimals         uint64  `json:"decimals"`
 	//CreatedTime      uint64  `json:"createdTime"`
+	Erc20   bool `json:"erc20"`
+	Erc721  bool `json:"erc721"`
+	Erc1155 bool `json:"erc1155"`
 }
 
 type InternalTxResp struct {
