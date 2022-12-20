@@ -20,6 +20,7 @@ func ListTxs(pager *types.Pager) ([]*types.ListTransactionResp, uint64, error) {
 	}
 	resp := make([]*types.ListTransactionResp, 0)
 	addresses := make(map[string]common.Address)
+	methodIDs := make([]string, 0)
 	for _, tx := range txs {
 		t := &types.ListTransactionResp{
 			Hash:   tx.Hash.Hex(),
@@ -33,17 +34,23 @@ func ListTxs(pager *types.Pager) ([]*types.ListTransactionResp, uint64, error) {
 			Value:       tx.Value.StringPointer(),
 			CreatedTime: tx.TimeStamp.ToUint64(),
 		}
-		if t.Method == "0x" {
-			t.Method = ""
-		}
 		resp = append(resp, t)
-
 		addresses[tx.From.String()] = tx.From
 		if tx.To != nil {
 			addresses[tx.To.String()] = *tx.To
 		}
+		if tx.Method.String() != "0x" && tx.Method.String() != "0x60806040" {
+			mid := strings.Split(tx.Method.String(), "0x")
+			if len(mid) == 2 {
+				methodIDs = append(methodIDs, mid[1])
+			}
+		}
 	}
 	accounts, err := GetAccounts(addresses)
+	if err != nil {
+		return nil, 0, err
+	}
+	methodNames, err := GetMethodNames(methodIDs)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -60,6 +67,17 @@ func ListTxs(pager *types.Pager) ([]*types.ListTransactionResp, uint64, error) {
 			t.FromSymbol = to.Symbol
 			if to.Erc20 || to.Erc721 || to.Erc1155 {
 				t.ToContract = true
+			}
+		}
+		if t.Method == "0x" {
+			t.Method = ""
+		}
+		if t.Method != "" && t.Method != "0x60806040" {
+			if mn, ok := methodNames[t.Method]; ok {
+				md := strings.Split(mn, "(")
+				if len(md) >= 1 {
+					t.Method = md[0]
+				}
 			}
 		}
 	}
@@ -280,4 +298,19 @@ func GetAccounts(addresses map[string]common.Address) (map[string]*types.Account
 		accounts[account.Owner.String()] = account
 	}
 	return accounts, nil
+}
+
+func GetMethodNames(methodIDs []string) (methodNames map[string]string, err error) {
+	methodNames = make(map[string]string, 0)
+	for _, methodID := range methodIDs {
+		methodName, err := store.GetMethodName(methodID)
+		if err != nil {
+			if err == kv.NotFound {
+				continue
+			}
+			return nil, err
+		}
+		methodNames["0x"+methodID] = methodName
+	}
+	return
 }
