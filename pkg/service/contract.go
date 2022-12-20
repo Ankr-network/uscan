@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	filePath = "/Users/johnson/goWork/Ankr-network/uscan/pkg/files/"
+	filePath = "/go/src/app/pkg/files/"
 )
 
 func WriteValidateContractMetadata(metadata *types.ValidateContractMetadata) error {
