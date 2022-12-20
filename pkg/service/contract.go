@@ -16,11 +16,10 @@ import (
 	"github.com/xiaobaiskill/solc-go"
 	"io/ioutil"
 	"os"
-	"strings"
 )
 
 const (
-	filePath = "/go/src/app/pkg/files/"
+	filePath = "/Users/johnson/goWork/Ankr-network/uscan/pkg/files/"
 )
 
 func WriteValidateContractMetadata(metadata *types.ValidateContractMetadata) error {
@@ -64,12 +63,12 @@ func ValidateContract(req *types.ValidateContractReq) (map[string]string, error)
 	}
 
 	if req.LicenseType == 0 {
-		response.ErrVerityContract.Msg = "license type cannot be empty"
+		response.ErrVerityContract.Msg = "license type cannot be empty."
 		return nil, response.ErrVerityContract
 	}
 
 	if req.SourceCode == "" {
-		response.ErrVerityContract.Msg = "contract source code cannot be empty"
+		response.ErrVerityContract.Msg = "contract source code cannot be empty."
 		return nil, response.ErrVerityContract
 	}
 
@@ -86,20 +85,8 @@ func ValidateContract(req *types.ValidateContractReq) (map[string]string, error)
 		EVMVersion:       req.EVMVersion,
 	}
 
-	switch req.CompilerType {
-	case types.SolidityStandardJsonInput:
-		contractFileName := strings.Split(req.ContractName, ":")
-		if len(contractFileName) != 2 || req.ContractName == "" {
-			response.ErrVerityContract.Msg = "when license type is solidity-standard-json-input, contractName example: contracts/BlindBox.sol:BlindBox"
-			return nil, response.ErrVerityContract
-		}
-	case types.SoliditySingleFile:
-		if req.ContractName == "" {
-			response.ErrVerityContract.Msg = "when license type is solidity-single-file, contractName example: BlindBox"
-			return nil, response.ErrVerityContract
-		}
-	default:
-		response.ErrVerityContract.Msg = "contractName error"
+	if req.ContractName == "" {
+		response.ErrVerityContract.Msg = "contract name cannot be empty."
 		return nil, response.ErrVerityContract
 	}
 
@@ -150,7 +137,6 @@ func validateContract(param *types.ContractVerityTmp) error {
 			},
 			Settings: settings,
 		}
-		param.ContractName = "contract.sol:" + param.ContractName
 	case types.SolidityStandardJsonInput:
 		if err := json.Unmarshal([]byte(param.SourceCode), &input); err != nil {
 			return err
@@ -171,22 +157,21 @@ func validateContract(param *types.ContractVerityTmp) error {
 	object := ""
 	log.Infof("contract content: 【%+v】\n", out.Contracts)
 	metadata := make(map[string]string)
-	contractFileName := strings.Split(param.ContractName, ":")
-	if len(contractFileName) != 2 {
-		log.Errorf("contractFileName: %+v", contractFileName)
-		return fmt.Errorf("contract error. contract name:【%s】", param.ContractName)
+	// 通过合约名查找合约
+	v := solc.Contract{}
+	key := ""
+	for k, contract := range out.Contracts {
+		cc, ok := contract[param.ContractName]
+		if !ok {
+			continue
+		}
+		v = cc
+		key = k
 	}
-	contract, ok := out.Contracts[contractFileName[0]]
-	if !ok {
-		log.Errorf("contractFileName[0]: %+v", contractFileName[0])
-		return fmt.Errorf("contract error. contract name:【%s】", param.ContractName)
+	if key == "" {
+		return fmt.Errorf("contract name error. contract name:【%s】", param.ContractName)
 	}
 
-	v, ok := contract[contractFileName[1]]
-	if !ok {
-		log.Errorf("contractFileName[1]: %+v", contractFileName[1])
-		return fmt.Errorf("contract error. contract name:【%s】", param.ContractName)
-	}
 	abi = v.ABI
 	object = v.EVM.Bytecode.Object
 
@@ -199,7 +184,7 @@ func validateContract(param *types.ContractVerityTmp) error {
 
 	switch param.CompilerType {
 	case types.SoliditySingleFile:
-		metadata[contractFileName[0]] = param.SourceCode
+		metadata[key] = param.SourceCode
 		accountBC := hexutil.Encode(account.ByteCode)
 		log.Infof("solidity-single-file, hexutil.Encode(account.ByteCode): %+v\n", accountBC)
 		decodeObject, err := hexutil.Decode(accountBC[:len(accountBC)-86])
