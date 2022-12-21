@@ -45,13 +45,13 @@ func ListTxs(pager *types.Pager) ([]*types.ListTransactionResp, uint64, error) {
 			CreatedTime: tx.TimeStamp.ToUint64(),
 		}
 		resp = append(resp, t)
-		if tx.Method.String() != "0x60806040" {
-			tx.To = rts[tx.Hash.Hex()].ContractAddress
-		}
 		if tx.To != nil {
 			addresses[tx.To.String()] = *tx.To
 		}
-
+		if tx.Method.String() == "0x60806040" {
+			contractAddress := rts[tx.Hash.Hex()].ContractAddress
+			addresses[rts[tx.Hash.Hex()].ContractAddress.String()] = *contractAddress
+		}
 		if tx.Method.String() != "0x" && tx.Method.String() != "0x60806040" {
 			mid := strings.Split(tx.Method.String(), "0x")
 			if len(mid) == 2 {
@@ -68,6 +68,9 @@ func ListTxs(pager *types.Pager) ([]*types.ListTransactionResp, uint64, error) {
 		return nil, 0, err
 	}
 	for _, t := range resp {
+		if t.Method == "0x60806040" {
+			t.To = rts[t.Hash].ContractAddress.Hex()
+		}
 		if to, ok := accounts[t.To]; ok {
 			t.To = to.Name
 			t.To = to.Symbol
