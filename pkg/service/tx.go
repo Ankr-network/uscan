@@ -19,7 +19,6 @@ func ListTxs(pager *types.Pager) ([]*types.ListTransactionResp, uint64, error) {
 		return nil, 0, err
 	}
 	rts := make(map[string]*types.Rt, 0)
-
 	for _, tx := range txs {
 		rt, err := store.GetRt(tx.Hash)
 		if err != nil {
@@ -33,9 +32,8 @@ func ListTxs(pager *types.Pager) ([]*types.ListTransactionResp, uint64, error) {
 	methodIDs := make([]string, 0)
 	for _, tx := range txs {
 		t := &types.ListTransactionResp{
-			Hash:   tx.Hash.Hex(),
-			Method: tx.Method.String(),
-			//BlockHash:   tx.BlockNum.String(),
+			Hash:        tx.Hash.Hex(),
+			Method:      tx.Method.String(),
 			BlockNumber: DecodeBig(tx.BlockNum.String()).String(),
 			From:        tx.From.Hex(),
 			To:          tx.To.Hex(),
@@ -72,8 +70,8 @@ func ListTxs(pager *types.Pager) ([]*types.ListTransactionResp, uint64, error) {
 			t.To = rts[t.Hash].ContractAddress.Hex()
 		}
 		if to, ok := accounts[t.To]; ok {
-			t.To = to.Name
-			t.To = to.Symbol
+			t.ToName = to.Name
+			t.ToSymbol = to.Symbol
 			if to.Erc20 || to.Erc721 || to.Erc1155 {
 				t.ToContract = true
 			}

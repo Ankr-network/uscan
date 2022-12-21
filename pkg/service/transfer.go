@@ -82,13 +82,13 @@ func ListErc20Txs(pager *types.Pager) ([]*types.Erc20TxResp, uint64, error) {
 			t.ContractDecimals = c.Decimals.ToUint64()
 		}
 		if t.Method == "0x" {
-			t.Method = ""
+			t.Method = "0x60806040"
 		}
-		if t.Method != "" && t.Method != "0x60806040" {
+		if t.Method != "0x60806040" && t.Method != "0x60806040" {
 			if mn, ok := methodNames[t.Method]; ok {
 				md := strings.Split(mn, "(")
 				if len(md) >= 1 {
-					t.Method = md[0]
+					t.Method = strings.Title(md[0])
 				}
 			}
 		}
@@ -165,9 +165,9 @@ func ListErc721Txs(pager *types.Pager) ([]*types.Erc721TxResp, uint64, error) {
 			t.ContractDecimals = c.Decimals.ToUint64()
 		}
 		if t.Method == "0x" {
-			t.Method = ""
+			t.Method = "Transfer"
 		}
-		if t.Method != "" && t.Method != "0x60806040" {
+		if t.Method != "Transfer" && t.Method != "0x60806040" {
 			if mn, ok := methodNames[t.Method]; ok {
 				md := strings.Split(mn, "(")
 				if len(md) >= 1 {
@@ -251,13 +251,13 @@ func ListErc1155Txs(pager *types.Pager) ([]*types.Erc1155TxResp, uint64, error) 
 			t.ContractDecimals = c.Decimals.ToUint64()
 		}
 		if t.Method == "0x" {
-			t.Method = ""
+			t.Method = "Transfer"
 		}
-		if t.Method != "" && t.Method != "0x60806040" {
+		if t.Method != "Transfer" && t.Method != "0x60806040" {
 			if mn, ok := methodNames[t.Method]; ok {
 				md := strings.Split(mn, "(")
 				if len(md) >= 1 {
-					t.Method = md[0]
+					t.Method = strings.Title(md[0])
 				}
 			}
 		}
@@ -412,13 +412,13 @@ func ListErc20Transfers(pager *types.Pager, address common.Address) ([]*types.Er
 			t.ContractDecimals = c.Decimals.ToUint64()
 		}
 		if t.Method == "0x" {
-			t.Method = ""
+			t.Method = "Transfer"
 		}
-		if t.Method != "" && t.Method != "0x60806040" {
+		if t.Method != "Transfer" && t.Method != "0x60806040" {
 			if mn, ok := methodNames[t.Method]; ok {
 				md := strings.Split(mn, "(")
 				if len(md) >= 1 {
-					t.Method = md[0]
+					t.Method = strings.Title(md[0])
 				}
 			}
 		}
@@ -491,13 +491,13 @@ func ListErc721Transfers(pager *types.Pager, address common.Address) ([]*types.E
 			t.ContractDecimals = c.Decimals.ToUint64()
 		}
 		if t.Method == "0x" {
-			t.Method = ""
+			t.Method = "Transfer"
 		}
-		if t.Method != "" && t.Method != "0x60806040" {
+		if t.Method != "Transfer" && t.Method != "0x60806040" {
 			if mn, ok := methodNames[t.Method]; ok {
 				md := strings.Split(mn, "(")
 				if len(md) >= 1 {
-					t.Method = md[0]
+					t.Method = strings.Title(md[0])
 				}
 			}
 		}
@@ -572,13 +572,13 @@ func ListErc1155Transfers(pager *types.Pager, address common.Address) ([]*types.
 			t.ContractDecimals = c.Decimals.ToUint64()
 		}
 		if t.Method == "0x" {
-			t.Method = ""
+			t.Method = "Transfer"
 		}
-		if t.Method != "" && t.Method != "0x60806040" {
+		if t.Method != "Transfer" && t.Method != "0x60806040" {
 			if mn, ok := methodNames[t.Method]; ok {
 				md := strings.Split(mn, "(")
 				if len(md) >= 1 {
-					t.Method = md[0]
+					t.Method = strings.Title(md[0])
 				}
 			}
 		}
