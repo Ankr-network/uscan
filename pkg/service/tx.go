@@ -18,6 +18,16 @@ func ListTxs(pager *types.Pager) ([]*types.ListTransactionResp, uint64, error) {
 	if err != nil {
 		return nil, 0, err
 	}
+	rts := make(map[string]*types.Rt, 0)
+
+	for _, tx := range txs {
+		rt, err := store.GetRt(tx.Hash)
+		if err != nil {
+			return nil, 0, err
+		}
+		rts[tx.Hash.String()] = rt
+	}
+
 	resp := make([]*types.ListTransactionResp, 0)
 	addresses := make(map[string]common.Address)
 	methodIDs := make([]string, 0)
@@ -29,16 +39,19 @@ func ListTxs(pager *types.Pager) ([]*types.ListTransactionResp, uint64, error) {
 			BlockNumber: DecodeBig(tx.BlockNum.String()).String(),
 			From:        tx.From.Hex(),
 			To:          tx.To.Hex(),
-			Gas:         tx.Gas.StringPointer(),
+			Gas:         rts[tx.Hash.Hex()].GasUsed.StringPointer(),
 			GasPrice:    tx.GasPrice.StringPointer(),
 			Value:       tx.Value.StringPointer(),
 			CreatedTime: tx.TimeStamp.ToUint64(),
 		}
 		resp = append(resp, t)
-		addresses[tx.From.String()] = tx.From
+		if tx.Method.String() != "0x60806040" {
+			tx.To = rts[tx.Hash.Hex()].ContractAddress
+		}
 		if tx.To != nil {
 			addresses[tx.To.String()] = *tx.To
 		}
+
 		if tx.Method.String() != "0x" && tx.Method.String() != "0x60806040" {
 			mid := strings.Split(tx.Method.String(), "0x")
 			if len(mid) == 2 {
@@ -55,28 +68,21 @@ func ListTxs(pager *types.Pager) ([]*types.ListTransactionResp, uint64, error) {
 		return nil, 0, err
 	}
 	for _, t := range resp {
-		if from, ok := accounts[t.From]; ok {
-			t.FromName = from.Name
-			t.FromSymbol = from.Symbol
-			if from.Erc20 || from.Erc721 || from.Erc1155 {
-				t.FromContract = true
-			}
-		}
 		if to, ok := accounts[t.To]; ok {
-			t.FromName = to.Name
-			t.FromSymbol = to.Symbol
+			t.To = to.Name
+			t.To = to.Symbol
 			if to.Erc20 || to.Erc721 || to.Erc1155 {
 				t.ToContract = true
 			}
 		}
 		if t.Method == "0x" {
-			t.Method = ""
+			t.Method = "Transfer"
 		}
-		if t.Method != "" && t.Method != "0x60806040" {
+		if t.Method != "Transfer" && t.Method != "0x60806040" {
 			if mn, ok := methodNames[t.Method]; ok {
 				md := strings.Split(mn, "(")
 				if len(md) >= 1 {
-					t.Method = md[0]
+					t.Method = strings.Title(md[0])
 				}
 			}
 		}
@@ -104,16 +110,16 @@ func GetTxBase(tx string) (*types.TransactionBaseResp, error) {
 		Hash:  txData.Hash.Hex(),
 		Nonce: txData.Nonce.String(),
 		//GasUsed: txData.Gas,
-		//GasLimit: txData.Gas,
-		Status: 3,
+		GasLimit: txData.Gas.String(),
+		Status:   3,
 	}
 	if rtData != nil {
 		resp.Status = rtData.Status.ToUint64()
 		resp.GasUsed = rtData.GasUsed.String()
 	}
 
-	block, _ := store.GetBlock(&txData.BlockNum)
-	resp.GasLimit = block.GasLimit.String()
+	//x gas => gas limit (前)
+	//rt gasUsed => (后)
 	return resp, nil
 }
 

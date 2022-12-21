@@ -116,22 +116,19 @@ type TokensTransferred struct {
 }
 
 type ListTransactionResp struct {
-	Hash         string  `json:"hash"` // transaction Hash
-	Method       string  `json:"method"`
-	BlockHash    string  `json:"blockHash"`
-	BlockNumber  string  `json:"blockNumber"`
-	From         string  `json:"from"`
-	FromName     string  `json:"fromName"`
-	FromSymbol   string  `json:"fromSymbol"`
-	FromContract bool    `json:"fromContract"`
-	To           string  `json:"to"`
-	ToName       string  `json:"toName"`
-	ToSymbol     string  `json:"toSymbol"`
-	ToContract   bool    `json:"toContract"`
-	Gas          *string `json:"gas"`
-	GasPrice     *string `json:"gasPrice"`
-	Value        *string `json:"value"`
-	CreatedTime  uint64  `json:"createTime"`
+	Hash        string  `json:"hash"` // transaction Hash
+	Method      string  `json:"method"`
+	BlockHash   string  `json:"blockHash"`
+	BlockNumber string  `json:"blockNumber"`
+	From        string  `json:"from"`
+	To          string  `json:"to"`
+	ToName      string  `json:"toName"`
+	ToSymbol    string  `json:"toSymbol"`
+	ToContract  bool    `json:"toContract"`
+	Gas         *string `json:"gas"`
+	GasPrice    *string `json:"gasPrice"`
+	Value       *string `json:"value"`
+	CreatedTime uint64  `json:"createTime"`
 }
 
 type TransactionBaseResp struct {
