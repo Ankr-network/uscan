@@ -334,16 +334,9 @@ func GetBlockTxs(blockNum string, pager *types.Pager) ([]*types.ListTransactionR
 		return nil, 0, err
 	}
 	for _, t := range resp {
-		if from, ok := accounts[t.From]; ok {
-			t.FromName = from.Name
-			t.FromSymbol = from.Symbol
-			if from.Erc20 || from.Erc721 || from.Erc1155 {
-				t.FromContract = true
-			}
-		}
 		if to, ok := accounts[t.To]; ok {
-			t.FromName = to.Name
-			t.FromSymbol = to.Symbol
+			t.ToName = to.Name
+			t.ToSymbol = to.Symbol
 			if to.Erc20 || to.Erc721 || to.Erc1155 {
 				t.ToContract = true
 			}

@@ -110,13 +110,6 @@ func GetAccountTxs(pager *types.Pager, address common.Address) (map[string]inter
 		return nil, err
 	}
 	for _, t := range txsResp {
-		if from, ok := accounts[t.From]; ok {
-			t.FromName = from.Name
-			t.FromSymbol = from.Symbol
-			if from.Erc20 || from.Erc721 || from.Erc1155 {
-				t.FromContract = true
-			}
-		}
 		if to, ok := accounts[t.To]; ok {
 			t.ToName = to.Name
 			t.ToSymbol = to.Symbol
