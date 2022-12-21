@@ -1,0 +1,1 @@
+class l{label;key;constructor(a,e){this.label=a,this.key=e}}class p{parameterName;parameterDisplay;parameterValue;parameterExplain;constructor(a,e,t,s){this.parameterName=a,this.parameterDisplay=e,this.parameterValue=t,this.parameterExplain=s}}export{p as O,l as T};
