@@ -106,13 +106,15 @@ type RtResp struct {
 }
 
 type TokensTransferred struct {
-	From          string `json:"from"`
-	FromHex       string `json:"fromHex"`
-	To            string `json:"to"`
-	ToHex         string `json:"toHex"`
-	Address       string `json:"address"`
-	AddressName   string `json:"addressName"`
-	AddressSymbol string `json:"addressSymbol"`
+	From            string `json:"from"`
+	FromHex         string `json:"fromHex"`
+	To              string `json:"to"`
+	ToHex           string `json:"toHex"`
+	Address         string `json:"address"`
+	AddressName     string `json:"addressName"`
+	AddressSymbol   string `json:"addressSymbol"`
+	AddressDecimals uint64 `json:"addressDecimals"`
+	AddressValue    string `json:"addressValue"`
 }
 
 type ListTransactionResp struct {

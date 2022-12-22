@@ -19,6 +19,7 @@ package apis
 import (
 	"context"
 	"fmt"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/rakyll/statik/fs"
 
@@ -48,15 +49,15 @@ func Apis(ctx context.Context) error {
 
 	g := svc.Group("/uscan/v1")
 	g.Use(recover.New())
-	//g.Use(cors.New(cors.Config{
-	//	Next:             nil,
-	//	AllowOrigins:     "*",
-	//	AllowMethods:     "*",
-	//	AllowHeaders:     "Origin, Content-Type, Accept",
-	//	AllowCredentials: true,
-	//	ExposeHeaders:    "Content-Length, Access-Control-Allow-Headers",
-	//	MaxAge:           86400,
-	//}))
+	g.Use(cors.New(cors.Config{
+		Next:             nil,
+		AllowOrigins:     "*",
+		AllowMethods:     "*",
+		AllowHeaders:     "Origin, Content-Type, Accept",
+		AllowCredentials: true,
+		ExposeHeaders:    "Content-Length, Access-Control-Allow-Headers",
+		MaxAge:           86400,
+	}))
 	SetupRouter(g)
 
 	addr := fmt.Sprintf("%s:%s", viper.GetString(share.HttpAddr), viper.GetString(share.HttpPort))

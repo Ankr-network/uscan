@@ -256,11 +256,12 @@ func GetTx(tx string) (*types.TxResp, error) {
 							toHex = log.Topics[2].Hex()
 						}
 						resp.TokensTransferred = append(resp.TokensTransferred, &types.TokensTransferred{
-							From:    from,
-							FromHex: fromHex,
-							To:      to,
-							ToHex:   toHex,
-							Address: log.Address.Hex(),
+							From:         from,
+							FromHex:      fromHex,
+							To:           to,
+							ToHex:        toHex,
+							Address:      log.Address.Hex(),
+							AddressValue: log.Data.String(),
 						})
 					}
 				}
@@ -274,6 +275,7 @@ func GetTx(tx string) (*types.TxResp, error) {
 			if _, ok := accounts[transferred.Address]; ok {
 				transferred.AddressName = accounts[transferred.Address].Name
 				transferred.AddressSymbol = accounts[transferred.Address].Symbol
+				transferred.AddressDecimals = accounts[transferred.Address].Decimals.ToUint64()
 			}
 		}
 	}
