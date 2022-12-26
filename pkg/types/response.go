@@ -1,5 +1,9 @@
 package types
 
+import (
+	"math/big"
+)
+
 type HomeBlock struct {
 	Number            string `json:"number"`
 	Timestamp         uint64 `json:"timestamp"`
@@ -285,8 +289,8 @@ const (
 )
 
 type TokenNum struct {
-	TokenId *string `json:"tokenID"`
-	Num     *string `json:"num"`
+	TokenId *big.Int `json:"tokenID"`
+	Num     *big.Int `json:"num"`
 }
 
 type EventTransferData struct {

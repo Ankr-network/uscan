@@ -373,11 +373,11 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 		}
 		tns := make([]*types.TokenNum, 0, len(ids))
 		for i := range ids {
-			tokenId := field.BigInt(*ids[i])
-			num := field.BigInt(*values[i])
+			//tokenId := field.BigInt(*ids[i])
+			//num := field.BigInt(*values[i])
 			tns = append(tns, &types.TokenNum{
-				TokenId: tokenId.StringPointer(),
-				Num:     num.StringPointer(),
+				TokenId: ids[i],
+				Num:     values[i],
 			})
 		}
 
@@ -397,8 +397,8 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 			break
 		}
 
-		tokenID := field.BigInt(data[0].(big.Int))
-		num := field.BigInt(data[1].(big.Int))
+		//tokenID := field.BigInt(data[0].(big.Int))
+		//num := field.BigInt(data[1].(big.Int))
 		return &types.EventTransferData{
 			ContractType: types.EIP1155,
 			From:         common.BytesToAddress(log.Topics[2][:]).String(),
@@ -406,8 +406,8 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 			Contract:     log.Address.String(),
 			TokenIDToNums: []*types.TokenNum{
 				{
-					TokenId: tokenID.StringPointer(),
-					Num:     num.StringPointer(),
+					TokenId: data[0].(*big.Int),
+					Num:     data[1].(*big.Int),
 				},
 			},
 		}, nil
@@ -447,8 +447,8 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 			if err != nil {
 				return nil, err
 			}
-			tokenID := field.BigInt(*out.TokenId)
-			num := field.BigInt(*big.NewInt(1))
+			//tokenID := field.BigInt(*out.TokenId)
+			//num := field.BigInt(*big.NewInt(1))
 			return &types.EventTransferData{
 				ContractType: types.EIP721,
 				From:         out.From.String(),
@@ -456,8 +456,8 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 				Contract:     log.Address.String(),
 				TokenIDToNums: []*types.TokenNum{
 					{
-						TokenId: tokenID.StringPointer(),
-						Num:     num.StringPointer(),
+						TokenId: out.TokenId,
+						Num:     big.NewInt(1),
 					},
 				},
 			}, nil
