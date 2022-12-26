@@ -134,11 +134,12 @@ type ListTransactionResp struct {
 }
 
 type TransactionBaseResp struct {
-	Hash     string `json:"hash"` // transaction Hash
-	Nonce    string `json:"nonce"`
-	GasUsed  string `json:"gasUsed"`
-	GasLimit string `json:"gasLimit"`
-	Status   uint64 `json:"status"`
+	Hash     string  `json:"hash"` // transaction Hash
+	Nonce    string  `json:"nonce"`
+	GasUsed  string  `json:"gasUsed"`
+	GasLimit string  `json:"gasLimit"`
+	Status   uint64  `json:"status"`
+	GasPrice *string `json:"gasPrice"`
 }
 
 type AccountResp struct {

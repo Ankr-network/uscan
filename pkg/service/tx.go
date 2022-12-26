@@ -119,6 +119,7 @@ func GetTxBase(tx string) (*types.TransactionBaseResp, error) {
 		//GasUsed: txData.Gas,
 		GasLimit: txData.Gas.String(),
 		Status:   3,
+		GasPrice: txData.GasPrice.StringPointer(),
 	}
 	if rtData != nil {
 		resp.Status = rtData.Status.ToUint64()
