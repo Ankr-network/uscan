@@ -426,6 +426,7 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 		//erc20 or erc721
 		if len(log.Data) > 0 {
 			//erc20
+			logrus.Infof("CheckLog:len(log.Data) > 0:%+v", eip20Abi.Events)
 			out := new(eip.Erc20Transfer)
 			var indexed abi.Arguments
 			for _, arg := range eip20Abi.Events["Transfer"].Inputs {
