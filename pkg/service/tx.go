@@ -9,6 +9,7 @@ import (
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/sirupsen/logrus"
 	"math/big"
 	"strings"
@@ -434,6 +435,7 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 					indexed = append(indexed, arg)
 				}
 			}
+
 			logrus.Infof("CheckLog:indexed:%+v", indexed)
 			logrus.Infof("CheckLog:log.Topics > 0:%+v", len(log.Topics))
 			err := abi.ParseTopics(out, indexed, log.Topics[1:])
@@ -442,8 +444,9 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 				return nil, err
 			}
 			num := *field.NewInt(0)
-			if out.Value != nil {
-				num = field.BigInt(*out.Value)
+			v := hexutil.MustDecodeBig(log.Data.String())
+			if v != nil {
+				num = field.BigInt(*v)
 			}
 			logrus.Infof("Checklog:erc20:%s", out.Value.String())
 			logrus.Infof("Checklog:From:%s", out.From.String())
@@ -465,6 +468,7 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 					indexed = append(indexed, arg)
 				}
 			}
+
 			logrus.Infof("CheckLog:indexed > 0:%+v", indexed)
 			logrus.Infof("CheckLog:log.Topics > 0:%+v", len(log.Topics))
 			err := abi.ParseTopics(out, indexed, log.Topics[1:])
