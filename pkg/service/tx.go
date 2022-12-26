@@ -444,6 +444,7 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 				return nil, err
 			}
 			num := *field.NewInt(0)
+			logrus.Infof("log.Data.String():%s", log.Data.String())
 			v := hexutil.MustDecodeBig(log.Data.String())
 			if v != nil {
 				num = field.BigInt(*v)
