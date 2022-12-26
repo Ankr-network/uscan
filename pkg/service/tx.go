@@ -428,12 +428,13 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 			//erc20
 			logrus.Infof("CheckLog:len(log.Data) > 0:%+v", eip20Abi.Events)
 			out := new(eip.Erc20Transfer)
-			var indexed abi.Arguments
+			indexed := make(abi.Arguments, 0)
 			for _, arg := range eip20Abi.Events["Transfer"].Inputs {
 				if arg.Indexed {
 					indexed = append(indexed, arg)
 				}
 			}
+			logrus.Infof("CheckLog:indexed:%+v", indexed)
 			err := abi.ParseTopics(out, indexed, log.Topics[1:])
 			if err != nil {
 				return nil, err
@@ -451,13 +452,15 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 			}, nil
 		} else {
 			// erc721
+			logrus.Infof("CheckLog:erc721 > 0:%+v", eip721Abi.Events)
 			out := new(eip.Ieip721Transfer)
-			var indexed abi.Arguments
+			indexed := make(abi.Arguments, 0)
 			for _, arg := range eip721Abi.Events["Transfer"].Inputs {
 				if arg.Indexed {
 					indexed = append(indexed, arg)
 				}
 			}
+			logrus.Infof("CheckLog:indexed > 0:%+v", indexed)
 			err := abi.ParseTopics(out, indexed, log.Topics[1:])
 			if err != nil {
 				return nil, err
