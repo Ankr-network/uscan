@@ -1,12 +1,39 @@
 package service
 
 import (
+	"errors"
+	"github.com/Ankr-network/uscan/pkg/contract/eip"
+	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/response"
 	"github.com/Ankr-network/uscan/pkg/types"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"math/big"
 	"strings"
 )
+
+var (
+	eip1155Abi abi.ABI
+	eip721Abi  abi.ABI
+	eip20Abi   abi.ABI
+)
+
+func init() {
+	var err error
+	eip1155Abi, err = abi.JSON(strings.NewReader(eip.Ieip1155ABI))
+	if err != nil {
+		panic("get abi from erc1155 error")
+	}
+	eip721Abi, err = abi.JSON(strings.NewReader(eip.Ieip721ABI))
+	if err != nil {
+		panic("get abi from erc721 error")
+	}
+	eip20Abi, err = abi.JSON(strings.NewReader(eip.Erc20ABI))
+	if err != nil {
+		panic("get abi from erc20 error")
+	}
+}
 
 func ListTxs(pager *types.Pager) ([]*types.ListTransactionResp, uint64, error) {
 	total, err := store.GetTxTotal()
@@ -240,7 +267,7 @@ func GetTx(tx string) (*types.TxResp, error) {
 	// event log
 	resp.TotalLogs = 0
 	resp.Logs = make([]*types.RtLogResp, 0)
-	resp.TokensTransferred = make([]*types.TokensTransferred, 0)
+	resp.TokensTransferred = make([]*types.EventTransferData, 0)
 	if rtData != nil {
 		resp.TotalLogs = len(rtData.Logs)
 		resp.Logs = make([]*types.RtLogResp, resp.TotalLogs)
@@ -257,29 +284,35 @@ func GetTx(tx string) (*types.TxResp, error) {
 				Data:     log.Data.String(),
 				LogIndex: log.LogIndex.ToUint64(),
 			}
-			addresses[log.Address.Hex()] = log.Address
-			for _, topic := range TokenTopics {
-				if len(log.Topics) > 0 {
-					if log.Topics[0].Hex() == topic {
-						var from, fromHex, to, toHex string
-						if len(log.Topics) > 1 {
-							from = common.HexToAddress(log.Topics[1].Hex()).String()
-							fromHex = log.Topics[1].Hex()
-						}
-						if len(log.Topics) > 2 {
-							to = common.HexToAddress(log.Topics[2].Hex()).String()
-							toHex = log.Topics[2].Hex()
-						}
-						resp.TokensTransferred = append(resp.TokensTransferred, &types.TokensTransferred{
-							From:         from,
-							FromHex:      fromHex,
-							To:           to,
-							ToHex:        toHex,
-							Address:      log.Address.Hex(),
-							AddressValue: log.Data.String(),
-						})
-					}
-				}
+
+			//for _, topic := range TokenTopics {
+			//	if len(log.Topics) > 0 {
+			//		if log.Topics[0].Hex() == topic {
+			//			var from, fromHex, to, toHex string
+			//			if len(log.Topics) > 1 {
+			//				from = common.HexToAddress(log.Topics[1].Hex()).String()
+			//				fromHex = log.Topics[1].Hex()
+			//			}
+			//			if len(log.Topics) > 2 {
+			//				to = common.HexToAddress(log.Topics[2].Hex()).String()
+			//				toHex = log.Topics[2].Hex()
+			//			}
+			//			resp.TokensTransferred = append(resp.TokensTransferred, &types.TokensTransferred{
+			//				From:         from,
+			//				FromHex:      fromHex,
+			//				To:           to,
+			//				ToHex:        toHex,
+			//				Address:      log.Address.Hex(),
+			//				AddressValue: log.Data.String(),
+			//			})
+			//		}
+			//	}
+			//}
+
+			cl, err := CheckLog(log)
+			if err == nil && cl.ContractType > 0 {
+				addresses[log.Address.Hex()] = log.Address
+				resp.TokensTransferred = append(resp.TokensTransferred, cl)
 			}
 		}
 		accounts, err := GetAccounts(addresses)
@@ -287,10 +320,10 @@ func GetTx(tx string) (*types.TxResp, error) {
 			return nil, err
 		}
 		for _, transferred := range resp.TokensTransferred {
-			if _, ok := accounts[transferred.Address]; ok {
-				transferred.AddressName = accounts[transferred.Address].Name
-				transferred.AddressSymbol = accounts[transferred.Address].Symbol
-				transferred.AddressDecimals = accounts[transferred.Address].Decimals.ToUint64()
+			if _, ok := accounts[transferred.Contract]; ok {
+				transferred.ContractName = accounts[transferred.Contract].Name
+				transferred.ContractSymbol = accounts[transferred.Contract].Symbol
+				transferred.ContractDecimals = accounts[transferred.Contract].Decimals.ToUint64()
 			}
 		}
 	}
@@ -307,6 +340,128 @@ func GetTx(tx string) (*types.TxResp, error) {
 	}
 
 	return resp, nil
+}
+
+var (
+	TransferBatchEventTopic  = common.HexToHash("0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb")
+	TransferSingleEventTopic = common.HexToHash("0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62")
+	TransferEventTopic       = common.HexToHash("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef")
+)
+
+func CheckLog(log *types.Log) (*types.EventTransferData, error) {
+	if len(log.Topics) < 1 {
+		return nil, errors.New("ErrinvalidTopic")
+	}
+
+	switch log.Topics[0] {
+	case TransferBatchEventTopic:
+		data, err := eip1155Abi.Events["TransferBatch"].Inputs.UnpackValues(log.Data)
+		if err != nil {
+			break
+		}
+		if len(data) != 2 {
+			break
+		}
+
+		ids := data[0].([]*big.Int)
+		values := data[1].([]*big.Int)
+
+		if len(ids) != len(values) {
+			break
+		}
+		tns := make([]*types.TokenNum, 0, len(ids))
+		for i := range ids {
+			tokenId := field.BigInt(*ids[i])
+			num := field.BigInt(*values[i])
+			tns = append(tns, &types.TokenNum{
+				TokenId: tokenId.StringPointer(),
+				Num:     num.StringPointer(),
+			})
+		}
+
+		return &types.EventTransferData{
+			ContractType:  types.EIP1155,
+			From:          common.BytesToAddress(log.Topics[2][:]).String(),
+			To:            common.BytesToAddress(log.Topics[3][:]).String(),
+			Contract:      log.Address.Hex(),
+			TokenIDToNums: tns,
+		}, nil
+	case TransferSingleEventTopic:
+		data, err := eip1155Abi.Events["TransferSingle"].Inputs.UnpackValues(log.Data)
+		if err != nil {
+			break
+		}
+		if len(data) != 2 {
+			break
+		}
+
+		tokenID := field.BigInt(data[0].(big.Int))
+		num := field.BigInt(data[1].(big.Int))
+		return &types.EventTransferData{
+			ContractType: types.EIP1155,
+			From:         common.BytesToAddress(log.Topics[2][:]).String(),
+			To:           common.BytesToAddress(log.Topics[3][:]).String(),
+			Contract:     log.Address.String(),
+			TokenIDToNums: []*types.TokenNum{
+				{
+					TokenId: tokenID.StringPointer(),
+					Num:     num.StringPointer(),
+				},
+			},
+		}, nil
+	case TransferEventTopic:
+		//erc20 or erc721
+		if len(log.Data) > 0 {
+			//erc20
+			out := new(eip.Erc20Transfer)
+			var indexed abi.Arguments
+			for _, arg := range eip20Abi.Events["Transfer"].Inputs {
+				if arg.Indexed {
+					indexed = append(indexed, arg)
+				}
+			}
+			err := abi.ParseTopics(out, indexed, log.Topics[1:])
+			if err != nil {
+				return nil, err
+			}
+			num := field.BigInt(*out.Value)
+			return &types.EventTransferData{
+				ContractType: types.EIP20,
+				From:         out.From.String(),
+				To:           out.To.String(),
+				Contract:     log.Address.String(),
+				Value:        num.String(),
+			}, nil
+		} else {
+			// erc721
+			out := new(eip.Ieip721Transfer)
+			var indexed abi.Arguments
+			for _, arg := range eip721Abi.Events["Transfer"].Inputs {
+				if arg.Indexed {
+					indexed = append(indexed, arg)
+				}
+			}
+			err := abi.ParseTopics(out, indexed, log.Topics[1:])
+			if err != nil {
+				return nil, err
+			}
+			tokenID := field.BigInt(*out.TokenId)
+			num := field.BigInt(*big.NewInt(1))
+			return &types.EventTransferData{
+				ContractType: types.EIP721,
+				From:         out.From.String(),
+				To:           out.To.String(),
+				Contract:     log.Address.String(),
+				TokenIDToNums: []*types.TokenNum{
+					{
+						TokenId: tokenID.StringPointer(),
+						Num:     num.StringPointer(),
+					},
+				},
+			}, nil
+		}
+	}
+	return nil, errors.New("ErrNotNftContract")
 }
 
 func GetAccounts(addresses map[string]common.Address) (map[string]*types.Account, error) {

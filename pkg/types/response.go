@@ -77,7 +77,7 @@ type TxResp struct {
 	R                    string               `json:"r"`
 	S                    string               `json:"s"`
 	TotalLogs            int                  `json:"totalLogs"`
-	TokensTransferred    []*TokensTransferred `json:"tokensTransferred"`
+	TokensTransferred    []*EventTransferData `json:"tokensTransferred"`
 	BaseFeePerGas        *string              `json:"baseFeePerGas"`
 	GasLimit             string               `json:"gasLimit"` // change string
 	MethodName           string               `json:"methodName"`
@@ -114,7 +114,9 @@ type TokensTransferred struct {
 	AddressName     string `json:"addressName"`
 	AddressSymbol   string `json:"addressSymbol"`
 	AddressDecimals uint64 `json:"addressDecimals"`
+	AddressType     string `json:"addressType"`
 	AddressValue    string `json:"addressValue"`
+	TokenID         string `json:"tokenID"`
 }
 
 type ListTransactionResp struct {
@@ -271,4 +273,30 @@ type ContractVerityInfoResp struct {
 	Contract             *ContractVerityInfo `json:"contract"`
 	ProxyContractAddress string              `json:"proxyContractAddress"`
 	ProxyContract        *ContractVerityInfo `json:"proxyContract"`
+}
+
+type ContractType uint8
+
+const (
+	UnKnow ContractType = iota
+	EIP20
+	EIP721
+	EIP1155
+)
+
+type TokenNum struct {
+	TokenId *string `json:"tokenID"`
+	Num     *string `json:"num"`
+}
+
+type EventTransferData struct {
+	ContractType     ContractType `json:"contractType"`
+	From             string       `json:"from"`
+	To               string       `json:"to"`
+	Contract         string       `json:"contract"`
+	ContractName     string       `json:"contractName"`
+	ContractSymbol   string       `json:"contractSymbol"`
+	ContractDecimals uint64       `json:"contractDecimals"`
+	TokenIDToNums    []*TokenNum  `json:"tokenIDToNums"`
+	Value            string       `json:"value"`
 }
