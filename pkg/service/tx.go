@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"github.com/Ankr-network/uscan/pkg/contract/eip"
+	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/response"
 	"github.com/Ankr-network/uscan/pkg/types"
@@ -440,7 +441,10 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 				logrus.Errorf("abi.ParseTopics error:%s", err)
 				return nil, err
 			}
-			//num := field.BigInt(*out.Value)
+			num := *field.NewInt(0)
+			if out.Value != nil {
+				num = field.BigInt(*out.Value)
+			}
 			logrus.Infof("Checklog:erc20:%s", out.Value.String())
 			logrus.Infof("Checklog:From:%s", out.From.String())
 			logrus.Infof("Checklog:To:%s", out.To.String())
@@ -449,7 +453,7 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 				From:         out.From.String(),
 				To:           out.To.String(),
 				Contract:     log.Address.String(),
-				Value:        out.Value.String(),
+				Value:        num.String(),
 			}, nil
 		} else {
 			// erc721
