@@ -9,6 +9,7 @@ import (
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/sirupsen/logrus"
 	"math/big"
 	"strings"
 )
@@ -308,11 +309,12 @@ func GetTx(tx string) (*types.TxResp, error) {
 			//		}
 			//	}
 			//}
-
+			logrus.Infof("CheckLog:%d", log.LogIndex.ToUint64())
 			cl, err := CheckLog(log)
 			if err == nil && cl.ContractType > 0 {
 				addresses[log.Address.Hex()] = log.Address
 				resp.TokensTransferred = append(resp.TokensTransferred, cl)
+				logrus.Infof("CheckLog append:%d", log.LogIndex.ToUint64())
 			}
 		}
 		accounts, err := GetAccounts(addresses)
