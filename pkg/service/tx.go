@@ -406,8 +406,8 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 		logrus.Infof("CheckLog:data[1]:%+v", data[1])
 		logrus.Infof("Checklog:From:%s", log.Topics[2][:])
 		logrus.Infof("Checklog:To:%s", log.Topics[3][:])
-		tokenID := field.BigInt(data[0].(big.Int))
-		num := field.BigInt(data[1].(big.Int))
+		tokenID := field.BigInt(*data[0].(*big.Int))
+		num := field.BigInt(*data[1].(*big.Int))
 		return &types.EventTransferData{
 			ContractType: types.EIP1155,
 			From:         common.BytesToAddress(log.Topics[2][:]).String(),
