@@ -376,11 +376,11 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 		}
 		tns := make([]*types.TokenNum, 0, len(ids))
 		for i := range ids {
-			//tokenId := field.BigInt(*ids[i])
-			//num := field.BigInt(*values[i])
+			tokenId := field.BigInt(*ids[i])
+			num := field.BigInt(*values[i])
 			tns = append(tns, &types.TokenNum{
-				TokenId: ids[i],
-				Num:     values[i],
+				TokenId: tokenId.StringPointer(),
+				Num:     num.StringPointer(),
 			})
 		}
 		logrus.Infof("Checklog:From:%s", log.Topics[2][:])
@@ -406,8 +406,8 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 		logrus.Infof("CheckLog:data[1]:%+v", data[1])
 		logrus.Infof("Checklog:From:%s", log.Topics[2][:])
 		logrus.Infof("Checklog:To:%s", log.Topics[3][:])
-		//tokenID := field.BigInt(data[0].(big.Int))
-		//num := field.BigInt(data[1].(big.Int))
+		tokenID := field.BigInt(data[0].(big.Int))
+		num := field.BigInt(data[1].(big.Int))
 		return &types.EventTransferData{
 			ContractType: types.EIP1155,
 			From:         common.BytesToAddress(log.Topics[2][:]).String(),
@@ -415,8 +415,8 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 			Contract:     log.Address.String(),
 			TokenIDToNums: []*types.TokenNum{
 				{
-					TokenId: data[0].(*big.Int),
-					Num:     data[1].(*big.Int),
+					TokenId: tokenID.StringPointer(),
+					Num:     num.StringPointer(),
 				},
 			},
 		}, nil
@@ -476,8 +476,8 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 			logrus.Infof("Checklog:erc721:%s", out.TokenId.String())
 			logrus.Infof("Checklog:From:%s", out.From.String())
 			logrus.Infof("Checklog:To:%s", out.To.String())
-			//tokenID := field.BigInt(*out.TokenId)
-			//num := field.BigInt(*big.NewInt(1))
+			tokenID := field.BigInt(*out.TokenId)
+			num := field.BigInt(*big.NewInt(1))
 			return &types.EventTransferData{
 				ContractType: types.EIP721,
 				From:         out.From.String(),
@@ -485,8 +485,8 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 				Contract:     log.Address.String(),
 				TokenIDToNums: []*types.TokenNum{
 					{
-						TokenId: out.TokenId,
-						Num:     big.NewInt(1),
+						TokenId: tokenID.StringPointer(),
+						Num:     num.StringPointer(),
 					},
 				},
 			}, nil
