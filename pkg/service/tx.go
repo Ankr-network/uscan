@@ -357,6 +357,7 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 
 	switch log.Topics[0] {
 	case TransferBatchEventTopic:
+		logrus.Infof("CheckLog:TransferBatchEventTopic:%s", TransferBatchEventTopic.String())
 		data, err := eip1155Abi.Events["TransferBatch"].Inputs.UnpackValues(log.Data)
 		if err != nil {
 			break
@@ -367,6 +368,8 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 
 		ids := data[0].([]*big.Int)
 		values := data[1].([]*big.Int)
+		logrus.Infof("CheckLog:ids:%+v", ids)
+		logrus.Infof("CheckLog:values:%+v", values)
 
 		if len(ids) != len(values) {
 			break
@@ -380,7 +383,8 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 				Num:     values[i],
 			})
 		}
-
+		logrus.Infof("Checklog:From:%s", log.Topics[2][:])
+		logrus.Infof("Checklog:To:%s", log.Topics[3][:])
 		return &types.EventTransferData{
 			ContractType:  types.EIP1155,
 			From:          common.BytesToAddress(log.Topics[2][:]).String(),
@@ -389,6 +393,8 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 			TokenIDToNums: tns,
 		}, nil
 	case TransferSingleEventTopic:
+		logrus.Infof("CheckLog:TransferSingleEventTopic:%s", TransferSingleEventTopic.String())
+
 		data, err := eip1155Abi.Events["TransferSingle"].Inputs.UnpackValues(log.Data)
 		if err != nil {
 			break
@@ -396,7 +402,10 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 		if len(data) != 2 {
 			break
 		}
-
+		logrus.Infof("CheckLog:data[0]:%+v", data[0])
+		logrus.Infof("CheckLog:data[1]:%+v", data[1])
+		logrus.Infof("Checklog:From:%s", log.Topics[2][:])
+		logrus.Infof("Checklog:To:%s", log.Topics[3][:])
 		//tokenID := field.BigInt(data[0].(big.Int))
 		//num := field.BigInt(data[1].(big.Int))
 		return &types.EventTransferData{
@@ -412,6 +421,8 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 			},
 		}, nil
 	case TransferEventTopic:
+		logrus.Infof("CheckLog:TransferEventTopic:%s", TransferEventTopic.String())
+
 		//erc20 or erc721
 		if len(log.Data) > 0 {
 			//erc20
@@ -427,6 +438,9 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 				return nil, err
 			}
 			num := field.BigInt(*out.Value)
+			logrus.Infof("Checklog:erc20:%s", out.Value.String())
+			logrus.Infof("Checklog:From:%s", out.From.String())
+			logrus.Infof("Checklog:To:%s", out.To.String())
 			return &types.EventTransferData{
 				ContractType: types.EIP20,
 				From:         out.From.String(),
@@ -447,6 +461,9 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 			if err != nil {
 				return nil, err
 			}
+			logrus.Infof("Checklog:erc721:%s", out.TokenId.String())
+			logrus.Infof("Checklog:From:%s", out.From.String())
+			logrus.Infof("Checklog:To:%s", out.To.String())
 			//tokenID := field.BigInt(*out.TokenId)
 			//num := field.BigInt(*big.NewInt(1))
 			return &types.EventTransferData{
