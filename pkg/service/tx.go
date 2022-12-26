@@ -61,6 +61,10 @@ func ListTxs(pager *types.Pager) ([]*types.ListTransactionResp, uint64, error) {
 	if err != nil {
 		return nil, 0, err
 	}
+	contracts, err := GetAccountContracts(addresses)
+	if err != nil {
+		return nil, 0, err
+	}
 	methodNames, err := GetMethodNames(methodIDs)
 	if err != nil {
 		return nil, 0, err
@@ -72,7 +76,9 @@ func ListTxs(pager *types.Pager) ([]*types.ListTransactionResp, uint64, error) {
 		if to, ok := accounts[t.To]; ok {
 			t.ToName = to.Name
 			t.ToSymbol = to.Symbol
-			if to.Erc20 || to.Erc721 || to.Erc1155 {
+		}
+		if to, ok := contracts[t.To]; ok {
+			if to.DeployedCode != nil {
 				t.ToContract = true
 			}
 		}
