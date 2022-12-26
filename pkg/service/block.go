@@ -353,6 +353,10 @@ func GetBlockTxs(blockNum string, pager *types.Pager) ([]*types.ListTransactionR
 	if err != nil {
 		return nil, 0, err
 	}
+	contracts, err := GetAccountContracts(addresses)
+	if err != nil {
+		return nil, 0, err
+	}
 	methodNames, err := GetMethodNames(methodIDs)
 	if err != nil {
 		return nil, 0, err
@@ -365,6 +369,11 @@ func GetBlockTxs(blockNum string, pager *types.Pager) ([]*types.ListTransactionR
 			t.ToName = to.Name
 			t.ToSymbol = to.Symbol
 			if to.Erc20 || to.Erc721 || to.Erc1155 {
+				t.ToContract = true
+			}
+		}
+		if to, ok := contracts[t.To]; ok {
+			if to.DeployedCode != nil {
 				t.ToContract = true
 			}
 		}

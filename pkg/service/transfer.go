@@ -57,6 +57,10 @@ func ListErc20Txs(pager *types.Pager) ([]*types.Erc20TxResp, uint64, error) {
 	if err != nil {
 		return nil, 0, err
 	}
+	contracts, err := GetAccountContracts(addresses)
+	if err != nil {
+		return nil, 0, err
+	}
 	methodNames, err := GetMethodNames(methodIDs)
 	if err != nil {
 		return nil, 0, err
@@ -65,14 +69,18 @@ func ListErc20Txs(pager *types.Pager) ([]*types.Erc20TxResp, uint64, error) {
 		if from, ok := accounts[t.From]; ok {
 			t.FromName = from.Name
 			t.FromSymbol = from.Symbol
-			if from.Erc20 || from.Erc721 || from.Erc1155 {
+		}
+		if from, ok := contracts[t.From]; ok {
+			if from.DeployedCode != nil {
 				t.FromContract = true
 			}
 		}
 		if to, ok := accounts[t.To]; ok {
 			t.ToName = to.Name
 			t.ToSymbol = to.Symbol
-			if to.Erc20 || to.Erc721 || to.Erc1155 {
+		}
+		if to, ok := contracts[t.To]; ok {
+			if to.DeployedCode != nil {
 				t.ToContract = true
 			}
 		}
@@ -140,6 +148,10 @@ func ListErc721Txs(pager *types.Pager) ([]*types.Erc721TxResp, uint64, error) {
 	if err != nil {
 		return nil, 0, err
 	}
+	contracts, err := GetAccountContracts(addresses)
+	if err != nil {
+		return nil, 0, err
+	}
 	methodNames, err := GetMethodNames(methodIDs)
 	if err != nil {
 		return nil, 0, err
@@ -148,14 +160,18 @@ func ListErc721Txs(pager *types.Pager) ([]*types.Erc721TxResp, uint64, error) {
 		if from, ok := accounts[t.From]; ok {
 			t.FromName = from.Name
 			t.FromSymbol = from.Symbol
-			if from.Erc20 || from.Erc721 || from.Erc1155 {
+		}
+		if from, ok := contracts[t.From]; ok {
+			if from.DeployedCode != nil {
 				t.FromContract = true
 			}
 		}
 		if to, ok := accounts[t.To]; ok {
 			t.ToName = to.Name
 			t.ToSymbol = to.Symbol
-			if to.Erc20 || to.Erc721 || to.Erc1155 {
+		}
+		if to, ok := contracts[t.To]; ok {
+			if to.DeployedCode != nil {
 				t.ToContract = true
 			}
 		}
@@ -226,6 +242,10 @@ func ListErc1155Txs(pager *types.Pager) ([]*types.Erc1155TxResp, uint64, error) 
 	if err != nil {
 		return nil, 0, err
 	}
+	contracts, err := GetAccountContracts(addresses)
+	if err != nil {
+		return nil, 0, err
+	}
 	methodNames, err := GetMethodNames(methodIDs)
 	if err != nil {
 		return nil, 0, err
@@ -234,14 +254,18 @@ func ListErc1155Txs(pager *types.Pager) ([]*types.Erc1155TxResp, uint64, error) 
 		if from, ok := accounts[t.From]; ok {
 			t.FromName = from.Name
 			t.FromSymbol = from.Symbol
-			if from.Erc20 || from.Erc721 || from.Erc1155 {
+		}
+		if from, ok := contracts[t.From]; ok {
+			if from.DeployedCode != nil {
 				t.FromContract = true
 			}
 		}
 		if to, ok := accounts[t.To]; ok {
 			t.ToName = to.Name
 			t.ToSymbol = to.Symbol
-			if to.Erc20 || to.Erc721 || to.Erc1155 {
+		}
+		if to, ok := contracts[t.To]; ok {
+			if to.DeployedCode != nil {
 				t.ToContract = true
 			}
 		}
@@ -387,6 +411,10 @@ func ListErc20Transfers(pager *types.Pager, address common.Address) ([]*types.Er
 	if err != nil {
 		return nil, 0, err
 	}
+	contracts, err := GetAccountContracts(addresses)
+	if err != nil {
+		return nil, 0, err
+	}
 	methodNames, err := GetMethodNames(methodIDs)
 	if err != nil {
 		return nil, 0, err
@@ -395,14 +423,18 @@ func ListErc20Transfers(pager *types.Pager, address common.Address) ([]*types.Er
 		if from, ok := accounts[t.From]; ok {
 			t.FromName = from.Name
 			t.FromSymbol = from.Symbol
-			if from.Erc20 || from.Erc721 || from.Erc1155 {
+		}
+		if from, ok := contracts[t.From]; ok {
+			if from.DeployedCode != nil {
 				t.FromContract = true
 			}
 		}
 		if to, ok := accounts[t.To]; ok {
 			t.ToName = to.Name
 			t.ToSymbol = to.Symbol
-			if to.Erc20 || to.Erc721 || to.Erc1155 {
+		}
+		if to, ok := contracts[t.To]; ok {
+			if to.DeployedCode != nil {
 				t.ToContract = true
 			}
 		}
@@ -466,6 +498,10 @@ func ListErc721Transfers(pager *types.Pager, address common.Address) ([]*types.E
 	if err != nil {
 		return nil, 0, err
 	}
+	contracts, err := GetAccountContracts(addresses)
+	if err != nil {
+		return nil, 0, err
+	}
 	methodNames, err := GetMethodNames(methodIDs)
 	if err != nil {
 		return nil, 0, err
@@ -474,14 +510,18 @@ func ListErc721Transfers(pager *types.Pager, address common.Address) ([]*types.E
 		if from, ok := accounts[t.From]; ok {
 			t.FromName = from.Name
 			t.FromSymbol = from.Symbol
-			if from.Erc20 || from.Erc721 || from.Erc1155 {
+		}
+		if from, ok := contracts[t.From]; ok {
+			if from.DeployedCode != nil {
 				t.FromContract = true
 			}
 		}
 		if to, ok := accounts[t.To]; ok {
 			t.ToName = to.Name
 			t.ToSymbol = to.Symbol
-			if to.Erc20 || to.Erc721 || to.Erc1155 {
+		}
+		if to, ok := contracts[t.To]; ok {
+			if to.DeployedCode != nil {
 				t.ToContract = true
 			}
 		}
@@ -547,6 +587,10 @@ func ListErc1155Transfers(pager *types.Pager, address common.Address) ([]*types.
 	if err != nil {
 		return nil, 0, err
 	}
+	contracts, err := GetAccountContracts(addresses)
+	if err != nil {
+		return nil, 0, err
+	}
 	methodNames, err := GetMethodNames(methodIDs)
 	if err != nil {
 		return nil, 0, err
@@ -555,14 +599,18 @@ func ListErc1155Transfers(pager *types.Pager, address common.Address) ([]*types.
 		if from, ok := accounts[t.From]; ok {
 			t.FromName = from.Name
 			t.FromSymbol = from.Symbol
-			if from.Erc20 || from.Erc721 || from.Erc1155 {
+		}
+		if from, ok := contracts[t.From]; ok {
+			if from.DeployedCode != nil {
 				t.FromContract = true
 			}
 		}
 		if to, ok := accounts[t.To]; ok {
 			t.ToName = to.Name
 			t.ToSymbol = to.Symbol
-			if to.Erc20 || to.Erc721 || to.Erc1155 {
+		}
+		if to, ok := contracts[t.To]; ok {
+			if to.DeployedCode != nil {
 				t.ToContract = true
 			}
 		}

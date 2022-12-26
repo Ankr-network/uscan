@@ -32,4 +32,5 @@ const (
 	APPTitle    = "app_title"    //app_title是用户自定义的浏览器标题，比如是Coq的话就显示 Coq Chain Scan
 	UnitDisplay = "unit_display" //unit_display是用户指定显示的单位，比如是Eth、Peel、Bnb
 	NodeUrl     = "node_url"     //node_url是需要和合约交互的时候使用的节点
+	Decimal     = "decimal"
 )

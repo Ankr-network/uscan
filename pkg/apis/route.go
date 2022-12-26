@@ -71,10 +71,12 @@ func getCustomParameters(c *fiber.Ctx) error {
 	appTitle := viper.GetString(share.APPTitle)
 	unitDisplay := viper.GetString(share.UnitDisplay)
 	nodeUrl := viper.GetString(share.NodeUrl)
+	decimal := viper.GetUint64(share.Decimal)
 	return c.Status(http.StatusOK).JSON(response.Ok(map[string]interface{}{
 		"appTitle":    appTitle,
 		"unitDisplay": unitDisplay,
 		"nodeUrl":     nodeUrl,
+		"decimal":     decimal,
 	}))
 }
 

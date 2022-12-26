@@ -59,6 +59,7 @@ func init() {
 	rootCmd.Flags().StringP(share.APPTitle, "", "", "app_title is a user-defined browser title, such as Coq, which displays Coq Chain Scan")
 	rootCmd.Flags().StringP(share.UnitDisplay, "", "", "unit_display indicates the unit specified by the user, for example, Eth, Peel, Bnb")
 	rootCmd.Flags().StringP(share.NodeUrl, "", "", "The node_url is the node to be used when you need to interact with the contract")
+	rootCmd.Flags().Uint64P(share.Decimal, "", 18, "decimal")
 
 	// bind viper
 	viper.BindPFlag(share.HttpAddr, rootCmd.Flags().Lookup(share.HttpAddr))
@@ -71,6 +72,7 @@ func init() {
 	viper.BindPFlag(share.APPTitle, rootCmd.Flags().Lookup(share.APPTitle))
 	viper.BindPFlag(share.UnitDisplay, rootCmd.Flags().Lookup(share.UnitDisplay))
 	viper.BindPFlag(share.NodeUrl, rootCmd.Flags().Lookup(share.NodeUrl))
+	viper.BindPFlag(share.Decimal, rootCmd.Flags().Lookup(share.Decimal))
 
 }
 

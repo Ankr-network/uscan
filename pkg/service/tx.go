@@ -202,17 +202,25 @@ func GetTx(tx string) (*types.TxResp, error) {
 	if err != nil {
 		return nil, err
 	}
+	contracts, err := GetAccountContracts(addresses)
+	if err != nil {
+		return nil, err
+	}
 	if from, ok := accounts[txData.From.Hex()]; ok {
 		resp.FromName = from.Name
 		resp.FromSymbol = from.Symbol
-		if from.Erc20 || from.Erc721 || from.Erc1155 {
+	}
+	if from, ok := contracts[txData.From.Hex()]; ok {
+		if from.DeployedCode != nil {
 			resp.FromContract = true
 		}
 	}
 	if to, ok := accounts[txData.To.Hex()]; ok {
 		resp.ToName = to.Name
 		resp.ToSymbol = to.Symbol
-		if to.Erc20 || to.Erc721 || to.Erc1155 {
+	}
+	if to, ok := contracts[txData.To.Hex()]; ok {
+		if to.DeployedCode != nil {
 			resp.ToContract = true
 		}
 	}
@@ -298,6 +306,21 @@ func GetAccounts(addresses map[string]common.Address) (map[string]*types.Account
 	accounts := make(map[string]*types.Account, 0)
 	for _, address := range addresses {
 		account, err := store.GetAccount(address)
+		if err != nil {
+			if err == kv.NotFound {
+				continue
+			}
+			return nil, err
+		}
+		accounts[account.Owner.String()] = account
+	}
+	return accounts, nil
+}
+
+func GetAccountContracts(addresses map[string]common.Address) (map[string]*types.Contract, error) {
+	accounts := make(map[string]*types.Contract, 0)
+	for _, address := range addresses {
+		account, err := store.GetContract(address)
 		if err != nil {
 			if err == kv.NotFound {
 				continue
