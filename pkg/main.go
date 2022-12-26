@@ -38,11 +38,13 @@ func MainRun(cmd *cobra.Command, args []string) {
 	os.RemoveAll(viper.GetString(share.MdbxPath) + "/fork")
 	storage := storage.NewStorage(viper.GetString(share.MdbxPath))
 	rpcMgr := rpcclient.NewRpcClient(viper.GetStringSlice(share.RpcUrls))
+
 	sync := core.NewSync(rpcMgr, contract.NewClient(rpcMgr), viper.GetInt64(share.ForkBlockNum), storage.FullDB, storage.ForkDB, viper.GetUint64(share.WorkChan))
 	go sync.Execute(context.Background())
 
 	service.NewStore(storage)
 	service.StartHandleContractVerity()
+	apis.GetChainID(rpcMgr.ChainID(context.Background()))
 	_, svc := grace.New(context.Background())
 	svc.RegisterService("web service", apis.Apis)
 	svc.Wait()

@@ -16,6 +16,8 @@ import (
 	"time"
 )
 
+var ChainID uint64
+
 func SetupRouter(g fiber.Router) {
 	g.Get("/search", search)
 	g.Get("/home", getHome)
@@ -77,7 +79,12 @@ func getCustomParameters(c *fiber.Ctx) error {
 		"unitDisplay": unitDisplay,
 		"nodeUrl":     nodeUrl,
 		"decimal":     decimal,
+		"chainID":     ChainID,
 	}))
+}
+
+func GetChainID(chainID uint64) {
+	ChainID = chainID
 }
 
 func search(c *fiber.Ctx) error {
