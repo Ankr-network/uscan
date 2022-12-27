@@ -16,12 +16,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 package log
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestInfo(t *testing.T) {
-	Info("hello info")
+	Info("hello info", "err", "errorororr")
 
 	Infof("hello %s info", "log")
+
+	Errorf("err: %v", errors.New("testtest"))
 }
 
 func TestError(t *testing.T) {

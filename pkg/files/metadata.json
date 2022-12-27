@@ -1,0 +1,441 @@
+{
+  "compilerVersions": [
+    {
+      "id": 1,
+      "name": "v0.4.11+commit.68ef5810",
+      "fileName": "solc-static-linux-v0.4.11"
+    },
+    {
+      "id": 2,
+      "name": "v0.4.15+commit.bbb8e64f",
+      "fileName": "solc-static-linux-v0.4.15"
+    },
+    {
+      "id": 3,
+      "name": "v0.4.12+commit.194ff033",
+      "fileName": "solc-static-linux-v0.4.12"
+    },
+    {
+      "id": 4,
+      "name": "v0.4.13+commit.0fb4cb1a",
+      "fileName": "solc-static-linux-v0.4.13"
+    },
+    {
+      "id": 5,
+      "name": "v0.4.14+commit.c2215d46",
+      "fileName": "solc-static-linux-v0.4.14"
+    },
+    {
+      "id": 6,
+      "name": "v0.4.15+commit.8b45bddb",
+      "fileName": "solc-static-linux-v0.4.15"
+    },
+    {
+      "id": 7,
+      "name": "v0.4.16+commit.d7661dd9",
+      "fileName": "solc-static-linux-v0.4.16"
+    },
+    {
+      "id": 8,
+      "name": "v0.4.17+commit.bdeb9e52",
+      "fileName": "solc-static-linux-v0.4.17"
+    },
+    {
+      "id": 9,
+      "name": "v0.4.18+commit.9cf6e910",
+      "fileName": "solc-static-linux-v0.4.18"
+    },
+    {
+      "id": 10,
+      "name": "v0.4.19+commit.c4cbbb05",
+      "fileName": "solc-static-linux-v0.4.19"
+    },
+    {
+      "id": 11,
+      "name": "v0.4.20+commit.3155dd80",
+      "fileName": "solc-static-linux-v0.4.20"
+    },
+    {
+      "id": 12,
+      "name": "v0.4.21+commit.dfe3193c",
+      "fileName": "solc-static-linux-v0.4.21"
+    },
+    {
+      "id": 13,
+      "name": "v0.4.22+commit.4cb486ee",
+      "fileName": "solc-static-linux-v0.4.22"
+    },
+    {
+      "id": 14,
+      "name": "v0.4.23+commit.124ca40d",
+      "fileName": "solc-static-linux-v0.4.23"
+    },
+    {
+      "id": 15,
+      "name": "v0.4.24+commit.e67f0147",
+      "fileName": "solc-static-linux-v0.4.24"
+    },
+    {
+      "id": 16,
+      "name": "v0.4.25+commit.59dbf8f1",
+      "fileName": "solc-static-linux-v0.4.25"
+    },
+    {
+      "id": 17,
+      "name": "v0.4.26+commit.4563c3fc",
+      "fileName": "solc-static-linux-v0.4.26"
+    },
+    {
+      "id": 18,
+      "name": "v0.5.0+commit.1d4f565a",
+      "fileName": "solc-static-linux-v0.5.0"
+    },
+    {
+      "id": 19,
+      "name": "v0.5.1+commit.c8a2cb62",
+      "fileName": "solc-static-linux-v0.5.1"
+    },
+    {
+      "id": 20,
+      "name": "v0.5.2+commit.1df8f40c",
+      "fileName": "solc-static-linux-v0.5.2"
+    },
+    {
+      "id": 21,
+      "name": "v0.5.3+commit.10d17f24",
+      "fileName": "solc-static-linux-v0.5.3"
+    },
+    {
+      "id": 22,
+      "name": "v0.5.4+commit.9549d8ff",
+      "fileName": "solc-static-linux-v0.5.4"
+    },
+    {
+      "id": 23,
+      "name": "v0.5.5+commit.47a71e8f",
+      "fileName": "solc-static-linux-v0.5.5"
+    },
+    {
+      "id": 24,
+      "name": "v0.5.6+commit.b259423e",
+      "fileName": "solc-static-linux-v0.5.6"
+    },
+    {
+      "id": 25,
+      "name": "v0.5.7+commit.6da8b019",
+      "fileName": "solc-static-linux-v0.5.7"
+    },
+    {
+      "id": 26,
+      "name": "v0.5.8+commit.23d335f2",
+      "fileName": "solc-static-linux-v0.5.8"
+    },
+    {
+      "id": 27,
+      "name": "v0.5.9+commit.e560f70d",
+      "fileName": "solc-static-linux-v0.5.9"
+    },
+    {
+      "id": 28,
+      "name": "v0.5.9+commit.c68bc34e",
+      "fileName": "solc-static-linux-v0.5.9"
+    },
+    {
+      "id": 29,
+      "name": "v0.5.10+commit.5a6ea5b1",
+      "fileName": "solc-static-linux-v0.5.10"
+    },
+    {
+      "id": 30,
+      "name": "v0.5.11+commit.c082d0b4",
+      "fileName": "solc-static-linux-v0.5.11"
+    },
+    {
+      "id": 31,
+      "name": "v0.5.11+commit.22be8592",
+      "fileName": "solc-static-linux-v0.5.11"
+    },
+    {
+      "id": 32,
+      "name": "v0.5.12+commit.7709ece9",
+      "fileName": "solc-static-linux-v0.5.12"
+    },
+    {
+      "id": 33,
+      "name": "v0.5.13+commit.5b0b510c",
+      "fileName": "solc-static-linux-v0.5.13"
+    },
+    {
+      "id": 34,
+      "name": "v0.5.14+commit.01f1aaa4",
+      "fileName": "solc-static-linux-v0.5.14"
+    },
+    {
+      "id": 35,
+      "name": "v0.5.15+commit.6a57276f",
+      "fileName": "solc-static-linux-v0.5.15"
+    },
+    {
+      "id": 36,
+      "name": "v0.5.16+commit.9c3226ce",
+      "fileName": "solc-static-linux-v0.5.16"
+    },
+    {
+      "id": 37,
+      "name": "v0.5.17+commit.d19bba13",
+      "fileName": "solc-static-linux-v0.5.17"
+    },
+    {
+      "id": 38,
+      "name": "v0.6.0+commit.26b70077",
+      "fileName": "solc-static-linux-v0.6.0"
+    },
+    {
+      "id": 39,
+      "name": "v0.6.1+commit.e6f7d5a4",
+      "fileName": "solc-static-linux-v0.6.1"
+    },
+    {
+      "id": 40,
+      "name": "v0.6.2+commit.bacdbe57",
+      "fileName": "solc-static-linux-v0.6.2"
+    },
+    {
+      "id": 41,
+      "name": "v0.6.3+commit.8dda9521",
+      "fileName": "solc-static-linux-v0.6.3"
+    },
+    {
+      "id": 42,
+      "name": "v0.6.4+commit.1dca32f3",
+      "fileName": "solc-static-linux-v0.6.4"
+    },
+    {
+      "id": 43,
+      "name": "v0.6.5+commit.f956cc89",
+      "fileName": "solc-static-linux-v0.6.5"
+    },
+    {
+      "id": 44,
+      "name": "v0.6.6+commit.6c089d02",
+      "fileName": "solc-static-linux-v0.6.6"
+    },
+    {
+      "id": 45,
+      "name": "v0.6.7+commit.b8d736ae",
+      "fileName": "solc-static-linux-v0.6.7"
+    },
+    {
+      "id": 46,
+      "name": "v0.6.8+commit.0bbfe453",
+      "fileName": "solc-static-linux-v0.6.8"
+    },
+    {
+      "id": 47,
+      "name": "v0.6.9+commit.3e3065ac",
+      "fileName": "solc-static-linux-v0.6.9"
+    },
+    {
+      "id": 48,
+      "name": "v0.6.10+commit.00c0fcaf",
+      "fileName": "solc-static-linux-v0.6.10"
+    },
+    {
+      "id": 49,
+      "name": "v0.6.11+commit.5ef660b1",
+      "fileName": "solc-static-linux-v0.6.11"
+    },
+    {
+      "id": 50,
+      "name": "v0.6.12+commit.27d51765",
+      "fileName": "solc-static-linux-v0.6.12"
+    },
+    {
+      "id": 51,
+      "name": "v0.7.0+commit.9e61f92b",
+      "fileName": "solc-static-linux-v0.7.0"
+    },
+    {
+      "id": 52,
+      "name": "v0.7.1+commit.f4a555be",
+      "fileName": "solc-static-linux-v0.7.1"
+    },
+    {
+      "id": 53,
+      "name": "v0.7.2+commit.51b20bc0",
+      "fileName": "solc-static-linux-v0.7.2"
+    },
+    {
+      "id": 54,
+      "name": "v0.7.3+commit.9bfce1f6",
+      "fileName": "solc-static-linux-v0.7.3"
+    },
+    {
+      "id": 55,
+      "name": "v0.7.4+commit.3f05b770",
+      "fileName": "solc-static-linux-v0.7.4"
+    },
+    {
+      "id": 56,
+      "name": "v0.7.5+commit.eb77ed08",
+      "fileName": "solc-static-linux-v0.7.5"
+    },
+    {
+      "id": 57,
+      "name": "v0.7.6+commit.7338295f",
+      "fileName": "solc-static-linux-v0.7.6"
+    },
+    {
+      "id": 58,
+      "name": "v0.8.0+commit.c7dfd78e",
+      "fileName": "solc-static-linux-v0.8.0"
+    },
+    {
+      "id": 59,
+      "name": "v0.8.1+commit.df193b15",
+      "fileName": "solc-static-linux-v0.8.1"
+    },
+    {
+      "id": 60,
+      "name": "v0.8.2+commit.661d1103",
+      "fileName": "solc-static-linux-v0.8.2"
+    },
+    {
+      "id": 61,
+      "name": "v0.8.3+commit.8d00100c",
+      "fileName": "solc-static-linux-v0.8.3"
+    },
+    {
+      "id": 62,
+      "name": "v0.8.4+commit.c7e474f2",
+      "fileName": "solc-static-linux-v0.8.4"
+    },
+    {
+      "id": 63,
+      "name": "v0.8.5+commit.a4f2e591",
+      "fileName": "solc-static-linux-v0.8.5"
+    },
+    {
+      "id": 64,
+      "name": "v0.8.6+commit.11564f7e",
+      "fileName": "solc-static-linux-v0.8.6"
+    },
+    {
+      "id": 65,
+      "name": "v0.8.7+commit.e28d00a7",
+      "fileName": "solc-static-linux-v0.8.7"
+    },
+    {
+      "id": 66,
+      "name": "v0.8.8+commit.dddeac2f",
+      "fileName": "solc-static-linux-v0.8.8"
+    },
+    {
+      "id": 67,
+      "name": "v0.8.9+commit.e5eed63a",
+      "fileName": "solc-static-linux-v0.8.9"
+    },
+    {
+      "id": 68,
+      "name": "v0.8.10+commit.fc410830",
+      "fileName": "solc-static-linux-v0.8.10"
+    },
+    {
+      "id": 69,
+      "name": "v0.8.11+commit.d7f03943",
+      "fileName": "solc-static-linux-v0.8.11"
+    },
+    {
+      "id": 70,
+      "name": "v0.8.12+commit.f00d7308",
+      "fileName": "solc-static-linux-v0.8.12"
+    },
+    {
+      "id": 71,
+      "name": "v0.8.13+commit.abaa5c0e",
+      "fileName": "solc-static-linux-v0.8.13"
+    },
+    {
+      "id": 72,
+      "name": "v0.8.14+commit.80d49f37",
+      "fileName": "solc-static-linux-v0.8.14"
+    },
+    {
+      "id": 73,
+      "name": "v0.8.15+commit.e14f2714",
+      "fileName": "solc-static-linux-v0.8.15"
+    },
+    {
+      "id": 74,
+      "name": "v0.8.16+commit.07a7930e",
+      "fileName": "solc-static-linux-v0.8.16"
+    },
+    {
+      "id": 75,
+      "name": "v0.8.17+commit.8df45f5f",
+      "fileName": "solc-static-linux-v0.8.17"
+    }
+  ],
+  "licenseTypes": [
+    {
+      "id": 1,
+      "name": "No License (None)"
+    },
+    {
+      "id": 2,
+      "name": "The Unlicense (Unlicense)"
+    },
+    {
+      "id": 3,
+      "name": "MIT License"
+    },
+    {
+      "id": 4,
+      "name": "GNU General Public License v2.0 (GNU GPLv2)"
+    },
+    {
+      "id": 5,
+      "name": "GNU General Public License v3.0 (GNU GPLv3)"
+    },
+    {
+      "id": 6,
+      "name": "GNU Lesser General Public License v2.1 (GNU LGPLv2.1)"
+    },
+    {
+      "id": 7,
+      "name": "GNU Lesser General Public License v3.0 (GNU LGPLv3)"
+    },
+    {
+      "id": 8,
+      "name": "BSD 2-clause \"Simplified\" license (BSD-2-Clause)"
+    },
+    {
+      "id": 9,
+      "name": "BSD 3-clause \"New\" Or \"Revised\" license (BSD-3-Clause)"
+    },
+    {
+      "id": 10,
+      "name": "Mozilla Public License 2.0 (MPL-2.0)"
+    },
+    {
+      "id": 11,
+      "name": "Open Software License 3.0 (OSL-3.0)"
+    },
+    {
+      "id": 12,
+      "name": "Apache 2.0 (Apache-2.0)"
+    },
+    {
+      "id": 13,
+      "name": "GNU Affero General Public License (GNU AGPLv3)"
+    },
+    {
+      "id": 14,
+      "name": "Business Source License (BSL 1.1)"
+    }
+  ],
+  "compilerTypes": [
+    "solidity-single-file",
+    "solidity-standard-json-input"
+  ]
+}
