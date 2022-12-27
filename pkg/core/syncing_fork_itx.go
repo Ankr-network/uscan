@@ -20,7 +20,6 @@ var (
 
 func (n *blockHandle) writeForkITx(ctx context.Context, itxmap map[common.Hash][]*types.InternalTx, deleteMap map[string][][]byte, indexMap, totalMap, iTxTotalMap map[string]*field.BigInt) (err error) {
 	var itxTotal *field.BigInt
-	var i *field.BigInt
 
 	for k, itxs := range itxmap {
 		itxTotal, err = forkdb.ReadITxTotal(ctx, n.db, k)
@@ -37,7 +36,6 @@ func (n *blockHandle) writeForkITx(ctx context.Context, itxmap map[common.Hash][
 				log.Errorf("write fork itx(%s): %v", k.Hex(), err)
 				return err
 			}
-			i.Add(field.NewInt(1))
 			deleteMap[share.ForkTxTbl] = append(deleteMap[share.ForkTxTbl], append(append([]byte("/fork/iTx/"), k.Bytes()...), append([]byte("/"), itxTotal.Bytes()...)...))
 			key2 := append(append([]byte("/fork/iTx/"), k.Bytes()...), []byte("/index")...)
 			if indexMap[string(key2)] == nil {
