@@ -7,8 +7,8 @@ import (
 	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/log"
-	"github.com/Ankr-network/uscan/pkg/rawdb"
 	"github.com/Ankr-network/uscan/pkg/rpcclient"
+	"github.com/Ankr-network/uscan/pkg/storage/fulldb"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/Ankr-network/uscan/share"
 	"github.com/ethereum/go-ethereum/common"
@@ -62,7 +62,7 @@ func (e *SyncDebugJob) Execute() {
 		res.StructLogs = res.StructLogs[:1000]
 	}
 
-	err = rawdb.WriteTraceTx(context.Background(), e.db, e.txhash, &types.TraceTx{
+	err = fulldb.WriteTraceTx(context.Background(), e.db, e.txhash, &types.TraceTx{
 		Res:    res.JsonToString(),
 		LogNum: *field.NewInt(int64(logNum)),
 	})

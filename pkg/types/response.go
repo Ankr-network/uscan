@@ -20,7 +20,7 @@ type HomeTx struct {
 type BlockResp struct {
 	BaseFeePerGas     *string  `json:"baseFeePerGas"`
 	Difficulty        string   `json:"difficulty"`
-	ExtraData         string   `json:"extraData"`
+	ExtraData         []byte   `json:"extraData"`
 	GasLimit          string   `json:"gasLimit"` // int64 改成string
 	GasUsed           string   `json:"gasUsed"`  // int64 改成string
 	Hash              string   `json:"hash"`
@@ -77,7 +77,7 @@ type TxResp struct {
 	R                    string               `json:"r"`
 	S                    string               `json:"s"`
 	TotalLogs            int                  `json:"totalLogs"`
-	TokensTransferred    []*TokensTransferred `json:"tokensTransferred"`
+	TokensTransferred    []*EventTransferData `json:"tokensTransferred"`
 	BaseFeePerGas        *string              `json:"baseFeePerGas"`
 	GasLimit             string               `json:"gasLimit"` // change string
 	MethodName           string               `json:"methodName"`
@@ -86,9 +86,10 @@ type TxResp struct {
 }
 
 type RtLogResp struct {
-	Address string   `json:"address"`
-	Topics  []string `json:"topics"`
-	Data    string   `json:"data"`
+	Address  string   `json:"address"`
+	Topics   []string `json:"topics"`
+	Data     string   `json:"data"`
+	LogIndex uint64   `json:"logIndex"`
 }
 
 type RtResp struct {
@@ -105,40 +106,42 @@ type RtResp struct {
 }
 
 type TokensTransferred struct {
-	From          string `json:"from"`
-	FromHex       string `json:"fromHex"`
-	To            string `json:"to"`
-	ToHex         string `json:"toHex"`
-	Address       string `json:"address"`
-	AddressName   string `json:"addressName"`
-	AddressSymbol string `json:"addressSymbol"`
+	From            string `json:"from"`
+	FromHex         string `json:"fromHex"`
+	To              string `json:"to"`
+	ToHex           string `json:"toHex"`
+	Address         string `json:"address"`
+	AddressName     string `json:"addressName"`
+	AddressSymbol   string `json:"addressSymbol"`
+	AddressDecimals uint64 `json:"addressDecimals"`
+	AddressType     string `json:"addressType"`
+	AddressValue    string `json:"addressValue"`
+	TokenID         string `json:"tokenID"`
 }
 
 type ListTransactionResp struct {
-	Hash         string  `json:"hash"` // transaction Hash
-	Method       string  `json:"method"`
-	BlockHash    string  `json:"blockHash"`
-	BlockNumber  string  `json:"blockNumber"`
-	From         string  `json:"from"`
-	FromName     string  `json:"fromName"`
-	FromSymbol   string  `json:"fromSymbol"`
-	FromContract bool    `json:"fromContract"`
-	To           string  `json:"to"`
-	ToName       string  `json:"toName"`
-	ToSymbol     string  `json:"toSymbol"`
-	ToContract   bool    `json:"toContract"`
-	Gas          *string `json:"gas"`
-	GasPrice     *string `json:"gasPrice"`
-	Value        *string `json:"value"`
-	CreatedTime  uint64  `json:"createTime"`
+	Hash        string  `json:"hash"` // transaction Hash
+	Method      string  `json:"method"`
+	BlockHash   string  `json:"blockHash"`
+	BlockNumber string  `json:"blockNumber"`
+	From        string  `json:"from"`
+	To          string  `json:"to"`
+	ToName      string  `json:"toName"`
+	ToSymbol    string  `json:"toSymbol"`
+	ToContract  bool    `json:"toContract"`
+	Gas         *string `json:"gas"`
+	GasPrice    *string `json:"gasPrice"`
+	Value       *string `json:"value"`
+	CreatedTime uint64  `json:"createTime"`
 }
 
 type TransactionBaseResp struct {
-	Hash     string `json:"hash"` // transaction Hash
-	Nonce    string `json:"nonce"`
-	GasUsed  string `json:"gasUsed"`
-	GasLimit string `json:"gasLimit"`
-	Status   uint64 `json:"status"`
+	Hash     string  `json:"hash"` // transaction Hash
+	Nonce    string  `json:"nonce"`
+	GasUsed  string  `json:"gasUsed"`
+	GasLimit string  `json:"gasLimit"`
+	Status   uint64  `json:"status"`
+	GasPrice *string `json:"gasPrice"`
 }
 
 type AccountResp struct {
@@ -154,6 +157,9 @@ type AccountResp struct {
 	NftTotalSupply   *string `json:"nftTotalSupply"`
 	Decimals         uint64  `json:"decimals"`
 	//CreatedTime      uint64  `json:"createdTime"`
+	Erc20   bool `json:"erc20"`
+	Erc721  bool `json:"erc721"`
+	Erc1155 bool `json:"erc1155"`
 }
 
 type InternalTxResp struct {
@@ -170,64 +176,67 @@ type InternalTxResp struct {
 }
 
 type Erc20TxResp struct {
-	TransactionHash string `json:"transactionHash"`
-	BlockHash       string `json:"blockHash"`
-	BlockNumber     string `json:"blockNumber"`
-	Contract        string `json:"contract"`
-	ContractName    string `json:"contractName"`
-	ContractSymbol  string `json:"contractSymbol"`
-	Method          string `json:"method"`
-	From            string `json:"from"`
-	FromName        string `json:"fromName"`
-	FromSymbol      string `json:"fromSymbol"`
-	FromContract    bool   `json:"fromContract"`
-	To              string `json:"to"`
-	ToName          string `json:"toName"`
-	ToSymbol        string `json:"toSymbol"`
-	ToContract      bool   `json:"toContract"`
-	Value           string `json:"value"`
-	CreatedTime     uint64 `json:"createdTime"`
+	TransactionHash  string `json:"transactionHash"`
+	BlockHash        string `json:"blockHash"`
+	BlockNumber      string `json:"blockNumber"`
+	Contract         string `json:"contract"`
+	ContractName     string `json:"contractName"`
+	ContractSymbol   string `json:"contractSymbol"`
+	ContractDecimals uint64 `json:"contractDecimals"`
+	Method           string `json:"method"`
+	From             string `json:"from"`
+	FromName         string `json:"fromName"`
+	FromSymbol       string `json:"fromSymbol"`
+	FromContract     bool   `json:"fromContract"`
+	To               string `json:"to"`
+	ToName           string `json:"toName"`
+	ToSymbol         string `json:"toSymbol"`
+	ToContract       bool   `json:"toContract"`
+	Value            string `json:"value"`
+	CreatedTime      uint64 `json:"createdTime"`
 }
 
 type Erc721TxResp struct {
-	TransactionHash string `json:"transactionHash"`
-	BlockHash       string `json:"blockHash"`
-	BlockNumber     string `json:"blockNumber"`
-	Contract        string `json:"contract"`
-	ContractName    string `json:"contractName"`
-	ContractSymbol  string `json:"contractSymbol"`
-	Method          string `json:"method"`
-	From            string `json:"from"`
-	FromName        string `json:"fromName"`
-	FromSymbol      string `json:"fromSymbol"`
-	FromContract    bool   `json:"fromContract"`
-	To              string `json:"to"`
-	ToName          string `json:"toName"`
-	ToSymbol        string `json:"toSymbol"`
-	ToContract      bool   `json:"toContract"`
-	TokenID         uint64 `json:"tokenID"`
-	CreatedTime     uint64 `json:"createdTime"`
+	TransactionHash  string `json:"transactionHash"`
+	BlockHash        string `json:"blockHash"`
+	BlockNumber      string `json:"blockNumber"`
+	Contract         string `json:"contract"`
+	ContractName     string `json:"contractName"`
+	ContractSymbol   string `json:"contractSymbol"`
+	ContractDecimals uint64 `json:"contractDecimals"`
+	Method           string `json:"method"`
+	From             string `json:"from"`
+	FromName         string `json:"fromName"`
+	FromSymbol       string `json:"fromSymbol"`
+	FromContract     bool   `json:"fromContract"`
+	To               string `json:"to"`
+	ToName           string `json:"toName"`
+	ToSymbol         string `json:"toSymbol"`
+	ToContract       bool   `json:"toContract"`
+	TokenID          string `json:"tokenID"`
+	CreatedTime      uint64 `json:"createdTime"`
 }
 
 type Erc1155TxResp struct {
-	TransactionHash string `json:"transactionHash"`
-	BlockHash       string `json:"blockHash"`
-	BlockNumber     string `json:"blockNumber"`
-	Contract        string `json:"contract"`
-	ContractName    string `json:"contractName"`
-	ContractSymbol  string `json:"contractSymbol"`
-	Method          string `json:"method"`
-	From            string `json:"from"`
-	FromName        string `json:"fromName"`
-	FromSymbol      string `json:"fromSymbol"`
-	FromContract    bool   `json:"fromContract"`
-	To              string `json:"to"`
-	ToName          string `json:"toName"`
-	ToSymbol        string `json:"toSymbol"`
-	ToContract      bool   `json:"toContract"`
-	TokenID         uint64 `json:"tokenID"`
-	Value           string `json:"value"`
-	CreatedTime     uint64 `json:"createdTime"`
+	TransactionHash  string `json:"transactionHash"`
+	BlockHash        string `json:"blockHash"`
+	BlockNumber      string `json:"blockNumber"`
+	Contract         string `json:"contract"`
+	ContractName     string `json:"contractName"`
+	ContractSymbol   string `json:"contractSymbol"`
+	ContractDecimals uint64 `json:"contractDecimals"`
+	Method           string `json:"method"`
+	From             string `json:"from"`
+	FromName         string `json:"fromName"`
+	FromSymbol       string `json:"fromSymbol"`
+	FromContract     bool   `json:"fromContract"`
+	To               string `json:"to"`
+	ToName           string `json:"toName"`
+	ToSymbol         string `json:"toSymbol"`
+	ToContract       bool   `json:"toContract"`
+	TokenID          string `json:"tokenID"`
+	Value            string `json:"value"`
+	CreatedTime      uint64 `json:"createdTime"`
 }
 
 type TraceTxResp struct {
@@ -245,7 +254,7 @@ type HolderResp struct {
 
 type InventoryResp struct {
 	Address string
-	TokenID uint64
+	TokenID string
 }
 
 type ContractVerityInfo struct {
@@ -264,4 +273,30 @@ type ContractVerityInfoResp struct {
 	Contract             *ContractVerityInfo `json:"contract"`
 	ProxyContractAddress string              `json:"proxyContractAddress"`
 	ProxyContract        *ContractVerityInfo `json:"proxyContract"`
+}
+
+type ContractType uint8
+
+const (
+	UnKnow ContractType = iota
+	EIP20
+	EIP721
+	EIP1155
+)
+
+type TokenNum struct {
+	TokenId *string `json:"tokenID"`
+	Num     *string `json:"num"`
+}
+
+type EventTransferData struct {
+	ContractType     ContractType `json:"contractType"`
+	From             string       `json:"from"`
+	To               string       `json:"to"`
+	Contract         string       `json:"contract"`
+	ContractName     string       `json:"contractName"`
+	ContractSymbol   string       `json:"contractSymbol"`
+	ContractDecimals uint64       `json:"contractDecimals"`
+	TokenIDToNums    []*TokenNum  `json:"tokenIDToNums"`
+	Value            string       `json:"value"`
 }

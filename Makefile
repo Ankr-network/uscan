@@ -1,6 +1,6 @@
 Branch=$(shell git symbolic-ref --short -q HEAD)
 Commit=$(shell git rev-parse --short HEAD)
-Date=$(shell git log --pretty=format:%cd $(Commit) -1) 
+Date=$(shell git log --pretty=format:%cd $(Commit) -1)
 Author=$(shell git log --pretty=format:%an $(Commit) -1)
 shortDate=$(shell git log -1 --format="%at" | xargs -I{} date -d @{} +%Y%m%d)
 Email=$(shell git log --pretty=format:%ae $(Commit) -1)
@@ -24,28 +24,19 @@ compile: statik
 
 .PHONY: perf
 perf: compile
-	bin/uscan --config .uscan.yaml 
+	bin/uscan --config .uscan.yaml
 
 .PHONY: race
 race:
-	go run -race main.go --config .uscan.yaml 
+	go run -race main.go --config .uscan.yaml
 
-.PHONY: start 
+.PHONY: start
 start: compile
-	bin/uscan --config .uscan.yaml 
-
-.PHONY: init
-init:
-	@echo "Init data dir...."
-	mkdir $(HOME)/uscan-deploy  &&  cp docker-compose.yaml $(HOME)/uscan-deploy/
-	@echo "build docker image..."
-	docker build -t uscan:latest .
-	docker image prune -f --filter label=stage=uscan-builder
-	@echo "init finish! Please go to $(HOME)/uscan-deploy"
+	bin/uscan --config .uscan.yaml
 
 
 .PHONY: build
-build: 
+build:
 	docker build \
 	--build-arg GoVersion='$(GoVersion)' \
 	--build-arg Branch='$(Branch)' \
@@ -61,6 +52,4 @@ release: build
 	docker push ankrnetwork/uscan:$(Ver)
 	docker tag ankrnetwork/uscan:$(Ver) ankrnetwork/uscan:latest
 	docker push ankrnetwork/uscan:latest
-
-
 

@@ -18,11 +18,11 @@ package mdbx
 
 import (
 	"context"
+	"os"
 	"runtime"
 
 	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/log"
-	"github.com/Ankr-network/uscan/share"
 	"github.com/torquem-ch/mdbx-go/mdbx"
 )
 
@@ -36,23 +36,11 @@ type MdbxDB struct {
 	tables map[string]mdbx.DBI
 }
 
-var schemas = []string{
-	share.AccountsTbl,
-	share.HomeTbl,
-	share.TxTbl,
-	share.BlockTbl,
-	share.TraceLogTbl,
-	share.TransferTbl,
-	share.HolderTbl,
-	share.ValidateContractTbl,
-}
-
-var schemasSort = []string{
-	share.HolderSortTabl,
-	share.InventorySortTabl,
-}
-
-func NewMdbx(path string) *MdbxDB {
+func NewMdbx(path string, schemas []string, schemasSort []string) *MdbxDB {
+	_, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		os.MkdirAll(path, os.ModePerm)
+	}
 	env, err := mdbx.NewEnv()
 	if err != nil {
 		log.Fatal(err)

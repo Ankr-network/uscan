@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/Ankr-network/uscan/pkg/kv/memorydb"
-	"github.com/Ankr-network/uscan/pkg/rawdb"
+	"github.com/Ankr-network/uscan/pkg/storage/fulldb"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 )
@@ -18,7 +18,7 @@ func TestDebugJob(t *testing.T) {
 	job := NewSyncDebugJob(txhash, testRpc, cache)
 	job.Execute()
 
-	res, err := rawdb.ReadTraceTx(context.Background(), cache, txhash)
+	res, err := fulldb.ReadTraceTx(context.Background(), cache, txhash)
 	assert.NoError(t, err)
 
 	t.Log(res)

@@ -88,3 +88,16 @@ func (b *ContractVerity) Marshal() ([]byte, error) {
 func (b *ContractVerity) Unmarshal(bin []byte) (err error) {
 	return rlp.DecodeBytes(bin, &b)
 }
+
+type ContractStatus struct {
+	Status    uint64 `json:"status"`
+	ErrReason string `json:"errReason"`
+}
+
+func (b *ContractStatus) Marshal() ([]byte, error) {
+	return rlp.EncodeToBytes(b)
+}
+
+func (b *ContractStatus) Unmarshal(bin []byte) error {
+	return rlp.DecodeBytes(bin, &b)
+}

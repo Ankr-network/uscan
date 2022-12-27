@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Ankr-network/uscan/pkg/kv"
+	"github.com/Ankr-network/uscan/pkg/log"
 	"github.com/Ankr-network/uscan/pkg/response"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -14,9 +15,11 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/xiaobaiskill/solc-go"
 	"io/ioutil"
-	"math/big"
 	"os"
-	"strings"
+)
+
+const (
+	filePath = "/go/src/app/pkg/files/"
 )
 
 func WriteValidateContractMetadata(metadata *types.ValidateContractMetadata) error {
@@ -60,12 +63,12 @@ func ValidateContract(req *types.ValidateContractReq) (map[string]string, error)
 	}
 
 	if req.LicenseType == 0 {
-		response.ErrVerityContract.Msg = "license type cannot be empty"
+		response.ErrVerityContract.Msg = "license type cannot be empty."
 		return nil, response.ErrVerityContract
 	}
 
 	if req.SourceCode == "" {
-		response.ErrVerityContract.Msg = "contract source code cannot be empty"
+		response.ErrVerityContract.Msg = "contract source code cannot be empty."
 		return nil, response.ErrVerityContract
 	}
 
@@ -82,24 +85,15 @@ func ValidateContract(req *types.ValidateContractReq) (map[string]string, error)
 		EVMVersion:       req.EVMVersion,
 	}
 
-	switch req.CompilerType {
-	case types.SolidityStandardJsonInput:
-		contractFileName := strings.Split(req.ContractName, ":")
-		if len(contractFileName) != 2 || req.ContractName == "" {
-			response.ErrVerityContract.Msg = "when license type is solidity-standard-json-input, contractName example: contracts/BlindBox.sol:BlindBox"
-			return nil, response.ErrVerityContract
-		}
-	case types.SoliditySingleFile:
-		if req.ContractName == "" {
-			response.ErrVerityContract.Msg = "when license type is solidity-single-file, contractName example: BlindBox"
-			return nil, response.ErrVerityContract
-		}
-	default:
-		response.ErrVerityContract.Msg = "contractName error"
+	if req.ContractName == "" {
+		response.ErrVerityContract.Msg = "contract name cannot be empty."
 		return nil, response.ErrVerityContract
 	}
 
-	if err := store.WriteValidateContractStatus(common.HexToAddress(req.ContractAddress), big.NewInt(0)); err != nil {
+	if err := store.WriteValidateContractStatus(common.HexToAddress(req.ContractAddress), &types.ContractStatus{
+		Status:    0,
+		ErrReason: "",
+	}); err != nil {
 		return nil, err
 	}
 
@@ -127,6 +121,7 @@ func validateContract(param *types.ContractVerityTmp) error {
 					"*": []string{
 						"abi",
 						"evm.deployedBytecode",
+						"evm.bytecode",
 						"evm.methodIdentifiers",
 						"metadata",
 					},
@@ -142,7 +137,6 @@ func validateContract(param *types.ContractVerityTmp) error {
 			},
 			Settings: settings,
 		}
-		param.ContractName = "contract.sol:" + param.ContractName
 	case types.SolidityStandardJsonInput:
 		if err := json.Unmarshal([]byte(param.SourceCode), &input); err != nil {
 			return err
@@ -150,54 +144,65 @@ func validateContract(param *types.ContractVerityTmp) error {
 	}
 
 	filePath := getSolcFile(param.CompilerFileName)
-	logrus.Infof("getSolcFile:%s", filePath)
+	log.Infof("getSolcFilePath:%s\n", filePath)
 	newSolc := solc.NewSolc(filePath)
 	out, err := newSolc.Compile(input)
 	if err != nil {
-		return errors.New(fmt.Sprintf("validateContract err: %+v, filePath: %+v", err, filePath))
+		return errors.New(fmt.Sprintf("contract verification failure. error: %s", err))
 	}
 	if out != nil && out.Errors != nil {
-		return errors.New(fmt.Sprintf("validateContract out.Errors: %+v, filePath: %+v", out.Errors, filePath))
+		return errors.New(fmt.Sprintf("contract verification failure. error: %+v", out.Errors))
 	}
 	abi := make([]json.RawMessage, 0)
 	object := ""
-
+	log.Infof("contract content: 【%+v】\n", out.Contracts)
 	metadata := make(map[string]string)
-	contractFileName := strings.Split(param.ContractName, ":")
-	if len(contractFileName) != 2 {
-		return fmt.Errorf("validateContract strings.Split contractName error. contractName: %s", param.ContractName)
+	// 通过合约名查找合约
+	v := solc.Contract{}
+	key := ""
+	for k, contract := range out.Contracts {
+		cc, ok := contract[param.ContractName]
+		if !ok {
+			continue
+		}
+		v = cc
+		key = k
 	}
-	contract, ok := out.Contracts[contractFileName[0]]
-	if !ok {
-		return fmt.Errorf("out.Contracts get %+v  error.", contractFileName[0])
-	}
-	v, ok := contract[contractFileName[1]]
-	if !ok {
-		return fmt.Errorf("contract get %+v  error.", contractFileName[1])
+	if key == "" {
+		return fmt.Errorf("contract name error. contract name:【%s】", param.ContractName)
 	}
 
 	abi = v.ABI
 	object = v.EVM.Bytecode.Object
 
-	bytecodeObject, err := hexutil.Decode("0x" + v.EVM.Bytecode.Object)
-	if err != nil {
-		return err
-	}
-	deployedBytecodeObject, err := hexutil.Decode("0x" + v.EVM.DeployedBytecode.Object)
+	account, err := store.GetContract(common.HexToAddress(param.Address))
 	if err != nil {
 		return err
 	}
 
-	splitOp := deployedBytecodeObject[len(deployedBytecodeObject)-32:]
-	var objectByte []byte
-	res := bytes.Split(bytecodeObject, splitOp)
-	if len(res) == 2 {
-		objectByte = append(res[0], splitOp...)
-	}
+	codeHash := ""
 
 	switch param.CompilerType {
 	case types.SoliditySingleFile:
-		metadata[contractFileName[0]] = param.SourceCode
+		metadata[key] = param.SourceCode
+		accountBC := hexutil.Encode(account.ByteCode)
+		log.Infof("solidity-single-file, hexutil.Encode(account.ByteCode): %+v\n", accountBC)
+		decodeObject, err := hexutil.Decode(accountBC[:len(accountBC)-86])
+		if err != nil {
+			return err
+		}
+
+		objectHash := "0x" + object
+		log.Infof("solidity-single-file, objectHash: %+v\n", objectHash)
+		decodeObject2, err := hexutil.Decode(objectHash[:len(objectHash)-86])
+		if err != nil {
+			return err
+		}
+		hashCode := crypto.Keccak256Hash(decodeObject)
+		hashCode2 := crypto.Keccak256Hash(decodeObject2)
+		if hashCode.Hex() == hashCode2.Hex() {
+			codeHash = account.ByteCodeHash.Hex()
+		}
 	case types.SolidityStandardJsonInput:
 		inputTmp := &solc.Input{}
 		if err := json.Unmarshal([]byte(param.SourceCode), &inputTmp); err != nil {
@@ -211,6 +216,31 @@ func validateContract(param *types.ContractVerityTmp) error {
 		for k, _ := range inputMetadata.Sources {
 			metadata[k] = inputTmp.Sources[k].Content
 		}
+
+		bytecodeObject, err := hexutil.Decode("0x" + v.EVM.Bytecode.Object)
+		if err != nil {
+			return err
+		}
+
+		deployedBytecodeObject, err := hexutil.Decode("0x" + v.EVM.DeployedBytecode.Object)
+		if err != nil {
+			return err
+		}
+
+		splitOp := deployedBytecodeObject[len(deployedBytecodeObject)-32:]
+		var objectByte []byte
+		res := bytes.Split(bytecodeObject, splitOp)
+		if len(res) == 2 {
+			objectByte = append(res[0], splitOp...)
+		}
+		if crypto.Keccak256Hash(objectByte).Hex() == account.ByteCodeHash.Hex() {
+			codeHash = hexutil.Encode(account.ByteCode)
+		}
+		param.Optimization = 0
+		if inputTmp.Settings.Optimizer.Enabled {
+			param.Optimization = 1
+		}
+		param.Runs = uint64(input.Settings.Optimizer.Runs)
 	}
 	metadataMarshal, err := json.Marshal(metadata)
 	if err != nil {
@@ -220,16 +250,6 @@ func validateContract(param *types.ContractVerityTmp) error {
 	abiStr, err := json.Marshal(abi)
 	if err != nil {
 		return err
-	}
-
-	account, err := store.GetContract(common.HexToAddress(param.Address))
-	if err != nil {
-		return err
-	}
-
-	codeHash := ""
-	if crypto.Keccak256Hash(objectByte).Hex() == account.ByteCodeHash.Hex() {
-		codeHash = hexutil.Encode(account.ByteCode)
 	}
 
 	if codeHash != "" {
@@ -256,11 +276,11 @@ func validateContract(param *types.ContractVerityTmp) error {
 		return nil
 	}
 
-	return fmt.Errorf("varity contract failed")
+	return fmt.Errorf("varity contract failed, Bytecode is :%s", "0x"+object)
 }
 
 func getSolcFile(compilerFileName string) string {
-	return fmt.Sprintf("%s%s", "/go/src/app/pkg/files/", compilerFileName)
+	return fmt.Sprintf("%s%s", filePath, compilerFileName)
 }
 
 var ContractVerityChain = make(chan *types.ContractVerityTmp, 100)
@@ -277,12 +297,18 @@ func StartHandleContractVerity() {
 				err := validateContract(contractVerityTmp)
 				if err != nil {
 					logrus.Errorf("StartHandleContractVerity validateContract error. err: %+v, contract verity id:%s", err, contractVerityTmp.Address)
-					if err := store.WriteValidateContractStatus(common.HexToAddress(contractVerityTmp.Address), big.NewInt(2)); err != nil {
+					if err := store.WriteValidateContractStatus(common.HexToAddress(contractVerityTmp.Address), &types.ContractStatus{
+						Status:    2,
+						ErrReason: err.Error(),
+					}); err != nil {
 						logrus.Errorf("StartHandleContractVerity UpdateContractVerityTmpStatus error. err: %+v, contract verity id:%s", err, contractVerityTmp.Address)
 					}
 				} else {
-					logrus.Errorf("StartHandleContractVerity validateContract error. err: %+v, contract verity id:%s", err, contractVerityTmp.Address)
-					if err := store.WriteValidateContractStatus(common.HexToAddress(contractVerityTmp.Address), big.NewInt(1)); err != nil {
+					log.Infof("StartHandleContractVerity validateContract error. err: %+v, contract verity id:%s\n", err, contractVerityTmp.Address)
+					if err := store.WriteValidateContractStatus(common.HexToAddress(contractVerityTmp.Address), &types.ContractStatus{
+						Status:    1,
+						ErrReason: "",
+					}); err != nil {
 						logrus.Errorf("StartHandleContractVerity UpdateContractVerityTmpStatus error. err: %+v, contract verity id:%s", err, contractVerityTmp.Address)
 					}
 				}
@@ -291,12 +317,12 @@ func StartHandleContractVerity() {
 	}()
 }
 
-func GetValidateContractStatus(address string) (int64, error) {
-	status, err := store.GetValidateContractStatus(common.HexToAddress(address))
+func GetValidateContractStatus(address string) (status *types.ContractStatus, err error) {
+	status, err = store.GetValidateContractStatus(common.HexToAddress(address))
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	return status.Int64(), nil
+	return
 }
 
 func GetValidateContract(address common.Address) (*types.ContractVerityInfoResp, error) {
@@ -341,15 +367,15 @@ func GetValidateContract(address common.Address) (*types.ContractVerityInfoResp,
 				return nil, err
 			}
 			resp.ProxyContract = &types.ContractVerityInfo{
-				ContractName:    contract.ContractName,
-				CompilerVersion: contract.CompilerVersion,
-				Optimization:    contract.Optimization,
-				Runs:            contract.Runs,
-				EVMVersion:      contract.EVMVersion,
-				LicenseType:     contract.LicenseType,
-				ABI:             contract.ABI,
+				ContractName:    proxyContract.ContractName,
+				CompilerVersion: proxyContract.CompilerVersion,
+				Optimization:    proxyContract.Optimization,
+				Runs:            proxyContract.Runs,
+				EVMVersion:      proxyContract.EVMVersion,
+				LicenseType:     proxyContract.LicenseType,
+				ABI:             proxyContract.ABI,
 				Metadata:        metadata,
-				Object:          contract.Object,
+				Object:          proxyContract.Object,
 			}
 		}
 	}
@@ -357,8 +383,19 @@ func GetValidateContract(address common.Address) (*types.ContractVerityInfoResp,
 	return resp, nil
 }
 
+func GetContractABI(address common.Address) (string, error) {
+	contract, err := store.GetValidateContract(address)
+	if err != nil && err != kv.NotFound {
+		return "", err
+	}
+	if contract == nil {
+		return "", nil
+	}
+	return contract.ABI, nil
+}
+
 func ReadMetaData() (*types.ValidateContractMetadata, error) {
-	jsonFile, err := os.Open("/go/src/app/pkg/files/metadata.json")
+	jsonFile, err := os.Open(filePath + "metadata.json")
 	if err != nil {
 		return nil, err
 	}

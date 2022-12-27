@@ -3,25 +3,23 @@ package service
 import (
 	"context"
 	"github.com/Ankr-network/uscan/pkg/field"
-	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/log"
-	rawdb "github.com/Ankr-network/uscan/pkg/rawdb"
+	"github.com/Ankr-network/uscan/pkg/storage"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/ethereum/go-ethereum/common"
-	"math/big"
 )
 
 var store Storage
 
 type Store struct {
 	ctx context.Context
-	db  kv.Database
+	St  *storage.StorageImpl
 }
 
-func NewStore(db kv.Database) {
+func NewStore(st *storage.StorageImpl) {
 	store = &Store{
 		ctx: context.Background(),
-		db:  db,
+		St:  st,
 	}
 	WriteMetadata()
 }
@@ -77,15 +75,25 @@ type Storage interface {
 	WriteValidateContractMetadata(metadata *types.ValidateContractMetadata) error
 	GetValidateContractMetadata() (data *types.ValidateContractMetadata, err error)
 	GetValidateContract(address common.Address) (data *types.ContractVerity, err error)
-	WriteValidateContractStatus(address common.Address, status *big.Int) error
-	GetValidateContractStatus(address common.Address) (status *big.Int, err error)
+	WriteValidateContractStatus(address common.Address, status *types.ContractStatus) error
+	GetValidateContractStatus(address common.Address) (status *types.ContractStatus, err error)
 	WriteMethodName(id, name string) error
 	WriteValidateContract(address common.Address, data *types.ContractVerity) error
 	GetProxyContract(address common.Address) (logic common.Address, err error)
+
+	GetErc20ContractTransfer(contract common.Address, offset, limit int64) (data []*types.Erc20Transfer, total *field.BigInt, err error)
+	GetErc721ContractTransfer(contract common.Address, offset, limit int64) (data []*types.Erc721Transfer, total *field.BigInt, err error)
+	GetErc1155ContractTransfer(contract common.Address, offset, limit int64) (data []*types.Erc1155Transfer, total *field.BigInt, err error)
+
+	ReadTraceTx2(address common.Hash) (res *types.TraceTx2, err error)
+
+	ReadErc20ContractTotal(contract common.Address) (total *field.BigInt, err error)
+	ReadErc721ContractTotal(contract common.Address) (total *field.BigInt, err error)
+	ReadErc1155ContractTotal(contract common.Address) (total *field.BigInt, err error)
 }
 
 func (s *Store) GetBlock(blockNum *field.BigInt) (*types.Block, error) {
-	return rawdb.ReadBlock(s.ctx, s.db, blockNum)
+	return s.St.ReadBlock(s.ctx, blockNum)
 }
 
 func (s *Store) ListBlockTxs(total, blockNum *field.BigInt, offset, limit int64) ([]*types.Tx, error) {
@@ -94,7 +102,8 @@ func (s *Store) ListBlockTxs(total, blockNum *field.BigInt, offset, limit int64)
 	begin, end := ParsePage(total, offset, limit)
 	p := begin
 	for {
-		tx, err := rawdb.ReadBlockTxByIndex(s.ctx, s.db, blockNum, p)
+
+		tx, err := s.St.ReadBlockTxByIndex(s.ctx, blockNum, p)
 		if err != nil {
 			return nil, err
 		}
@@ -115,7 +124,7 @@ func (s *Store) ListBlocks(total *field.BigInt, offset, limit int64) ([]*types.B
 	begin, end := ParsePage(total, offset, limit)
 	p := begin
 	for {
-		block, err := rawdb.ReadBlock(s.ctx, s.db, p)
+		block, err := s.St.ReadBlock(s.ctx, p)
 		if err != nil {
 			return nil, err
 		}
@@ -130,19 +139,19 @@ func (s *Store) ListBlocks(total *field.BigInt, offset, limit int64) ([]*types.B
 }
 
 func (s *Store) GetBlockTotal() (bk *field.BigInt, err error) {
-	return rawdb.ReadSyncingBlock(s.ctx, s.db)
+	return s.St.ReadSyncingBlock(s.ctx)
 }
 
 func (s *Store) GetAccount(address common.Address) (*types.Account, error) {
-	return rawdb.ReadAccount(s.ctx, s.db, address)
+	return s.St.ReadAccount(s.ctx, address)
 }
 
 func (s *Store) GetContract(address common.Address) (*types.Contract, error) {
-	return rawdb.ReadContract(s.ctx, s.db, address)
+	return s.St.ReadContract(s.ctx, address)
 }
 
 func (s *Store) GetAccountTxTotal(address common.Address) (total *field.BigInt, err error) {
-	return rawdb.ReadAccountTxTotal(s.ctx, s.db, address)
+	return s.St.ReadAccountTxTotal(s.ctx, address)
 }
 
 func (s *Store) ListAccountTxs(address common.Address, total *field.BigInt, offset, limit int64) ([]*types.Tx, error) {
@@ -154,7 +163,7 @@ func (s *Store) ListAccountTxs(address common.Address, total *field.BigInt, offs
 	p := begin
 
 	for {
-		tx, err := rawdb.ReadAccountTxByIndex(s.ctx, s.db, address, p)
+		tx, err := s.St.ReadAccountTxByIndex(s.ctx, address, p)
 		if err != nil {
 			return nil, err
 		}
@@ -167,16 +176,16 @@ func (s *Store) ListAccountTxs(address common.Address, total *field.BigInt, offs
 	return txs, nil
 }
 func (s *Store) GetAccountErc20Total(address common.Address) (total *field.BigInt, err error) {
-	return rawdb.ReadAccountErc20Total(s.ctx, s.db, address)
+	return s.St.ReadAccountErc20Total(s.ctx, address)
 }
 func (s *Store) GetAccountErc721Total(address common.Address) (total *field.BigInt, err error) {
-	return rawdb.ReadAccountErc721Total(s.ctx, s.db, address)
+	return s.St.ReadAccountErc721Total(s.ctx, address)
 }
 func (s *Store) GetAccountErc1155Total(address common.Address) (total *field.BigInt, err error) {
-	return rawdb.ReadAccountErc1155Total(s.ctx, s.db, address)
+	return s.St.ReadAccountErc1155Total(s.ctx, address)
 }
 func (s *Store) GetAccountITxTotal(address common.Address) (total *field.BigInt, err error) {
-	return rawdb.ReadAccountITxTotal(s.ctx, s.db, address)
+	return s.St.ReadAccountITxTotal(s.ctx, address)
 }
 
 func (s *Store) ListAccountITxs(address common.Address, total *field.BigInt, offset, limit int64) ([]*types.InternalTx, error) {
@@ -188,7 +197,7 @@ func (s *Store) ListAccountITxs(address common.Address, total *field.BigInt, off
 	log.Infof("ListAccountITxs ParsePage, total:%d, begin:%d, end:%d", total.ToUint64(), begin.ToUint64(), end.ToUint64())
 	p := begin
 	for {
-		tx, err := rawdb.ReadAccountITxByIndex(s.ctx, s.db, address, p)
+		tx, err := s.St.ReadAccountITxByIndex(s.ctx, address, p)
 		if err != nil {
 			log.Errorf("ListAccountITxs ReadAccountITxByIndex error. err:%s, p:%d, total:%d, begin:%d, end:%d", err, p.ToUint64(), total.ToUint64(), begin.ToUint64(), end.ToUint64())
 			return nil, err
@@ -210,7 +219,7 @@ func (s *Store) ListAccountErc20Txs(address common.Address, total *field.BigInt,
 	begin, end := ParsePage(total, offset, limit)
 	p := begin
 	for {
-		tx, err := rawdb.ReadAccountErc20ByIndex(s.ctx, s.db, address, p)
+		tx, err := s.St.ReadAccountErc20ByIndex(s.ctx, address, p)
 		if err != nil {
 			return nil, err
 		}
@@ -230,7 +239,7 @@ func (s *Store) ListAccountErc721Txs(address common.Address, total *field.BigInt
 	begin, end := ParsePage(total, offset, limit)
 	p := begin
 	for {
-		tx, err := rawdb.ReadAccountErc721ByIndex(s.ctx, s.db, address, p)
+		tx, err := s.St.ReadAccountErc721ByIndex(s.ctx, address, p)
 		if err != nil {
 			return nil, err
 		}
@@ -250,7 +259,7 @@ func (s *Store) ListAccountErc1155Txs(address common.Address, total *field.BigIn
 	begin, end := ParsePage(total, offset, limit)
 	p := begin
 	for {
-		tx, err := rawdb.ReadAccountErc1155ByIndex(s.ctx, s.db, address, p)
+		tx, err := s.St.ReadAccountErc1155ByIndex(s.ctx, address, p)
 		if err != nil {
 			return nil, err
 		}
@@ -264,18 +273,18 @@ func (s *Store) ListAccountErc1155Txs(address common.Address, total *field.BigIn
 }
 
 func (s *Store) GetHome() (home *types.Home, err error) {
-	return rawdb.ReadHome(s.ctx, s.db)
+	return s.St.ReadHome(s.ctx)
 }
 
 func (s *Store) GetTx(txhash common.Hash) (data *types.Tx, err error) {
-	return rawdb.ReadTx(s.ctx, s.db, txhash)
+	return s.St.ReadTx(s.ctx, txhash)
 }
 func (s *Store) GetRt(txhash common.Hash) (data *types.Rt, err error) {
-	return rawdb.ReadRt(s.ctx, s.db, txhash)
+	return s.St.ReadRt(s.ctx, txhash)
 }
 
 func (s *Store) GetTxTotal() (total *field.BigInt, err error) {
-	return rawdb.ReadTxTotal(s.ctx, s.db)
+	return s.St.ReadTxTotal(s.ctx)
 }
 
 func (s *Store) ListTxs(total *field.BigInt, offset, limit int64) ([]*types.Tx, error) {
@@ -285,10 +294,11 @@ func (s *Store) ListTxs(total *field.BigInt, offset, limit int64) ([]*types.Tx, 
 	}
 	begin, end := ParsePage(total, offset, limit)
 	p := begin
-
+	log.Infof("ListTxs: total: %d, begin: %d, end: %d\n", total.ToUint64(), begin.ToUint64(), end.ToUint64())
 	for {
-		tx, err := rawdb.ReadTxByIndex(s.ctx, s.db, p)
+		tx, err := s.St.ReadTxByIndex(s.ctx, p)
 		if err != nil {
+			log.Errorf("ListTxs: total: %d, p: %d\n", total.ToUint64(), p.ToUint64())
 			return nil, err
 		}
 		txs = append(txs, tx)
@@ -301,14 +311,14 @@ func (s *Store) ListTxs(total *field.BigInt, offset, limit int64) ([]*types.Tx, 
 }
 
 func (s *Store) GetErc20Total() (total *field.BigInt, err error) {
-	return rawdb.ReadErc20Total(s.ctx, s.db)
+	return s.St.ReadErc20Total(s.ctx)
 }
 func (s *Store) GetErc721Total() (total *field.BigInt, err error) {
-	return rawdb.ReadErc721Total(s.ctx, s.db)
+	return s.St.ReadErc721Total(s.ctx)
 }
 
 func (s *Store) GetErc1155Total() (total *field.BigInt, err error) {
-	return rawdb.ReadErc1155Total(s.ctx, s.db)
+	return s.St.ReadErc1155Total(s.ctx)
 }
 
 func (s *Store) ListErc20Transfers(total *field.BigInt, offset, limit int64) ([]*types.Erc20Transfer, error) {
@@ -320,7 +330,7 @@ func (s *Store) ListErc20Transfers(total *field.BigInt, offset, limit int64) ([]
 	p := begin
 
 	for {
-		tx, err := rawdb.ReadErc20Transfer(s.ctx, s.db, p)
+		tx, err := s.St.ReadErc20Transfer(s.ctx, p)
 		if err != nil {
 			return nil, err
 		}
@@ -341,7 +351,7 @@ func (s *Store) ListErc721Transfers(total *field.BigInt, offset, limit int64) ([
 	p := begin
 
 	for {
-		tx, err := rawdb.ReadErc721Transfer(s.ctx, s.db, p)
+		tx, err := s.St.ReadErc721Transfer(s.ctx, p)
 		if err != nil {
 			return nil, err
 		}
@@ -362,7 +372,7 @@ func (s *Store) ListErc1155Transfers(total *field.BigInt, offset, limit int64) (
 	p := begin
 
 	for {
-		tx, err := rawdb.ReadErc1155Transfer(s.ctx, s.db, p)
+		tx, err := s.St.ReadErc1155Transfer(s.ctx, p)
 		if err != nil {
 			return nil, err
 		}
@@ -376,76 +386,102 @@ func (s *Store) ListErc1155Transfers(total *field.BigInt, offset, limit int64) (
 }
 
 func (s *Store) ListErc20Holders(address common.Address, offset, limit int64) (holders []*types.Holder, err error) {
-	return rawdb.GetErc20Holder(s.ctx, s.db, address, uint64(offset), uint64(limit))
+	return s.St.GetErc20Holder(s.ctx, address, uint64(offset), uint64(limit))
 }
 
 func (s *Store) GetErc20HolderCount(address common.Address) (count uint64, err error) {
-	return rawdb.GetErc20HolderCount(s.ctx, s.db, address)
+	return s.St.GetErc20HolderCount(s.ctx, address)
 }
 
 func (s *Store) ListErc721Holders(address common.Address, offset, limit int64) (holders []*types.Holder, err error) {
-	return rawdb.GetErc721Holder(s.ctx, s.db, address, uint64(offset), uint64(limit))
+	return s.St.GetErc721Holder(s.ctx, address, uint64(offset), uint64(limit))
 }
 
 func (s *Store) GetErc721HolderCount(address common.Address) (count uint64, err error) {
-	return rawdb.GetErc721HolderCount(s.ctx, s.db, address)
+	return s.St.GetErc721HolderCount(s.ctx, address)
 }
 func (s *Store) ListErc1155Holders(address common.Address, offset, limit int64) (holders []*types.Holder, err error) {
-	return rawdb.GetErc1155Holder(s.ctx, s.db, address, uint64(offset), uint64(limit))
+	return s.St.GetErc1155Holder(s.ctx, address, uint64(offset), uint64(limit))
 }
 
 func (s *Store) GetErc1155HolderCount(address common.Address) (count uint64, err error) {
-	return rawdb.GetErc1155HolderCount(s.ctx, s.db, address)
+	return s.St.GetErc1155HolderCount(s.ctx, address)
 }
 
 func (s *Store) GetMethodName(methodID string) (string, error) {
-	return rawdb.ReadMethodName(s.ctx, s.db, methodID)
+	return s.St.ReadMethodName(s.ctx, methodID, "")
 }
 
 func (s *Store) ListErc721Inventories(address common.Address, offset, limit int64) ([]*types.Inventory, error) {
-	return rawdb.GetErc721Inventory(s.ctx, s.db, address, uint64(offset), uint64(limit))
+	return s.St.GetErc721Inventory(s.ctx, address, uint64(offset), uint64(limit))
 }
 
 func (s *Store) GetErc721InventoryCount(address common.Address) (count uint64, err error) {
-	return rawdb.GetErc721InventoryCount(s.ctx, s.db, address)
+	return s.St.GetErc721InventoryCount(s.ctx, address)
 }
 
 func (s *Store) ListErc1155Inventories(address common.Address, offset, limit int64) ([]*field.BigInt, error) {
-	return rawdb.GetErc1155Inventory(s.ctx, s.db, address, uint64(offset), uint64(limit))
+	return s.St.GetErc1155Inventory(s.ctx, address, uint64(offset), uint64(limit))
 }
 
 func (s *Store) GetErc1155InventoryCount(address common.Address) (count uint64, err error) {
-	return rawdb.GetErc1155InventoryCount(s.ctx, s.db, address)
+	return s.St.GetErc1155InventoryCount(s.ctx, address)
 }
 
 func (s *Store) WriteValidateContractMetadata(metadata *types.ValidateContractMetadata) error {
-	return rawdb.WriteValidateContractMetadata(s.ctx, s.db, metadata)
+	return s.St.WriteValidateContractMetadata(s.ctx, metadata)
 }
 
 func (s *Store) GetValidateContractMetadata() (data *types.ValidateContractMetadata, err error) {
-	return rawdb.ReadValidateContractMetadata(s.ctx, s.db)
+	return s.St.ReadValidateContractMetadata(s.ctx)
 }
 
 func (s *Store) GetValidateContract(address common.Address) (data *types.ContractVerity, err error) {
-	return rawdb.ReadValidateContract(s.ctx, s.db, address)
+	return s.St.ReadValidateContract(s.ctx, address)
 }
 
-func (s *Store) WriteValidateContractStatus(address common.Address, status *big.Int) error {
-	return rawdb.WriteValidateContractStatus(s.ctx, s.db, address, status)
+func (s *Store) WriteValidateContractStatus(address common.Address, status *types.ContractStatus) error {
+	return s.St.WriteValidateContractStatus(s.ctx, address, status)
 }
 
-func (s *Store) GetValidateContractStatus(address common.Address) (status *big.Int, err error) {
-	return rawdb.ReadValidateContractStatus(s.ctx, s.db, address)
+func (s *Store) GetValidateContractStatus(address common.Address) (status *types.ContractStatus, err error) {
+	return s.St.ReadValidateContractStatus(s.ctx, address)
 }
 
 func (s *Store) WriteMethodName(id, name string) error {
-	return rawdb.WriteMethodName(s.ctx, s.db, id, name)
+	return s.St.WriteMethodName(s.ctx, id, name)
 }
 
 func (s *Store) WriteValidateContract(address common.Address, data *types.ContractVerity) error {
-	return rawdb.WriteValidateContract(s.ctx, s.db, address, data)
+	return s.St.WriteValidateContract(s.ctx, address, data)
 }
 
 func (s *Store) GetProxyContract(address common.Address) (logic common.Address, err error) {
-	return rawdb.ReadProxyContract(s.ctx, s.db, address)
+	return s.St.ReadProxyContract(s.ctx, address)
+}
+
+func (s *Store) GetErc20ContractTransfer(contract common.Address, offset, limit int64) (data []*types.Erc20Transfer, total *field.BigInt, err error) {
+	return s.St.GetErc20ContractTransfer(s.ctx, contract, offset, limit)
+}
+
+func (s *Store) GetErc721ContractTransfer(contract common.Address, offset, limit int64) (data []*types.Erc721Transfer, total *field.BigInt, err error) {
+	return s.St.GetErc721ContractTransfer(s.ctx, contract, offset, limit)
+}
+
+func (s *Store) GetErc1155ContractTransfer(contract common.Address, offset, limit int64) (data []*types.Erc1155Transfer, total *field.BigInt, err error) {
+	return s.St.GetErc1155ContractTransfer(s.ctx, contract, offset, limit)
+}
+
+func (s *Store) ReadTraceTx2(address common.Hash) (res *types.TraceTx2, err error) {
+	return s.St.ReadTraceTx2(s.ctx, address)
+}
+
+func (s *Store) ReadErc20ContractTotal(contract common.Address) (total *field.BigInt, err error) {
+	return s.St.ReadErc20ContractTotal(s.ctx, contract)
+}
+func (s *Store) ReadErc721ContractTotal(contract common.Address) (total *field.BigInt, err error) {
+	return s.St.ReadErc721ContractTotal(s.ctx, contract)
+}
+func (s *Store) ReadErc1155ContractTotal(contract common.Address) (total *field.BigInt, err error) {
+	return s.St.ReadErc1155ContractTotal(s.ctx, contract)
 }

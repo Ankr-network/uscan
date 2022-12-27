@@ -19,6 +19,7 @@ package apis
 import (
 	"context"
 	"fmt"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/rakyll/statik/fs"
 
@@ -26,7 +27,6 @@ import (
 	"github.com/Ankr-network/uscan/share"
 	_ "github.com/Ankr-network/uscan/statik"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/spf13/viper"
 )

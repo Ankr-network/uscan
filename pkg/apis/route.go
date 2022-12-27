@@ -5,14 +5,18 @@ import (
 	"github.com/Ankr-network/uscan/pkg/response"
 	"github.com/Ankr-network/uscan/pkg/service"
 	"github.com/Ankr-network/uscan/pkg/types"
+	"github.com/Ankr-network/uscan/share"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gofiber/fiber/v2"
 	"github.com/mitchellh/mapstructure"
+	"github.com/spf13/viper"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"time"
 )
+
+var ChainID uint64
 
 func SetupRouter(g fiber.Router) {
 	g.Get("/search", search)
@@ -28,7 +32,6 @@ func SetupRouter(g fiber.Router) {
 	//g.Get("/txs/:txHash/internal", getInternalTx)
 
 	g.Get("/txs/:txHash/base", getTxBase)
-	//g.Get("/txs/:txHash/event-logs", getTxEventLogs) // 合并到/txs/:txHas
 
 	g.Get("/txs/:txHash/tracetx", getTraceTx)
 	g.Get("/txs/:txHash/tracetx2", getTraceTx2)
@@ -61,6 +64,27 @@ func SetupRouter(g fiber.Router) {
 	g.Get("/contracts/metadata", ReadValidateContractMetadata)
 	g.Post("/contracts/metadata", WriteValidateContractMetadata)
 	g.Get("/contracts/:address/content", getValidateContract)
+	g.Get("/contracts/:address/abi", getContractABI)
+
+	g.Get("/custom-params", getCustomParameters)
+}
+
+func getCustomParameters(c *fiber.Ctx) error {
+	appTitle := viper.GetString(share.APPTitle)
+	unitDisplay := viper.GetString(share.UnitDisplay)
+	nodeUrl := viper.GetString(share.NodeUrl)
+	decimal := viper.GetUint64(share.Decimal)
+	return c.Status(http.StatusOK).JSON(response.Ok(map[string]interface{}{
+		"appTitle":    appTitle,
+		"unitDisplay": unitDisplay,
+		"nodeUrl":     nodeUrl,
+		"decimal":     decimal,
+		"chainID":     ChainID,
+	}))
+}
+
+func GetChainID(chainID uint64) {
+	ChainID = chainID
 }
 
 func search(c *fiber.Ctx) error {
@@ -548,5 +572,16 @@ func getValidateContract(c *fiber.Ctx) error {
 		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
 	}
 	return c.Status(http.StatusOK).JSON(response.Ok(resp))
+}
 
+func getContractABI(c *fiber.Ctx) error {
+	address := c.Params("address")
+	if address == "" {
+		return c.Status(http.StatusBadRequest).JSON(response.Err(response.ErrInvalidParameter))
+	}
+	resp, err := service.GetContractABI(common.HexToAddress(address))
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(response.Err(err))
+	}
+	return c.Status(http.StatusOK).JSON(response.Ok(resp))
 }

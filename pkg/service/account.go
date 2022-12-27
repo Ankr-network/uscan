@@ -7,6 +7,7 @@ import (
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"strings"
 )
 
 func GetAccountInfo(address common.Address) (*types.AccountResp, error) {
@@ -27,6 +28,9 @@ func GetAccountInfo(address common.Address) (*types.AccountResp, error) {
 		TokenTotalSupply: account.TokenTotalSupply.StringPointer(),
 		NftTotalSupply:   account.NftTotalSupply.StringPointer(),
 		Decimals:         account.Decimals.ToUint64(),
+		Erc20:            account.Erc20,
+		Erc721:           account.Erc721,
+		Erc1155:          account.Erc1155,
 	}
 	if account.Creator != (common.Address{}) {
 		creator := account.Creator.Hex()
@@ -41,8 +45,8 @@ func GetAccountInfo(address common.Address) (*types.AccountResp, error) {
 		return nil, err
 	}
 	if c != nil {
-		if c.ByteCode != nil {
-			code := hexutil.Encode(c.ByteCode)
+		if c.DeployedCode != nil {
+			code := hexutil.Encode(c.DeployedCode)
 			resp.Code = &code
 		}
 	}
@@ -68,17 +72,24 @@ func GetAccountTxs(pager *types.Pager, address common.Address) (map[string]inter
 	if err != nil {
 		return nil, err
 	}
-
+	rts := make(map[string]*types.Rt, 0)
+	for _, tx := range txs {
+		rt, err := store.GetRt(tx.Hash)
+		if err != nil {
+			return nil, err
+		}
+		rts[tx.Hash.String()] = rt
+	}
 	addresses := make(map[string]common.Address)
+	methodIDs := make([]string, 0)
 	for _, tx := range txs {
 		t := &types.ListTransactionResp{
 			Hash:        tx.Hash.Hex(),
 			Method:      tx.Method.String(),
-			BlockHash:   tx.BlockNum.String(),
 			BlockNumber: DecodeBig(tx.BlockNum.String()).String(),
 			From:        tx.From.Hex(),
 			To:          tx.To.Hex(),
-			Gas:         tx.Gas.StringPointer(),
+			Gas:         rts[tx.Hash.Hex()].GasUsed.StringPointer(),
 			GasPrice:    tx.GasPrice.StringPointer(),
 			Value:       tx.Value.StringPointer(),
 			CreatedTime: tx.TimeStamp.ToUint64(),
@@ -89,24 +100,51 @@ func GetAccountTxs(pager *types.Pager, address common.Address) (map[string]inter
 		if tx.To != nil {
 			addresses[tx.To.String()] = *tx.To
 		}
+		if tx.Method.String() == "0x60806040" {
+			contractAddress := rts[tx.Hash.Hex()].ContractAddress
+			addresses[rts[tx.Hash.Hex()].ContractAddress.String()] = *contractAddress
+		}
+		if tx.Method.String() != "0x" && tx.Method.String() != "0x60806040" {
+			mid := strings.Split(tx.Method.String(), "0x")
+			if len(mid) == 2 {
+				methodIDs = append(methodIDs, mid[1])
+			}
+		}
 	}
 	accounts, err := GetAccounts(addresses)
 	if err != nil {
 		return nil, err
 	}
+	contracts, err := GetAccountContracts(addresses)
+	if err != nil {
+		return nil, err
+	}
+	methodNames, err := GetMethodNames(methodIDs)
+	if err != nil {
+		return nil, err
+	}
 	for _, t := range txsResp {
-		if from, ok := accounts[t.From]; ok {
-			t.FromName = from.Name
-			t.FromSymbol = from.Symbol
-			if from.Erc20 || from.Erc721 || from.Erc1155 {
-				t.FromContract = true
-			}
+		if t.Method == "0x60806040" {
+			t.To = rts[t.Hash].ContractAddress.Hex()
 		}
 		if to, ok := accounts[t.To]; ok {
 			t.ToName = to.Name
 			t.ToSymbol = to.Symbol
-			if to.Erc20 || to.Erc721 || to.Erc1155 {
+		}
+		if to, ok := contracts[t.To]; ok {
+			if to.DeployedCode != nil {
 				t.ToContract = true
+			}
+		}
+		if t.Method == "0x" {
+			t.Method = "Transfer"
+		}
+		if t.Method != "Transfer" && t.Method != "0x60806040" {
+			if mn, ok := methodNames[t.Method]; ok {
+				md := strings.Split(mn, "(")
+				if len(md) >= 1 {
+					t.Method = strings.Title(md[0])
+				}
 			}
 		}
 	}
@@ -215,6 +253,7 @@ func GetAccountErc20Txns(pager *types.Pager, address common.Address) ([]*types.E
 		return nil, 0, err
 	}
 	addresses := make(map[string]common.Address)
+	methodIDs := make([]string, 0)
 	for _, tx := range txs {
 		t := &types.Erc20TxResp{
 			TransactionHash: tx.TransactionHash.String(),
@@ -232,31 +271,60 @@ func GetAccountErc20Txns(pager *types.Pager, address common.Address) ([]*types.E
 		addresses[tx.From.String()] = tx.From
 		addresses[tx.To.String()] = tx.To
 		addresses[tx.Contract.String()] = tx.Contract
+		if t.Method != "0x" && t.Method != "0x60806040" {
+			mid := strings.Split(t.Method, "0x")
+			if len(mid) == 2 {
+				methodIDs = append(methodIDs, mid[1])
+			}
+		}
 	}
 
 	accounts, err := GetAccounts(addresses)
 	if err != nil {
-		log.Infof("GetAccountErc20Txns, GetAccounts:%s", err)
+		return nil, 0, err
+	}
+	contracts, err := GetAccountContracts(addresses)
+	if err != nil {
+		return nil, 0, err
+	}
+	methodNames, err := GetMethodNames(methodIDs)
+	if err != nil {
 		return nil, 0, err
 	}
 	for _, t := range resp {
 		if from, ok := accounts[t.From]; ok {
 			t.FromName = from.Name
 			t.FromSymbol = from.Symbol
-			if from.Erc20 || from.Erc721 || from.Erc1155 {
+		}
+		if from, ok := contracts[t.From]; ok {
+			if from.DeployedCode != nil {
 				t.FromContract = true
 			}
 		}
 		if to, ok := accounts[t.To]; ok {
 			t.ToName = to.Name
 			t.ToSymbol = to.Symbol
-			if to.Erc20 || to.Erc721 || to.Erc1155 {
+		}
+		if to, ok := contracts[t.To]; ok {
+			if to.DeployedCode != nil {
 				t.ToContract = true
 			}
 		}
 		if c, ok := accounts[t.Contract]; ok {
 			t.ContractName = c.Name
 			t.ContractSymbol = c.Symbol
+			t.ContractDecimals = c.Decimals.ToUint64()
+		}
+		if t.Method == "0x" {
+			t.Method = "Transfer"
+		}
+		if t.Method != "Transfer" && t.Method != "0x60806040" {
+			if mn, ok := methodNames[t.Method]; ok {
+				md := strings.Split(mn, "(")
+				if len(md) >= 1 {
+					t.Method = strings.Title(md[0])
+				}
+			}
 		}
 	}
 
@@ -278,6 +346,7 @@ func GetAccountErc721Txs(pager *types.Pager, address common.Address) ([]*types.E
 		return nil, 0, err
 	}
 	addresses := make(map[string]common.Address)
+	methodIDs := make([]string, 0)
 	for _, tx := range txs {
 		t := &types.Erc721TxResp{
 			TransactionHash: tx.TransactionHash.String(),
@@ -287,7 +356,7 @@ func GetAccountErc721Txs(pager *types.Pager, address common.Address) ([]*types.E
 			Method:          hexutil.Bytes(tx.Method).String(),
 			From:            tx.From.Hex(),
 			To:              tx.To.Hex(),
-			TokenID:         tx.TokenId.ToUint64(),
+			TokenID:         tx.TokenId.String(),
 			CreatedTime:     tx.TimeStamp.ToUint64(),
 		}
 		resp = append(resp, t)
@@ -295,9 +364,23 @@ func GetAccountErc721Txs(pager *types.Pager, address common.Address) ([]*types.E
 		addresses[tx.From.String()] = tx.From
 		addresses[tx.To.String()] = tx.To
 		addresses[tx.Contract.String()] = tx.Contract
+		if t.Method != "0x" && t.Method != "0x60806040" {
+			mid := strings.Split(t.Method, "0x")
+			if len(mid) == 2 {
+				methodIDs = append(methodIDs, mid[1])
+			}
+		}
 	}
 
 	accounts, err := GetAccounts(addresses)
+	if err != nil {
+		return nil, 0, err
+	}
+	contracts, err := GetAccountContracts(addresses)
+	if err != nil {
+		return nil, 0, err
+	}
+	methodNames, err := GetMethodNames(methodIDs)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -305,20 +388,36 @@ func GetAccountErc721Txs(pager *types.Pager, address common.Address) ([]*types.E
 		if from, ok := accounts[t.From]; ok {
 			t.FromName = from.Name
 			t.FromSymbol = from.Symbol
-			if from.Erc20 || from.Erc721 || from.Erc1155 {
+		}
+		if from, ok := contracts[t.From]; ok {
+			if from.DeployedCode != nil {
 				t.FromContract = true
 			}
 		}
 		if to, ok := accounts[t.To]; ok {
 			t.ToName = to.Name
 			t.ToSymbol = to.Symbol
-			if to.Erc20 || to.Erc721 || to.Erc1155 {
+		}
+		if to, ok := contracts[t.To]; ok {
+			if to.DeployedCode != nil {
 				t.ToContract = true
 			}
 		}
 		if c, ok := accounts[t.Contract]; ok {
 			t.ContractName = c.Name
 			t.ContractSymbol = c.Symbol
+			t.ContractDecimals = c.Decimals.ToUint64()
+		}
+		if t.Method == "0x" {
+			t.Method = "Transfer"
+		}
+		if t.Method != "Transfer" && t.Method != "0x60806040" {
+			if mn, ok := methodNames[t.Method]; ok {
+				md := strings.Split(mn, "(")
+				if len(md) >= 1 {
+					t.Method = strings.Title(md[0])
+				}
+			}
 		}
 	}
 
@@ -340,7 +439,7 @@ func GetAccountErc1155Txs(pager *types.Pager, address common.Address) ([]*types.
 	}
 
 	addresses := make(map[string]common.Address)
-
+	methodIDs := make([]string, 0)
 	for _, tx := range txs {
 		t := &types.Erc1155TxResp{
 			TransactionHash: tx.TransactionHash.String(),
@@ -350,7 +449,7 @@ func GetAccountErc1155Txs(pager *types.Pager, address common.Address) ([]*types.
 			Method:          hexutil.Bytes(tx.Method).String(),
 			From:            tx.From.Hex(),
 			To:              tx.To.Hex(),
-			TokenID:         tx.TokenID.ToUint64(),
+			TokenID:         tx.TokenID.String(),
 			Value:           tx.Quantity.String(),
 			CreatedTime:     tx.TimeStamp.ToUint64(),
 		}
@@ -359,9 +458,23 @@ func GetAccountErc1155Txs(pager *types.Pager, address common.Address) ([]*types.
 		addresses[tx.From.String()] = tx.From
 		addresses[tx.To.String()] = tx.To
 		addresses[tx.Contract.String()] = tx.Contract
+		if t.Method != "0x" && t.Method != "0x60806040" {
+			mid := strings.Split(t.Method, "0x")
+			if len(mid) == 2 {
+				methodIDs = append(methodIDs, mid[1])
+			}
+		}
 	}
 
 	accounts, err := GetAccounts(addresses)
+	if err != nil {
+		return nil, 0, err
+	}
+	contracts, err := GetAccountContracts(addresses)
+	if err != nil {
+		return nil, 0, err
+	}
+	methodNames, err := GetMethodNames(methodIDs)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -369,20 +482,36 @@ func GetAccountErc1155Txs(pager *types.Pager, address common.Address) ([]*types.
 		if from, ok := accounts[t.From]; ok {
 			t.FromName = from.Name
 			t.FromSymbol = from.Symbol
-			if from.Erc20 || from.Erc721 || from.Erc1155 {
+		}
+		if from, ok := contracts[t.From]; ok {
+			if from.DeployedCode != nil {
 				t.FromContract = true
 			}
 		}
 		if to, ok := accounts[t.To]; ok {
 			t.ToName = to.Name
 			t.ToSymbol = to.Symbol
-			if to.Erc20 || to.Erc721 || to.Erc1155 {
+		}
+		if to, ok := contracts[t.To]; ok {
+			if to.DeployedCode != nil {
 				t.ToContract = true
 			}
 		}
 		if c, ok := accounts[t.Contract]; ok {
 			t.ContractName = c.Name
 			t.ContractSymbol = c.Symbol
+			t.ContractDecimals = c.Decimals.ToUint64()
+		}
+		if t.Method == "0x" {
+			t.Method = "Transfer"
+		}
+		if t.Method != "Transfer" && t.Method != "0x60806040" {
+			if mn, ok := methodNames[t.Method]; ok {
+				md := strings.Split(mn, "(")
+				if len(md) >= 1 {
+					t.Method = strings.Title(md[0])
+				}
+			}
 		}
 	}
 

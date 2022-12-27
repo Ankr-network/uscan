@@ -3,11 +3,10 @@ package core
 import (
 	"context"
 	"errors"
-
 	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/log"
-	"github.com/Ankr-network/uscan/pkg/rawdb"
+	"github.com/Ankr-network/uscan/pkg/storage/fulldb"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -15,7 +14,7 @@ import (
 func (n *blockHandle) checkNewAddr(ctx context.Context) (*field.BigInt, error) {
 	var newAddrTotal = field.NewInt(0)
 	for k, v := range n.contractOrMemberData {
-		account, err := rawdb.ReadAccount(ctx, n.db, k)
+		account, err := fulldb.ReadAccount(ctx, n.db, k)
 		if err != nil {
 			if !errors.Is(err, kv.NotFound) {
 				log.Errorf("read account(%s): %v", k.Hex(), err)
@@ -75,7 +74,7 @@ func (n *blockHandle) readAccount(ctx context.Context, addr common.Address) (*ty
 	if ok {
 		return acc, nil
 	}
-	account, err := rawdb.ReadAccount(ctx, n.db, addr)
+	account, err := fulldb.ReadAccount(ctx, n.db, addr)
 	if err != nil {
 		if !errors.Is(err, kv.NotFound) {
 			log.Errorf("read account(%s): %v", addr.Hex(), err)
@@ -89,7 +88,7 @@ func (n *blockHandle) readAccount(ctx context.Context, addr common.Address) (*ty
 
 func (n *blockHandle) updateAccounts(ctx context.Context) (err error) {
 	for k, v := range n.contractOrMemberData {
-		if err = rawdb.WriteAccount(ctx, n.db, k, v); err != nil {
+		if err = fulldb.WriteAccount(ctx, n.db, k, v); err != nil {
 			log.Errorf("write account(%s): %v", k.Hex(), err)
 			return err
 		}

@@ -2,15 +2,17 @@ package service
 
 import (
 	"errors"
+	"math/big"
+	"sort"
+	"strings"
+	"unicode"
+
 	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/response"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"math/big"
-	"sort"
-	"unicode"
 )
 
 const (
@@ -215,7 +217,7 @@ func GetBlock(blockNum string) (*types.BlockResp, error) {
 	resp := &types.BlockResp{
 		BaseFeePerGas:     block.BaseFee.StringPointer(),
 		Difficulty:        block.Difficulty.String(),
-		ExtraData:         hexutil.Encode(block.Extra),
+		ExtraData:         block.Extra,
 		GasLimit:          block.GasLimit.String(),
 		GasUsed:           block.GasUsed.String(),
 		Hash:              block.Hash.Hex(),
@@ -306,45 +308,84 @@ func GetBlockTxs(blockNum string, pager *types.Pager) ([]*types.ListTransactionR
 	if err != nil {
 		return nil, 0, err
 	}
+	rts := make(map[string]*types.Rt, 0)
+
+	for _, tx := range txs {
+		rt, err := store.GetRt(tx.Hash)
+		if err != nil {
+			return nil, 0, err
+		}
+		rts[tx.Hash.String()] = rt
+	}
 	resp := make([]*types.ListTransactionResp, 0)
 	addresses := make(map[string]common.Address)
+	methodIDs := make([]string, 0)
 	for _, tx := range txs {
 		t := &types.ListTransactionResp{
 			Hash:        tx.Hash.Hex(),
 			Method:      tx.Method.String(),
-			BlockHash:   tx.BlockNum.String(),
 			BlockNumber: DecodeBig(tx.BlockNum.String()).String(),
 			From:        tx.From.Hex(),
 			To:          tx.To.Hex(),
-			Gas:         tx.Gas.StringPointer(),
+			Gas:         rts[tx.Hash.Hex()].GasUsed.StringPointer(),
 			GasPrice:    tx.GasPrice.StringPointer(),
 			Value:       tx.Value.StringPointer(),
 			CreatedTime: tx.TimeStamp.ToUint64(),
 		}
 		resp = append(resp, t)
-
 		addresses[tx.From.String()] = tx.From
 		if tx.To != nil {
 			addresses[tx.To.String()] = *tx.To
+		}
+
+		if tx.Method.String() == "0x60806040" {
+			contractAddress := rts[tx.Hash.Hex()].ContractAddress
+			addresses[rts[tx.Hash.Hex()].ContractAddress.String()] = *contractAddress
+		}
+		if tx.Method.String() != "0x" && tx.Method.String() != "0x60806040" {
+			mid := strings.Split(tx.Method.String(), "0x")
+			if len(mid) == 2 {
+				methodIDs = append(methodIDs, mid[1])
+			}
 		}
 	}
 	accounts, err := GetAccounts(addresses)
 	if err != nil {
 		return nil, 0, err
 	}
+	contracts, err := GetAccountContracts(addresses)
+	if err != nil {
+		return nil, 0, err
+	}
+	methodNames, err := GetMethodNames(methodIDs)
+	if err != nil {
+		return nil, 0, err
+	}
 	for _, t := range resp {
-		if from, ok := accounts[t.From]; ok {
-			t.FromName = from.Name
-			t.FromSymbol = from.Symbol
-			if from.Erc20 || from.Erc721 || from.Erc1155 {
-				t.FromContract = true
-			}
+		if t.Method == "0x60806040" {
+			t.To = rts[t.Hash].ContractAddress.Hex()
 		}
 		if to, ok := accounts[t.To]; ok {
-			t.FromName = to.Name
-			t.FromSymbol = to.Symbol
+			t.ToName = to.Name
+			t.ToSymbol = to.Symbol
 			if to.Erc20 || to.Erc721 || to.Erc1155 {
 				t.ToContract = true
+			}
+		}
+		if to, ok := contracts[t.To]; ok {
+			if to.DeployedCode != nil {
+				t.ToContract = true
+			}
+		}
+		if t.Method == "0x" {
+			t.Method = "Transfer"
+		}
+		if t.Method != "Transfer" && t.Method != "0x60806040" {
+			if mn, ok := methodNames[t.Method]; ok {
+				md := strings.Split(mn, "(")
+				if len(md) >= 1 {
+					t.Method = strings.Title(md[0])
+				}
 			}
 		}
 	}

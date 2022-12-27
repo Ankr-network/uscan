@@ -8,7 +8,7 @@ import (
 	"github.com/Ankr-network/uscan/pkg/field"
 	"github.com/Ankr-network/uscan/pkg/kv"
 	"github.com/Ankr-network/uscan/pkg/log"
-	"github.com/Ankr-network/uscan/pkg/rawdb"
+	"github.com/Ankr-network/uscan/pkg/storage/fulldb"
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/Ankr-network/uscan/pkg/utils"
 	"github.com/ethereum/go-ethereum/common"
@@ -27,12 +27,16 @@ var (
 	erc20TrasferAccountTotalMap   = utils.NewCache()
 	erc721TrasferAccountTotalMap  = utils.NewCache()
 	erc1155TrasferAccountTotalMap = utils.NewCache()
+
+	erc20TransferContractTotalMap   = utils.NewCache()
+	erc721TransferContractTotalMap  = utils.NewCache()
+	erc1155TransferContractTotalMap = utils.NewCache()
 )
 
 // ------------------- erc20 transfer -----------------
 func (n *blockHandle) writeErc20Transfer(ctx context.Context, data *types.Erc20Transfer) (err error) {
 	if erc20TrasferTotal == nil {
-		erc20TrasferTotal, err = rawdb.ReadErc20Total(ctx, n.db)
+		erc20TrasferTotal, err = fulldb.ReadErc20Total(ctx, n.db)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
 				erc20TrasferTotal = field.NewInt(0)
@@ -44,7 +48,7 @@ func (n *blockHandle) writeErc20Transfer(ctx context.Context, data *types.Erc20T
 		}
 	}
 	erc20TrasferTotal.Add(field.NewInt(1))
-	err = rawdb.WriteErc20Transfer(ctx, n.db, erc20TrasferTotal, data)
+	err = fulldb.WriteErc20Transfer(ctx, n.db, erc20TrasferTotal, data)
 	if err != nil {
 		log.Errorf("write erc20 transfer: %v", err)
 	}
@@ -85,7 +89,42 @@ func (n *blockHandle) writeErc20Transfer(ctx context.Context, data *types.Erc20T
 			}
 		}
 	}
+
+	if err = n.writeErc20ContractTransferIndex(ctx, data.Contract, erc20TrasferTotal); err != nil {
+		log.Errorf("write erc20 contract transfer index:%v", data.Contract.Hex(), err)
+		return err
+	}
+
 	return nil
+}
+
+func (n *blockHandle) writeErc20ContractTransferIndex(ctx context.Context, contract common.Address, transfer20Index *field.BigInt) (err error) {
+	var total = &field.BigInt{}
+	if BytesRes, ok := erc20TransferContractTotalMap.Get(contract); ok {
+		total.SetBytes(BytesRes.([]byte))
+	} else {
+		total, err = fulldb.ReadErc20ContractTotal(ctx, n.db, contract)
+		if err != nil {
+			if errors.Is(err, kv.NotFound) {
+				total = field.NewInt(0)
+				err = nil
+			} else {
+				log.Errorf("read erc20 contract transfer: %v", err)
+				return err
+			}
+		}
+	}
+	total.Add(field.NewInt(1))
+	if err = fulldb.WriteErc20ContractTransfer(ctx, n.db, contract, total, transfer20Index); err != nil {
+		log.Errorf("write erc20 contract transfer index: %v", err)
+		return err
+	}
+
+	err = fulldb.WriteErc20ContractTotal(ctx, n.db, contract, total)
+	if err == nil {
+		erc20TransferContractTotalMap.Add(contract, total.Bytes())
+	}
+	return err
 }
 
 func (n *blockHandle) writeAccountErc20TransferIndex(ctx context.Context, addr common.Address, transfer20Index *field.BigInt) (err error) {
@@ -93,24 +132,24 @@ func (n *blockHandle) writeAccountErc20TransferIndex(ctx context.Context, addr c
 	if BytesRes, ok := erc20TrasferAccountTotalMap.Get(addr); ok {
 		total.SetBytes(BytesRes.([]byte))
 	} else {
-		total, err = rawdb.ReadAccountErc20Total(ctx, n.db, addr)
+		total, err = fulldb.ReadAccountErc20Total(ctx, n.db, addr)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
 				total = field.NewInt(0)
 				err = nil
 			} else {
-				log.Errorf("read account erc2- transfer: %v", err)
+				log.Errorf("read account erc20 transfer: %v", err)
 				return err
 			}
 		}
 	}
 	total.Add(field.NewInt(1))
-	if err = rawdb.WriteAccountErc20Index(ctx, n.db, addr, total, transfer20Index); err != nil {
+	if err = fulldb.WriteAccountErc20Index(ctx, n.db, addr, total, transfer20Index); err != nil {
 		log.Errorf("write account erc20 transfer index: %v", err)
 		return err
 	}
 
-	err = rawdb.WriteAccountErc20Total(ctx, n.db, addr, total)
+	err = fulldb.WriteAccountErc20Total(ctx, n.db, addr, total)
 	if err == nil {
 		erc20TrasferAccountTotalMap.Add(addr, total.Bytes())
 	}
@@ -128,7 +167,7 @@ func (n *blockHandle) updateErc20Account(ctx context.Context, addr common.Addres
 		n.newErc20Total.Add(field.NewInt(1))
 	}
 
-	if acc.Retry.Cmp(field.NewInt(3)) < 0 {
+	if acc.Retry.Cmp(field.NewInt(6)) < 0 {
 		if acc.Name == "" {
 			if acc.Name, err = n.contractClient.GetContractName(addr.Hex()); err != nil {
 				acc.Retry.Add(field.NewInt(1))
@@ -141,7 +180,7 @@ func (n *blockHandle) updateErc20Account(ctx context.Context, addr common.Addres
 			}
 		}
 
-		if acc.Decimals.String() == "0" {
+		if acc.Decimals.String() == "0x0" {
 			var symbol *big.Int
 			symbol, err = n.contractClient.GetContractDecimals(addr.Hex())
 			if err == nil {
@@ -166,7 +205,7 @@ func (n *blockHandle) updateErc20Account(ctx context.Context, addr common.Addres
 
 func (n *blockHandle) writeErc20HolderAmount(ctx context.Context, contract common.Address, addr common.Address, amount *field.BigInt, inde bool) (err error) {
 	var oriAmount *field.BigInt
-	oriAmount, err = rawdb.ReadErc20HolderAmount(ctx, n.db, contract, addr)
+	oriAmount, err = fulldb.ReadErc20HolderAmount(ctx, n.db, contract, addr)
 	if err != nil {
 		if errors.Is(err, kv.NotFound) {
 			oriAmount = &field.BigInt{}
@@ -175,7 +214,7 @@ func (n *blockHandle) writeErc20HolderAmount(ctx context.Context, contract commo
 			return err
 		}
 	} else {
-		err = rawdb.DelErc20HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
+		err = fulldb.DelErc20HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
 		if err != nil {
 			return err
 		}
@@ -188,13 +227,13 @@ func (n *blockHandle) writeErc20HolderAmount(ctx context.Context, contract commo
 			oriAmount = field.NewInt(0)
 		}
 	}
-	return rawdb.WriteErc20HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
+	return fulldb.WriteErc20HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
 }
 
 // ------------------- erc721 transfer -----------------
 func (n *blockHandle) writeErc721Transfer(ctx context.Context, data *types.Erc721Transfer) (err error) {
 	if erc721TrasferTotal == nil {
-		erc721TrasferTotal, err = rawdb.ReadErc721Total(ctx, n.db)
+		erc721TrasferTotal, err = fulldb.ReadErc721Total(ctx, n.db)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
 				erc721TrasferTotal = field.NewInt(0)
@@ -206,7 +245,7 @@ func (n *blockHandle) writeErc721Transfer(ctx context.Context, data *types.Erc72
 		}
 	}
 	erc721TrasferTotal.Add(field.NewInt(1))
-	err = rawdb.WriteErc721Transfer(ctx, n.db, erc721TrasferTotal, data)
+	err = fulldb.WriteErc721Transfer(ctx, n.db, erc721TrasferTotal, data)
 	if err != nil {
 		log.Errorf("write erc721 transfer: %v", err)
 	}
@@ -246,7 +285,42 @@ func (n *blockHandle) writeErc721Transfer(ctx context.Context, data *types.Erc72
 			}
 		}
 	}
+
+	if err = n.writeErc721ContractTransferIndex(ctx, data.Contract, erc721TrasferTotal); err != nil {
+		log.Errorf("write erc721 contract transfer index:%v", data.Contract.Hex(), err)
+		return err
+	}
+
 	return nil
+}
+
+func (n *blockHandle) writeErc721ContractTransferIndex(ctx context.Context, contract common.Address, transfer721Index *field.BigInt) (err error) {
+	var total = &field.BigInt{}
+	if BytesRes, ok := erc721TransferContractTotalMap.Get(contract); ok {
+		total.SetBytes(BytesRes.([]byte))
+	} else {
+		total, err = fulldb.ReadErc721ContractTotal(ctx, n.db, contract)
+		if err != nil {
+			if errors.Is(err, kv.NotFound) {
+				total = field.NewInt(0)
+				err = nil
+			} else {
+				log.Errorf("read erc721 contract transfer: %v", err)
+				return err
+			}
+		}
+	}
+	total.Add(field.NewInt(1))
+	if err = fulldb.WriteErc721ContractTransfer(ctx, n.db, contract, total, transfer721Index); err != nil {
+		log.Errorf("write erc721 contract transfer index: %v", err)
+		return err
+	}
+
+	err = fulldb.WriteErc721ContractTotal(ctx, n.db, contract, total)
+	if err == nil {
+		erc721TransferContractTotalMap.Add(contract, total.Bytes())
+	}
+	return err
 }
 
 func (n *blockHandle) writeAccountErc721TransferIndex(ctx context.Context, addr common.Address, transfer721Index *field.BigInt) (err error) {
@@ -254,7 +328,7 @@ func (n *blockHandle) writeAccountErc721TransferIndex(ctx context.Context, addr 
 	if BytesRes, ok := erc721TrasferAccountTotalMap.Get(addr); ok {
 		total.SetBytes(BytesRes.([]byte))
 	} else {
-		total, err = rawdb.ReadAccountErc721Total(ctx, n.db, addr)
+		total, err = fulldb.ReadAccountErc721Total(ctx, n.db, addr)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
 				total = field.NewInt(0)
@@ -266,12 +340,12 @@ func (n *blockHandle) writeAccountErc721TransferIndex(ctx context.Context, addr 
 		}
 	}
 	total.Add(field.NewInt(1))
-	if err = rawdb.WriteAccountErc721Index(ctx, n.db, addr, total, transfer721Index); err != nil {
+	if err = fulldb.WriteAccountErc721Index(ctx, n.db, addr, total, transfer721Index); err != nil {
 		log.Errorf("write account erc721 transfer index: %v", err)
 		return err
 	}
 
-	err = rawdb.WriteAccountErc721Total(ctx, n.db, addr, total)
+	err = fulldb.WriteAccountErc721Total(ctx, n.db, addr, total)
 	if err == nil {
 		erc721TrasferAccountTotalMap.Add(addr, total.Bytes())
 	}
@@ -289,7 +363,7 @@ func (n *blockHandle) updateErc721Account(ctx context.Context, addr common.Addre
 		n.newErc721Total.Add(field.NewInt(1))
 	}
 
-	if acc.Retry.Cmp(field.NewInt(3)) < 0 {
+	if acc.Retry.Cmp(field.NewInt(6)) < 0 {
 		if acc.Name == "" {
 			acc.Name, err = n.contractClient.GetContractName(addr.Hex())
 			if err != nil {
@@ -321,26 +395,26 @@ func (n *blockHandle) updateErc721Account(ctx context.Context, addr common.Addre
 
 func (n *blockHandle) writeErc721HolderAmount(ctx context.Context, contract common.Address, addr common.Address, tokenId *field.BigInt, inde bool) (err error) {
 	var oriAmount *field.BigInt
-	oriAmount, err = rawdb.ReadErc721HolderAmount(ctx, n.db, contract, addr)
+	oriAmount, err = fulldb.ReadErc721HolderAmount(ctx, n.db, contract, addr)
 	if err != nil {
 		if !errors.Is(err, kv.NotFound) {
 			return err
 		}
 		oriAmount = field.NewInt(0)
 	} else {
-		err = rawdb.DelErc721HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
+		err = fulldb.DelErc721HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
 		if err != nil {
 			return err
 		}
 	}
 	if inde == increase {
-		err = rawdb.WriteErc721HolderTokenIdQuantity(ctx, n.db, contract, addr, tokenId, field.NewInt(1))
+		err = fulldb.WriteErc721HolderTokenIdQuantity(ctx, n.db, contract, addr, tokenId, field.NewInt(1))
 		if err != nil {
 			return err
 		}
 		oriAmount.Add(field.NewInt(1))
 	} else {
-		err = rawdb.WriteErc721HolderTokenIdQuantity(ctx, n.db, contract, addr, tokenId, field.NewInt(0))
+		err = fulldb.WriteErc721HolderTokenIdQuantity(ctx, n.db, contract, addr, tokenId, field.NewInt(0))
 		if err != nil {
 			return err
 		}
@@ -349,13 +423,13 @@ func (n *blockHandle) writeErc721HolderAmount(ctx context.Context, contract comm
 	if oriAmount.Cmp(field.NewInt(0)) < 0 {
 		oriAmount = field.NewInt(0)
 	}
-	return rawdb.WriteErc721HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
+	return fulldb.WriteErc721HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
 }
 
 // ------------------- erc1155 transfer -----------------
 func (n *blockHandle) writeErc1155Transfer(ctx context.Context, data *types.Erc1155Transfer) (err error) {
 	if erc1155TrasferTotal == nil {
-		erc1155TrasferTotal, err = rawdb.ReadErc1155Total(ctx, n.db)
+		erc1155TrasferTotal, err = fulldb.ReadErc1155Total(ctx, n.db)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
 				erc1155TrasferTotal = field.NewInt(0)
@@ -367,7 +441,7 @@ func (n *blockHandle) writeErc1155Transfer(ctx context.Context, data *types.Erc1
 		}
 	}
 	erc1155TrasferTotal.Add(field.NewInt(1))
-	err = rawdb.WriteErc1155Transfer(ctx, n.db, erc1155TrasferTotal, data)
+	err = fulldb.WriteErc1155Transfer(ctx, n.db, erc1155TrasferTotal, data)
 	if err != nil {
 		log.Errorf("write erc1155 transfer: %v", err)
 	}
@@ -403,7 +477,42 @@ func (n *blockHandle) writeErc1155Transfer(ctx context.Context, data *types.Erc1
 			return err
 		}
 	}
+
+	if err = n.writeErc1155ContractTransferIndex(ctx, data.Contract, erc1155TrasferTotal); err != nil {
+		log.Errorf("write erc1155 contract transfer index:%v", data.Contract.Hex(), err)
+		return err
+	}
+
 	return nil
+}
+
+func (n *blockHandle) writeErc1155ContractTransferIndex(ctx context.Context, contract common.Address, transfer1155Index *field.BigInt) (err error) {
+	var total = &field.BigInt{}
+	if BytesRes, ok := erc1155TransferContractTotalMap.Get(contract); ok {
+		total.SetBytes(BytesRes.([]byte))
+	} else {
+		total, err = fulldb.ReadErc1155ContractTotal(ctx, n.db, contract)
+		if err != nil {
+			if errors.Is(err, kv.NotFound) {
+				total = field.NewInt(0)
+				err = nil
+			} else {
+				log.Errorf("read erc1155 contract transfer: %v", err)
+				return err
+			}
+		}
+	}
+	total.Add(field.NewInt(1))
+	if err = fulldb.WriteErc1155ContractTransfer(ctx, n.db, contract, total, transfer1155Index); err != nil {
+		log.Errorf("write erc1155 contract transfer index: %v", err)
+		return err
+	}
+
+	err = fulldb.WriteErc1155ContractTotal(ctx, n.db, contract, total)
+	if err == nil {
+		erc1155TransferContractTotalMap.Add(contract, total.Bytes())
+	}
+	return err
 }
 
 func (n *blockHandle) writeAccountErc1155TransferIndex(ctx context.Context, addr common.Address, transfer1155Index *field.BigInt) (err error) {
@@ -411,7 +520,7 @@ func (n *blockHandle) writeAccountErc1155TransferIndex(ctx context.Context, addr
 	if BytesRes, ok := erc1155TrasferAccountTotalMap.Get(addr); ok {
 		total.SetBytes(BytesRes.([]byte))
 	} else {
-		total, err = rawdb.ReadAccountErc1155Total(ctx, n.db, addr)
+		total, err = fulldb.ReadAccountErc1155Total(ctx, n.db, addr)
 		if err != nil {
 			if errors.Is(err, kv.NotFound) {
 				total = field.NewInt(0)
@@ -423,12 +532,12 @@ func (n *blockHandle) writeAccountErc1155TransferIndex(ctx context.Context, addr
 		}
 	}
 	total.Add(field.NewInt(1))
-	if err = rawdb.WriteAccountErc1155Index(ctx, n.db, addr, total, transfer1155Index); err != nil {
+	if err = fulldb.WriteAccountErc1155Index(ctx, n.db, addr, total, transfer1155Index); err != nil {
 		log.Errorf("write account erc1155 transfer index: %v", err)
 		return err
 	}
 
-	err = rawdb.WriteAccountErc1155Total(ctx, n.db, addr, total)
+	err = fulldb.WriteAccountErc1155Total(ctx, n.db, addr, total)
 	if err == nil {
 		erc1155TrasferAccountTotalMap.Add(addr, total.Bytes())
 	}
@@ -446,7 +555,7 @@ func (n *blockHandle) updateErc1155Account(ctx context.Context, addr common.Addr
 		n.newErc1155Total.Add(field.NewInt(1))
 	}
 
-	if acc.Retry.Cmp(field.NewInt(3)) < 0 {
+	if acc.Retry.Cmp(field.NewInt(6)) < 0 {
 		if acc.Name == "" {
 			acc.Name, err = n.contractClient.GetContractName(addr.Hex())
 			if err != nil {
@@ -478,21 +587,21 @@ func (n *blockHandle) updateErc1155Account(ctx context.Context, addr common.Addr
 
 func (n *blockHandle) writeErc1155HolderAmount(ctx context.Context, contract common.Address, addr common.Address, tokenId *field.BigInt, quantity *field.BigInt, inde bool) (err error) {
 	var oriAmount *field.BigInt
-	oriAmount, err = rawdb.ReadErc1155HolderAmount(ctx, n.db, contract, addr)
+	oriAmount, err = fulldb.ReadErc1155HolderAmount(ctx, n.db, contract, addr)
 	if err != nil {
 		if !errors.Is(err, kv.NotFound) {
 			return err
 		}
 		oriAmount = field.NewInt(0)
 	} else {
-		err = rawdb.DelErc721HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
+		err = fulldb.DelErc721HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
 		if err != nil {
 			return err
 		}
 	}
 
 	var oriQuantity *field.BigInt
-	oriQuantity, err = rawdb.ReadErc1155HolderTokenIdQuantity(ctx, n.db, contract, addr, tokenId)
+	oriQuantity, err = fulldb.ReadErc1155HolderTokenIdQuantity(ctx, n.db, contract, addr, tokenId)
 	if err != nil {
 		if !errors.Is(err, kv.NotFound) {
 			return err
@@ -501,7 +610,7 @@ func (n *blockHandle) writeErc1155HolderAmount(ctx context.Context, contract com
 	}
 	if inde == increase {
 		oriQuantity.Add(quantity)
-		err = rawdb.WriteErc1155HolderTokenIdQuantity(ctx, n.db, contract, addr, tokenId, oriQuantity)
+		err = fulldb.WriteErc1155HolderTokenIdQuantity(ctx, n.db, contract, addr, tokenId, oriQuantity)
 		if err != nil {
 			return err
 		}
@@ -511,7 +620,7 @@ func (n *blockHandle) writeErc1155HolderAmount(ctx context.Context, contract com
 		if oriQuantity.Cmp(field.NewInt(0)) < 0 {
 			oriQuantity = field.NewInt(0)
 		}
-		err = rawdb.WriteErc1155HolderTokenIdQuantity(ctx, n.db, contract, addr, tokenId, oriQuantity)
+		err = fulldb.WriteErc1155HolderTokenIdQuantity(ctx, n.db, contract, addr, tokenId, oriQuantity)
 		if err != nil {
 			return err
 		}
@@ -520,13 +629,13 @@ func (n *blockHandle) writeErc1155HolderAmount(ctx context.Context, contract com
 	if oriAmount.Cmp(field.NewInt(0)) < 0 {
 		oriAmount = field.NewInt(0)
 	}
-	return rawdb.WriteErc1155HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
+	return fulldb.WriteErc1155HolderAmount(ctx, n.db, contract, &types.Holder{Addr: addr, Quantity: *oriAmount})
 }
 
 // write total for erc20
 func (n *blockHandle) updateErc20TrasferTotal(ctx context.Context) (err error) {
 	if erc20TrasferTotal != nil {
-		err = rawdb.WriteErc20Total(ctx, n.db, erc20TrasferTotal)
+		err = fulldb.WriteErc20Total(ctx, n.db, erc20TrasferTotal)
 	}
 	return
 }
@@ -534,7 +643,7 @@ func (n *blockHandle) updateErc20TrasferTotal(ctx context.Context) (err error) {
 // write total for erc721
 func (n *blockHandle) updateErc721TrasferTotal(ctx context.Context) (err error) {
 	if erc721TrasferTotal != nil {
-		err = rawdb.WriteErc721Total(ctx, n.db, erc721TrasferTotal)
+		err = fulldb.WriteErc721Total(ctx, n.db, erc721TrasferTotal)
 	}
 	return
 }
@@ -542,7 +651,7 @@ func (n *blockHandle) updateErc721TrasferTotal(ctx context.Context) (err error) 
 // write total for erc155
 func (n *blockHandle) updateErc1155TrasferTotal(ctx context.Context) (err error) {
 	if erc1155TrasferTotal != nil {
-		err = rawdb.WriteErc1155Total(ctx, n.db, erc1155TrasferTotal)
+		err = fulldb.WriteErc1155Total(ctx, n.db, erc1155TrasferTotal)
 	}
 	return
 }
