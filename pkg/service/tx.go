@@ -9,7 +9,6 @@ import (
 	"github.com/Ankr-network/uscan/pkg/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/sirupsen/logrus"
 	"math/big"
 	"strings"
@@ -443,13 +442,9 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 				logrus.Errorf("abi.ParseTopics error:%s", err)
 				return nil, err
 			}
-			num := *field.NewInt(0)
 			logrus.Infof("log.Data.String():%s", log.Data.String())
-			v := hexutil.MustDecodeBig(log.Data.String())
-			if v != nil {
-				num = field.BigInt(*v)
-			}
-			logrus.Infof("Checklog:erc20:%s", out.Value.String())
+			//v := hexutil.MustDecodeBig(log.Data.String())
+
 			logrus.Infof("Checklog:From:%s", out.From.String())
 			logrus.Infof("Checklog:To:%s", out.To.String())
 			return &types.EventTransferData{
@@ -457,7 +452,7 @@ func CheckLog(log *types.Log) (*types.EventTransferData, error) {
 				From:         out.From.String(),
 				To:           out.To.String(),
 				Contract:     log.Address.String(),
-				Value:        num.String(),
+				Value:        log.Data.String(),
 			}, nil
 		} else {
 			// erc721
